@@ -1,23 +1,22 @@
-﻿using MQTTnet;
+﻿using Microsoft.Extensions.Configuration;
+using MQTTnet;
 using MQTTnet.Client;
 
 namespace Technologai
 {
     public class Agent
     {
+        private const int PORT = 1883;
+        private const string TOPIC = "my/topic";
+
         public event EventHandler<string>? Output;
 
         private MqttClient _mqtt;
-
-        private const string USERNAME = "audiostream";
-        private const string PASSWORD = "7snLBemg1T";
-        private const int PORT = 1883;
-
-        private const string TOPIC = "my/topic";
-
+        private AppConfig _config = new AppConfig();        
+        
         public Agent(string host)
         {
-            _mqtt = new MqttClient(host, PORT, USERNAME, PASSWORD);
+            _mqtt = new MqttClient(host, PORT, _config.MqttUsername, _config.MqttPassword);
             _mqtt.MessageReceived += _mqtt_MessageReceived;
         }
 
