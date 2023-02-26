@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "z7m9yMZa+52s3GM03wSMDICFvsuC0iTLyGztY8IxVPz/ZK65rDpqok2fJYVsK9hyoDEPuJYNauoj8OK/cct22g==",
+  "dgSpecHash": "2jFE82PlLJuraLCSHAKrngC2S/JNqc9u7JwatboSpwB7nEoEE8jjgcMM8SR11pCj10wtfqPqQAus7pHRZNNLLw==",
   "success": true,
   "projectFilePath": "C:\\Users\\john\\Development\\Technologai\\Console\\Console.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\john\\.nuget\\packages\\mqttnet\\4.1.4.563\\mqttnet.4.1.4.563.nupkg.sha512"
+  ],
   "logs": []
 }
