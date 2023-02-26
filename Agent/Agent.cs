@@ -25,7 +25,7 @@ namespace Technologai
             Output?.Invoke(this, args.ApplicationMessage.ConvertPayloadToString());
         }
 
-        public async void Publish(string message)
+        public async void Input(string message)
         {
             await _mqtt.PublishAsync(TOPIC, message);
         }

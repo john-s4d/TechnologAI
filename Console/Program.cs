@@ -2,11 +2,13 @@
 
 internal class Program
 {
-    private const string HOST = "44.209.26.208";
-    private static Agent _agent = new Agent(HOST);
+    private static Agent? _agent;
+    private static AppConfig _config = new AppConfig();
 
     internal static void Main(string[] args)
-    {   
+    {
+        _agent = new Agent(_config.Host);
+
         _agent.Start();
         _agent.Output += _agent_Output;
 
@@ -22,11 +24,11 @@ internal class Program
 
     private static void Input(string message)
     {
-        _agent.Publish(message);
+        _agent?.Input(message);
     }
 
     private async static Task Run()
-    {   
+    {
         Console.WriteLine("input:>");
         do
         {
@@ -37,7 +39,7 @@ internal class Program
 
             if (value.Equals("quit", StringComparison.OrdinalIgnoreCase)) { break; }
 
-            Input(value);            
+            Input(value);
 
             Console.WriteLine($"sent:> {value}");
         }
