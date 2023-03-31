@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AuthProvider xmlns="http://soap.sforce.com/2006/04/metadata">
+    <authorizeUrl>https://technologai-users.auth.us-east-1.amazoncognito.com/oauth2/authorize</authorizeUrl>
+    <consumerKey>5ulsd5orh9ouob4qirqmk6tpg2</consumerKey>
+    <consumerSecret>Placeholder_Value</consumerSecret>
+    <executionUser>john@ikailo.com.technologai-dev</executionUser>
+    <friendlyName>User UI</friendlyName>
+    <includeOrgIdInIdentifier>false</includeOrgIdInIdentifier>
+    <providerType>OpenIdConnect</providerType>
+    <registrationHandler>CognitoRegistrationHandler</registrationHandler>
+    <sendAccessTokenInHeader>true</sendAccessTokenInHeader>
+    <sendClientCredentialsInHeader>false</sendClientCredentialsInHeader>
+    <sendSecretInApis>false</sendSecretInApis>
+    <tokenUrl>https://technologai-users.auth.us-east-1.amazoncognito.com/oauth2/token</tokenUrl>
+    <userInfoUrl>https://technologai-users.auth.us-east-1.amazoncognito.com/oauth2/userInfo</userInfoUrl>
+</AuthProvider>
