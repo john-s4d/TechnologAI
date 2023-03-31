@@ -4,7 +4,7 @@
     <consumerKey>5ulsd5orh9ouob4qirqmk6tpg2</consumerKey>
     <consumerSecret>Placeholder_Value</consumerSecret>
     <executionUser>john@ikailo.com.technologai-dev</executionUser>
-    <friendlyName>User UI</friendlyName>
+    <friendlyName>Cognito</friendlyName>
     <includeOrgIdInIdentifier>false</includeOrgIdInIdentifier>
     <providerType>OpenIdConnect</providerType>
     <registrationHandler>CognitoRegistrationHandler</registrationHandler>
