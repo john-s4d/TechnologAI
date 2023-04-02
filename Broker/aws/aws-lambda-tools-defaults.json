@@ -11,7 +11,6 @@
     "configuration" : "Release",
     "s3-prefix"     : "AWS-Technologai/",
     "template"      : "serverless.template",
-    "template-parameters" : "",
-    "s3-bucket"           : "technologai-dev",
-    "stack-name"          : "TechnologaiDev"
+    "s3-bucket"     : "technologai-dev",
+    "stack-name"    : "TechnologaiDev"
 }

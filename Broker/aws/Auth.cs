@@ -11,6 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Amazon.KeyManagementService;
 using Amazon.KeyManagementService.Model;
+using Amazon.Runtime.Internal.Transform;
 
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 
@@ -19,14 +20,14 @@ namespace Technologai
     public class Auth
     {
         // TODO: Get from environment config
+        private const int JWT_EXPIRY_SECONDS = 60 * 60 * 2;
         private readonly string _tableName = "TechnologaiDevAgentAuthKeys";
         private readonly string _secretKeySecretId = "mrk-c1a527a2856f4c98813d7642ea774e26";
-        private const int JWT_EXPIRY_SECONDS = 60 * 60 * 2;
 
-        public async Task<APIGatewayProxyResponse> KeyGen(APIGatewayProxyRequest request, ILambdaContext context)
+        public async Task<APIGatewayHttpApiV2ProxyResponse> KeyGen(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
-            byte[] clientId;
-            JsonWebKey jsonWebKey;
+            byte[] clientId = Array.Empty<byte>();
+            JsonWebKey jsonWebKey = new();
 
             try
             {
@@ -40,20 +41,24 @@ namespace Technologai
             catch (Exception ex)
             {
 #if DEBUG
-                clientId = RandomNumberGenerator.GetBytes(32);
-                jsonWebKey = JsonWebKeyConverter.ConvertFromRSASecurityKey(new(RSA.Create(2048).ExportParameters(false)));
-                KeyGenRequest kgr = new KeyGenRequest
+                if (request.Body == "DEBUG")
                 {
-                    ClientId = Base64UrlEncoder.Encode(clientId),
-                    JsonWebKey = JsonExtensions.SerializeToJson(jsonWebKey)
-                };
-                LambdaLogger.Log(JsonConvert.SerializeObject(kgr));                
+                    clientId = RandomNumberGenerator.GetBytes(32);
+                    jsonWebKey = JsonWebKeyConverter.ConvertFromRSASecurityKey(new(RSA.Create(2048).ExportParameters(false)));
+                    KeyGenRequest kgr = new KeyGenRequest
+                    {
+                        ClientId = Base64UrlEncoder.Encode(clientId),
+                        JsonWebKey = JsonExtensions.SerializeToJson(jsonWebKey)
+                    };
+                    LambdaLogger.Log(JsonConvert.SerializeObject(kgr));
+                }
 #else
                 LambdaLogger.Log(ex.Message); 
-                return new APIGatewayProxyResponse
+
+                return new APIGatewayHttpApiV2ProxyResponse
                 {
                     StatusCode = 400,                    
-                    Body = "Bad Request" // TODO: JSON message
+                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Bad Request" })
                 };
 #endif
             }
@@ -69,11 +74,11 @@ namespace Technologai
                 TableName = _tableName,
                 Item = new Dictionary<string, AttributeValue>
                     {
-                        // TODO: Log userId of user who is creating this key
                         { "ClientSecretSaltHash", new AttributeValue { S = Base64UrlEncoder.Encode(clientSecretSaltHash) } },
                         { "Salt", new AttributeValue { S = Base64UrlEncoder.Encode(salt) } },
                         { "ClientId", new AttributeValue { S = Base64UrlEncoder.Encode(clientId) } },
                         { "CreatedDateTime", new AttributeValue { S = DateTime.UtcNow.ToString("o") } },
+                        { "CreatedBy", new AttributeValue { S = request.RequestContext.Authorizer.Jwt.Claims.TryGetValue("sub", out string? sub) ? sub : null }},
                         { "Active", new AttributeValue { BOOL = true } }
                     }
             };
@@ -93,7 +98,7 @@ namespace Technologai
                     EncryptedApiKey = Base64UrlEncoder.Encode(rsa.Encrypt(apiKey, false))
                 };
 
-                return new APIGatewayProxyResponse
+                return new APIGatewayHttpApiV2ProxyResponse
                 {
                     StatusCode = 200,
                     Body = JsonConvert.SerializeObject(keyGenResponse)
@@ -101,7 +106,7 @@ namespace Technologai
             }
         }
 
-        public async Task<APIGatewayProxyResponse> Token(APIGatewayProxyRequest request, ILambdaContext context)
+        public async Task<APIGatewayHttpApiV2ProxyResponse> Token(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
             string clientId;
             byte[] clientSecret;
@@ -123,10 +128,11 @@ namespace Technologai
             catch (Exception ex)
             {
                 LambdaLogger.Log(ex.Message);
-                return new APIGatewayProxyResponse
+
+                return new APIGatewayHttpApiV2ProxyResponse
                 {
                     StatusCode = 400,
-                    Body = "Bad Request" // TODO: JSON message
+                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Bad Request" })
                 };
             }
 
@@ -149,10 +155,10 @@ namespace Technologai
 
             if (querySaltResponse.Items.Count != 1)
             {
-                return new APIGatewayProxyResponse
+                return new APIGatewayHttpApiV2ProxyResponse
                 {
                     StatusCode = 401,
-                    Body = "Unknown Api Key" // TODO: json message
+                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Bad Request" })
                 };
             }
 
@@ -161,12 +167,14 @@ namespace Technologai
 
             if (Base64UrlEncoder.Encode(clientSecretSaltHash) != querySaltResponse.Items[0]["ClientSecretSaltHash"].S)
             {
-                return new APIGatewayProxyResponse
+                return new APIGatewayHttpApiV2ProxyResponse
                 {
                     StatusCode = 401,
-                    Body = "Unknown Api Key" // TODO: json message
+                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Bad Request" })
                 };
             }
+
+            var kms = new AmazonKeyManagementServiceClient();            
 
             var jwtHeader = new JwtHeader();
             jwtHeader.Add("alg", "PS256");
@@ -175,7 +183,16 @@ namespace Technologai
             var jwtPayload = new JwtPayload();
             jwtPayload.Add("sub", clientId);
             jwtPayload.Add("exp", Convert.ToString(DateTimeOffset.UtcNow.AddSeconds(JWT_EXPIRY_SECONDS).ToUnixTimeSeconds()));
-            // TODO: More claims - kid, iss, aud, nbf, iat, [scope] // https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html
+            
+            // TODO: Fill these
+            jwtPayload.Add("kid", "");
+            jwtPayload.Add("iss", "");
+            jwtPayload.Add("aud", "");
+            jwtPayload.Add("nbf", "");
+            jwtPayload.Add("iat", "");
+            jwtPayload.Add("scp", "");
+
+            // https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html            
             // TODO: validate via jwks_uri
 
             string jwtHeaderBase64 = Base64UrlEncoder.Encode(jwtHeader.SerializeToJson());
@@ -190,7 +207,7 @@ namespace Technologai
             };
 
             SignResponse jwtSignResponse = await new AmazonKeyManagementServiceClient().SignAsync(jwtSignRequest);
-            
+
             string jwtSignatureBase64 = Base64UrlEncoder.Encode(jwtSignResponse.Signature.ToArray());
 
             var tokenResponse = new TokenResponse
@@ -198,7 +215,7 @@ namespace Technologai
                 Token = $"{jwtHeaderBase64}.{jwtPayloadBase64}.{jwtSignatureBase64}"
             };
 
-            return new APIGatewayProxyResponse
+            return new APIGatewayHttpApiV2ProxyResponse
             {
                 StatusCode = 200,
                 Body = JsonConvert.SerializeObject(tokenResponse)
@@ -239,5 +256,10 @@ namespace Technologai
     public class TokenResponse
     {
         public string? Token { get; set; }
+    }
+
+    public class MessageResponse
+    {
+        public string? Message { get; set; }
     }
 }
