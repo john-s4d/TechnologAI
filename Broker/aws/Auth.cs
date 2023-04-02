@@ -19,6 +19,8 @@ namespace Technologai
 {
     public class Auth
     {
+        // TODO: This isn't an ideal solution. Would be better to get *all* JWTs issued from Cognito (or any singular IDP for that matter). But we need to do it this way for now because of reasons.
+        
         // TODO: Get from environment config
         private const int JWT_EXPIRY_SECONDS = 60 * 60 * 2;
         private readonly string _tableName = "TechnologaiDevAgentAuthKeys";
@@ -26,6 +28,9 @@ namespace Technologai
 
         public async Task<APIGatewayHttpApiV2ProxyResponse> KeyGen(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
+            LambdaLogger.Log($"request: {JsonConvert.SerializeObject(request)}");
+            LambdaLogger.Log($"context: {JsonConvert.SerializeObject(context)}");
+
             byte[] clientId = Array.Empty<byte>();
             JsonWebKey jsonWebKey = new();
 
@@ -53,11 +58,11 @@ namespace Technologai
                     LambdaLogger.Log(JsonConvert.SerializeObject(kgr));
                 }
 #else
-                LambdaLogger.Log(ex.Message); 
+                LambdaLogger.Log(ex.Message);
 
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
-                    StatusCode = 400,                    
+                    StatusCode = 400,
                     Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Bad Request" })
                 };
 #endif
@@ -78,7 +83,7 @@ namespace Technologai
                         { "Salt", new AttributeValue { S = Base64UrlEncoder.Encode(salt) } },
                         { "ClientId", new AttributeValue { S = Base64UrlEncoder.Encode(clientId) } },
                         { "CreatedDateTime", new AttributeValue { S = DateTime.UtcNow.ToString("o") } },
-                        { "CreatedBy", new AttributeValue { S = request.RequestContext.Authorizer.Jwt.Claims.TryGetValue("sub", out string? sub) ? sub : null }},
+                        { "CreatedBy", new AttributeValue { S = request.RequestContext.Authorizer != null ? request.RequestContext.Authorizer.Jwt.Claims["sub"] : string.Empty } },
                         { "Active", new AttributeValue { BOOL = true } }
                     }
             };
@@ -108,6 +113,9 @@ namespace Technologai
 
         public async Task<APIGatewayHttpApiV2ProxyResponse> Token(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
+            LambdaLogger.Log($"request: {JsonConvert.SerializeObject(request)}");
+            LambdaLogger.Log($"context: {JsonConvert.SerializeObject(context)}");
+
             string clientId;
             byte[] clientSecret;
 
@@ -174,7 +182,7 @@ namespace Technologai
                 };
             }
 
-            var kms = new AmazonKeyManagementServiceClient();            
+            var kms = new AmazonKeyManagementServiceClient();
 
             var jwtHeader = new JwtHeader();
             jwtHeader.Add("alg", "PS256");
@@ -183,7 +191,7 @@ namespace Technologai
             var jwtPayload = new JwtPayload();
             jwtPayload.Add("sub", clientId);
             jwtPayload.Add("exp", Convert.ToString(DateTimeOffset.UtcNow.AddSeconds(JWT_EXPIRY_SECONDS).ToUnixTimeSeconds()));
-            
+
             // TODO: Fill these
             jwtPayload.Add("kid", "");
             jwtPayload.Add("iss", "");
