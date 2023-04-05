@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Technologai.Identity
+namespace Technologai.AWS.OpenID
 {
-    internal class AgentIdentity
+    internal class Authorization
     {
     }
 }
- 

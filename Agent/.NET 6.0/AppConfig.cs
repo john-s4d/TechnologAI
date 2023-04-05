@@ -5,10 +5,6 @@ namespace Technologai
     internal class AppConfig
     {
         private readonly IConfiguration _config;
-        
-        internal string MqttUsername => _config["mqtt_username"];
-        internal string MqttPassword=> _config["mqtt_password"];
-
 
         internal AppConfig()
         {

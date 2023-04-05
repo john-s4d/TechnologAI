@@ -7,31 +7,31 @@ namespace Technologai
     {
         private const int PORT = 8083;
 
-        private string _host;
-        private string _username;
-        private string _password;        
+        private string _host;                      
 
         private IMqttClient _client = new MqttFactory().CreateMqttClient();
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
+        private Authentication _authentication;
+
         internal event EventHandler<MqttApplicationMessageReceivedEventArgs>? MessageReceived;        
 
-        internal MqttClient(string host, string username, string password)
+        internal MqttClient(string host, Authentication authentication)
         {
-            _host = host;            
-            _username = username;
-            _password = password;            
+            _host = string.IsNullOrEmpty(host) ? throw new ArgumentNullException(nameof(host)) : host;
+            _authentication = authentication == null ? throw new ArgumentNullException(nameof(authentication)) : authentication;
         }
 
         internal async Task ConnectAsync()
         {
-            if (!_client.IsConnected)
-            {
+            if (!_client.IsConnected && _authentication.Agent != null)
+            {   
+               await _authentication.Agent.Authenticate();
+
                 var options = new MqttClientOptionsBuilder()
-                //.WithTcpServer(_host, PORT)
                 .WithWebSocketServer($"{_host}:{PORT}")
                 .WithTls()
-                .WithCredentials(_username, _password)
+                .WithCredentials(_authentication.Agent.Token, "password")
                 .Build();
 
                 _client.ApplicationMessageReceivedAsync += _client_ApplicationMessageReceivedAsync;
