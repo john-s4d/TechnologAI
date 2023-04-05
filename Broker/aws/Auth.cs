@@ -11,49 +11,71 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Amazon.KeyManagementService;
 using Amazon.KeyManagementService.Model;
-using Amazon.Runtime.Internal.Transform;
+using System.Security.Cryptography.X509Certificates;
+using Newtonsoft.Json.Linq;
 
-[assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
-
-namespace Technologai
+namespace Technologai.AWS
 {
     public class Auth
     {
-        // TODO: This isn't an ideal solution. Would be better to get *all* JWTs issued from Cognito (or any singular IDP for that matter). But we need to do it this way for now because of reasons.
-        
+        // NOTE: This isn't a perfect solution. Would be better to get all JWTs issued from Cognito (or any singular IDP for that matter).
+        //       But we need to do it this way for now because IDPs don't support dynamically creating clientId/clientSecret pairs en-masse.
+
+        // TODO: Use more-standard Client Credentials grant instead of API Key
+        // TODO: Provide method to deactivate ClientId
+
+        // TODO: Authorizer Method for KMS signed token        
+
         // TODO: Get from environment config
         private const int JWT_EXPIRY_SECONDS = 60 * 60 * 2;
         private readonly string _tableName = "TechnologaiDevAgentAuthKeys";
-        private readonly string _secretKeySecretId = "mrk-c1a527a2856f4c98813d7642ea774e26";
+        private readonly string _signingKeyId = "mrk-c1a527a2856f4c98813d7642ea774e26";
 
         public async Task<APIGatewayHttpApiV2ProxyResponse> KeyGen(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
             LambdaLogger.Log($"request: {JsonConvert.SerializeObject(request)}");
             LambdaLogger.Log($"context: {JsonConvert.SerializeObject(context)}");
 
-            byte[] clientId = Array.Empty<byte>();
+
+            if (request.RequestContext.Authorizer == null)
+            {
+                LambdaLogger.Log("No Authorizer");
+
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    StatusCode = 401,
+                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Unauthorized" })
+                };
+            }
+            else
+            {
+                // TODO: Do we need to validate Authorizer sub? Ideally issuer trust should be enough.
+            }
+
+
+            byte[] clientIdBytes = Array.Empty<byte>();
             JsonWebKey jsonWebKey = new();
 
             try
             {
                 var keyGenRequest = JsonConvert.DeserializeObject<KeyGenRequest>(request.Body);
 
-                clientId = Base64UrlEncoder.DecodeBytes(keyGenRequest?.ClientId);
+                clientIdBytes = Base64UrlEncoder.DecodeBytes(keyGenRequest?.ClientId);
                 jsonWebKey = new JsonWebKey(keyGenRequest?.JsonWebKey);
 
-                if (clientId.Length != 32) { throw new ArgumentException(nameof(clientId)); }
+                if (clientIdBytes.Length != 32) { throw new ArgumentException(nameof(KeyGenRequest.ClientId)); }
             }
             catch (Exception ex)
             {
 #if DEBUG
                 if (request.Body == "DEBUG")
                 {
-                    clientId = RandomNumberGenerator.GetBytes(32);
+                    clientIdBytes = RandomNumberGenerator.GetBytes(32);
                     jsonWebKey = JsonWebKeyConverter.ConvertFromRSASecurityKey(new(RSA.Create(2048).ExportParameters(false)));
                     KeyGenRequest kgr = new KeyGenRequest
                     {
-                        ClientId = Base64UrlEncoder.Encode(clientId),
-                        JsonWebKey = JsonExtensions.SerializeToJson(jsonWebKey)
+                        ClientId = Base64UrlEncoder.Encode(clientIdBytes),
+                        JsonWebKey = JsonExtensions.SerializeToJson(jsonWebKey) // JsonExtensions does a better job of serializing jwk
                     };
                     LambdaLogger.Log(JsonConvert.SerializeObject(kgr));
                 }
@@ -70,9 +92,10 @@ namespace Technologai
 
             byte[] clientSecret = RandomNumberGenerator.GetBytes(32);
             byte[] salt = RandomNumberGenerator.GetBytes(32);
-            byte[] apiKey = clientId.Concat(clientSecret).ToArray();
-
+            byte[] apiKey = clientIdBytes.Concat(clientSecret).ToArray();
             byte[] clientSecretSaltHash = SHA256.Create().ComputeHash(clientSecret.Concat(salt).ToArray());
+
+            string clientId = Base64UrlEncoder.Encode(clientIdBytes);
 
             var putRequest = new PutItemRequest
             {
@@ -81,17 +104,33 @@ namespace Technologai
                     {
                         { "ClientSecretSaltHash", new AttributeValue { S = Base64UrlEncoder.Encode(clientSecretSaltHash) } },
                         { "Salt", new AttributeValue { S = Base64UrlEncoder.Encode(salt) } },
-                        { "ClientId", new AttributeValue { S = Base64UrlEncoder.Encode(clientId) } },
+                        { "ClientId", new AttributeValue { S = clientId } },
                         { "CreatedDateTime", new AttributeValue { S = DateTime.UtcNow.ToString("o") } },
                         { "CreatedBy", new AttributeValue { S = request.RequestContext.Authorizer != null ? request.RequestContext.Authorizer.Jwt.Claims["sub"] : string.Empty } },
                         { "Active", new AttributeValue { BOOL = true } }
-                    }
+                    },
+                ConditionExpression = "attribute_not_exists(ClientId)"
+
             };
 
-            await new AmazonDynamoDBClient().PutItemAsync(putRequest);
+            try
+            {
+                await new AmazonDynamoDBClient().PutItemAsync(putRequest);
+            }
+            catch (Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    StatusCode = 500,
+                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Could not save key" })
+                };
+            }
 
 #if DEBUG
             LambdaLogger.Log(Base64UrlEncoder.Encode(apiKey));
+            //LambdaLogger.Log($"clientId: {clientId}");
+            //LambdaLogger.Log($"clientSecret: {Base64UrlEncoder.Encode(clientSecret)}");
+
 #endif
 
             using (var rsa = new RSACryptoServiceProvider())
@@ -101,6 +140,7 @@ namespace Technologai
                 var keyGenResponse = new KeyGenResponse
                 {
                     EncryptedApiKey = Base64UrlEncoder.Encode(rsa.Encrypt(apiKey, false))
+                    //EncryptedClientSecret = Base64UrlEncoder.Encode(rsa.Encrypt(clientSecret, false))
                 };
 
                 return new APIGatewayHttpApiV2ProxyResponse
@@ -166,19 +206,22 @@ namespace Technologai
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
                     StatusCode = 401,
-                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Bad Request" })
+                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "ApiKey Not Found" })
                 };
             }
 
             byte[] salt = Base64UrlEncoder.DecodeBytes(querySaltResponse.Items[0]["Salt"].S);
             byte[] clientSecretSaltHash = SHA256.Create().ComputeHash(clientSecret.Concat(salt).ToArray());
 
-            if (Base64UrlEncoder.Encode(clientSecretSaltHash) != querySaltResponse.Items[0]["ClientSecretSaltHash"].S)
+            string inputClientSecretSaltHash = Base64UrlEncoder.Encode(clientSecretSaltHash);
+            string dbClientSecretSaltHash = querySaltResponse.Items[0]["ClientSecretSaltHash"].S;
+
+            if (inputClientSecretSaltHash != dbClientSecretSaltHash)
             {
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
                     StatusCode = 401,
-                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Bad Request" })
+                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "ApiKey Not Verified" })
                 };
             }
 
@@ -191,24 +234,21 @@ namespace Technologai
             var jwtPayload = new JwtPayload();
             jwtPayload.Add("sub", clientId);
             jwtPayload.Add("exp", Convert.ToString(DateTimeOffset.UtcNow.AddSeconds(JWT_EXPIRY_SECONDS).ToUnixTimeSeconds()));
-
-            // TODO: Fill these
-            jwtPayload.Add("kid", "");
+            jwtPayload.Add("iat", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
+            jwtPayload.Add("nbf", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
+            jwtPayload.Add("kid", _signingKeyId);
             jwtPayload.Add("iss", "");
-            jwtPayload.Add("aud", "");
-            jwtPayload.Add("nbf", "");
-            jwtPayload.Add("iat", "");
-            jwtPayload.Add("scp", "");
 
-            // https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html            
-            // TODO: validate via jwks_uri
+            //jwtPayload.Add("aud", "");
+            //jwtPayload.Add("scp", "");
+
 
             string jwtHeaderBase64 = Base64UrlEncoder.Encode(jwtHeader.SerializeToJson());
             string jwtPayloadBase64 = Base64UrlEncoder.Encode(jwtPayload.SerializeToJson());
 
             var jwtSignRequest = new SignRequest
             {
-                KeyId = _secretKeySecretId,
+                KeyId = _signingKeyId,
                 SigningAlgorithm = SigningAlgorithmSpec.RSASSA_PSS_SHA_256,
                 MessageType = MessageType.RAW,
                 Message = new MemoryStream(Encoding.UTF8.GetBytes($"{jwtHeaderBase64}.{jwtPayloadBase64}"))
@@ -227,6 +267,33 @@ namespace Technologai
             {
                 StatusCode = 200,
                 Body = JsonConvert.SerializeObject(tokenResponse)
+            };
+        }
+
+        public async Task<APIGatewayHttpApiV2ProxyResponse> Jwks(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+        {
+            GetPublicKeyRequest publicKeyRequest = new GetPublicKeyRequest
+            {
+                KeyId = _signingKeyId
+            };
+
+            GetPublicKeyResponse publicKeyResponse = await new AmazonKeyManagementServiceClient().GetPublicKeyAsync(publicKeyRequest);
+
+            var rsaPublicKey = RSA.Create();
+
+            rsaPublicKey.ImportSubjectPublicKeyInfo(publicKeyResponse.PublicKey.ToArray(), out int bytesRead);
+
+            var jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(new(rsaPublicKey)
+            {
+                KeyId = _signingKeyId
+            });
+
+            jwk.Use = "sig";
+
+            return new APIGatewayHttpApiV2ProxyResponse
+            {
+                StatusCode = 200,
+                Body = JsonExtensions.SerializeToJson(new JwksResponse { keys = { jwk } }) // JsonExtensions does a better job of serializing jwk
             };
         }
 
@@ -254,6 +321,7 @@ namespace Technologai
     public class KeyGenResponse
     {
         public string? EncryptedApiKey { get; set; }
+        //public string? EncryptedClientSecret { get; set; }
     }
 
     public class TokenRequest
@@ -264,6 +332,12 @@ namespace Technologai
     public class TokenResponse
     {
         public string? Token { get; set; }
+    }
+
+    public class JwksResponse
+    {
+        public List<JsonWebKey> keys { get; set; } = new();
+
     }
 
     public class MessageResponse

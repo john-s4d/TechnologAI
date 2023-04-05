@@ -1,13 +1,14 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace Technologai
+namespace Technologai.Agents.Core.Interaction
 {
     internal class AppConfig
     {
         private readonly IConfiguration _config;
         
-        internal string? Host => _config["host"];        
-
+        internal string? BrokerHost => _config["brokerHost"];        
+        internal string? AgentApiKey => _config["agentApiKey"];
+        internal string? TokenEndpoint => _config["tokenEndpoint"];
 
         internal AppConfig()
         {
