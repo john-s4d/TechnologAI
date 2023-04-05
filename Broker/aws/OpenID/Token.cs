@@ -11,14 +11,13 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Security.Cryptography;
 
 namespace Technologai.AWS.OpenID
 {
     internal class Token
     {
-        public async Task<APIGatewayHttpApiV2ProxyResponse> PostToken(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+        public async Task<APIGatewayHttpApiV2ProxyResponse> TokenPost(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
             LambdaLogger.Log($"request: {JsonConvert.SerializeObject(request)}");
             LambdaLogger.Log($"context: {JsonConvert.SerializeObject(context)}");

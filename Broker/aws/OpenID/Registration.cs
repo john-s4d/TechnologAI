@@ -16,7 +16,7 @@ namespace Technologai.AWS.OpenID
 {
     internal class Registration
     {
-        public async Task<APIGatewayHttpApiV2ProxyResponse> PostClient(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+        public async Task<APIGatewayHttpApiV2ProxyResponse> ClientPost(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
             LambdaLogger.Log($"request: {JsonConvert.SerializeObject(request)}");
             LambdaLogger.Log($"context: {JsonConvert.SerializeObject(context)}");
@@ -60,7 +60,7 @@ namespace Technologai.AWS.OpenID
                     KeyGenRequest kgr = new KeyGenRequest
                     {
                         ClientId = Base64UrlEncoder.Encode(clientIdBytes),
-                        JsonWebKey = JsonExtensions.SerializeToJson(jsonWebKey) // JsonExtensions does a better job of serializing jwk
+                        JsonWebKey = JsonExtensions.SerializeToJson(jsonWebKey)
                     };
                     LambdaLogger.Log(JsonConvert.SerializeObject(kgr));
                 }
