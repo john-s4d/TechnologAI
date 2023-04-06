@@ -7,7 +7,9 @@ namespace Technologai.Agents.Core.Interaction
         private readonly IConfiguration _config;
         
         internal string? BrokerHost => _config["brokerHost"];        
-        internal string? AgentApiKey => _config["agentApiKey"];
+        internal string? AgentApiKey => _config["agentApiKey"]; // TODO: switch to client credentials
+        internal string? ClientId => _config["clientId"];
+        internal string? ClientSecret => _config["clientSecret"];
         internal string? TokenEndpoint => _config["tokenEndpoint"];
 
         internal AppConfig()

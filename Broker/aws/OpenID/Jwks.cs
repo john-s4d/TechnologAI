@@ -37,7 +37,6 @@ namespace Technologai.AWS.OpenID
         public class JwksResponse
         {
             public List<JsonWebKey> keys { get; set; } = new();
-
         }
     }
 }
