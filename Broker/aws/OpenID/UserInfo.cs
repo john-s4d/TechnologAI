@@ -8,5 +8,7 @@ namespace Technologai.AWS.OpenID
 {
     internal class UserInfo
     {
+
+        // TODO: Authorizer Method for KMS signed token  
     }
 }

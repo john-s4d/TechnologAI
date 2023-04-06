@@ -29,15 +29,8 @@ namespace Technologai.AWS.OpenID
             {
                 var tokenRequest = JsonConvert.DeserializeObject<TokenRequest>(request.Body);
 
-                byte[] apiKey = Base64UrlEncoder.DecodeBytes(tokenRequest?.ApiKey);
-                byte[] clientIdBytes = new byte[32];
-
-                clientSecret = new byte[32];
-
-                Array.Copy(apiKey, clientIdBytes, 32);
-                Array.Copy(apiKey, 32, clientSecret, 0, 32);
-
-                clientId = Base64UrlEncoder.Encode(clientIdBytes);
+                clientId = tokenRequest?.ClientId ?? throw new ArgumentNullException(nameof(clientId));
+                clientSecret = Base64UrlEncoder.DecodeBytes(tokenRequest?.ClientSecret ?? throw new ArgumentNullException(nameof(clientSecret)));
             }
             catch (Exception ex)
             {
@@ -103,9 +96,9 @@ namespace Technologai.AWS.OpenID
             jwtPayload.Add("iat", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
             jwtPayload.Add("nbf", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
             jwtPayload.Add("kid", Config.SIGNATURE_KEY_ID);
-            jwtPayload.Add("iss", "");
+            jwtPayload.Add("iss", ""); // TODO: Need these
+            jwtPayload.Add("aud", ""); // TODO: Need these
 
-            //jwtPayload.Add("aud", "");
             //jwtPayload.Add("scp", "");
 
 
@@ -136,14 +129,22 @@ namespace Technologai.AWS.OpenID
             };
         }
 
+        // TODO: Use RFC request/response
+
         public class TokenRequest
         {
-            public string? ApiKey { get; set; }
+            public string? ClientId { get; set; }
+            public string? ClientSecret { get; set; }
         }
 
         public class TokenResponse
         {
             public string? Token { get; set; }
+        }
+        
+        public class MessageResponse
+        {
+            public string? Message { get; set; }
         }
     }
 }

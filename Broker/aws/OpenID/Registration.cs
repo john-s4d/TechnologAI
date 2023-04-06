@@ -16,6 +16,8 @@ namespace Technologai.AWS.OpenID
 {
     internal class Registration
     {
+        // TODO: Provide method to deactivate ClientId
+
         public async Task<APIGatewayHttpApiV2ProxyResponse> ClientPost(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
             LambdaLogger.Log($"request: {JsonConvert.SerializeObject(request)}");
@@ -34,21 +36,20 @@ namespace Technologai.AWS.OpenID
             }
             else
             {
-                // TODO: Do we need to validate Authorizer sub? Ideally issuer trust should be enough.
+                // TODO: Do we need to validate Authorizer subject? Ideally issuer trust should be enough.
             }
-
 
             byte[] clientIdBytes = Array.Empty<byte>();
             JsonWebKey jsonWebKey = new();
 
             try
             {
-                var keyGenRequest = JsonConvert.DeserializeObject<KeyGenRequest>(request.Body);
+                var keyGenRequest = JsonConvert.DeserializeObject<ClientPostRequest>(request.Body);
 
                 clientIdBytes = Base64UrlEncoder.DecodeBytes(keyGenRequest?.ClientId);
                 jsonWebKey = new JsonWebKey(keyGenRequest?.JsonWebKey);
 
-                if (clientIdBytes.Length != 32) { throw new ArgumentException(nameof(KeyGenRequest.ClientId)); }
+                if (clientIdBytes.Length != 32) { throw new ArgumentException(nameof(ClientPostRequest.ClientId)); }
             }
             catch (Exception ex)
             {
@@ -57,7 +58,7 @@ namespace Technologai.AWS.OpenID
                 {
                     clientIdBytes = RandomNumberGenerator.GetBytes(32);
                     jsonWebKey = JsonWebKeyConverter.ConvertFromRSASecurityKey(new(RSA.Create(2048).ExportParameters(false)));
-                    KeyGenRequest kgr = new KeyGenRequest
+                    var kgr = new ClientPostRequest
                     {
                         ClientId = Base64UrlEncoder.Encode(clientIdBytes),
                         JsonWebKey = JsonExtensions.SerializeToJson(jsonWebKey)
@@ -77,7 +78,6 @@ namespace Technologai.AWS.OpenID
 
             byte[] clientSecret = RandomNumberGenerator.GetBytes(32);
             byte[] salt = RandomNumberGenerator.GetBytes(32);
-            byte[] apiKey = clientIdBytes.Concat(clientSecret).ToArray();
             byte[] clientSecretSaltHash = SHA256.Create().ComputeHash(clientSecret.Concat(salt).ToArray());
 
             string clientId = Base64UrlEncoder.Encode(clientIdBytes);
@@ -111,21 +111,18 @@ namespace Technologai.AWS.OpenID
                 };
             }
 
-#if DEBUG
-            LambdaLogger.Log(Base64UrlEncoder.Encode(apiKey));
-            //LambdaLogger.Log($"clientId: {clientId}");
-            //LambdaLogger.Log($"clientSecret: {Base64UrlEncoder.Encode(clientSecret)}");
-
+#if DEBUG   
+            LambdaLogger.Log($"clientId: {clientId}");
+            LambdaLogger.Log($"clientSecret: {Base64UrlEncoder.Encode(clientSecret)}");
 #endif
 
             using (var rsa = new RSACryptoServiceProvider())
             {
                 rsa.ImportParameters(JwkToRsa(jsonWebKey));
 
-                var keyGenResponse = new KeyGenResponse
-                {
-                    EncryptedApiKey = Base64UrlEncoder.Encode(rsa.Encrypt(apiKey, false))
-                    //EncryptedClientSecret = Base64UrlEncoder.Encode(rsa.Encrypt(clientSecret, false))
+                var keyGenResponse = new ClientPostResponse
+                {   
+                    EncryptedClientSecret = Base64UrlEncoder.Encode(rsa.Encrypt(clientSecret, false))
                 };
 
                 return new APIGatewayHttpApiV2ProxyResponse
@@ -149,16 +146,22 @@ namespace Technologai.AWS.OpenID
             return rsa;
         }
 
-        public class KeyGenRequest
+        // TODO: Use RFC request/response types
+
+        public class ClientPostRequest
         {
             public string? ClientId { get; set; }
             public string? JsonWebKey { get; set; }
         }
 
-        public class KeyGenResponse
+        public class ClientPostResponse
         {
-            public string? EncryptedApiKey { get; set; }
-            //public string? EncryptedClientSecret { get; set; }
+            public string? EncryptedClientSecret { get; set; }
+        }
+
+        public class MessageResponse
+        {
+            public string? Message { get; set; }
         }
     }
 }

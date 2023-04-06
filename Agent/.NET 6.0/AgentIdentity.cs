@@ -12,7 +12,8 @@ namespace Technologai
 {
     public class AgentIdentity
     {   
-
+        public string? Name { get; set; }
+        public string? ClientId { get; set; }
         public string? TokenEndpoint { get; set; }
         public string? ApiKey { get; set; }
         internal string? Token { get; set; } 

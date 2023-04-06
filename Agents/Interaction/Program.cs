@@ -13,24 +13,25 @@ namespace Technologai.Agents.Core.Interaction
                 _config.BrokerHost ?? throw new ArgumentNullException(nameof(_config.BrokerHost)),
                 new AgentIdentity
                 {
+                    Name = "Interaction",
+                    ClientId = string.Empty,
                     ApiKey = _config.AgentApiKey,
                     TokenEndpoint = _config.TokenEndpoint
                 }                
             );
+            
+            _agent.OutputReceived += _agent_OutputReceived;
 
-            Console.WriteLine($"Loading...");
+            Console.WriteLine("Loading...");
 
             await _agent.Start();
-            _agent.Output += _agent_Output;
-
-            Run().Wait();
-
+            await Program.Run();
             await _agent.Stop();
         }
 
-        private static void _agent_Output(object? sender, string message)
+        private static void _agent_OutputReceived(object? sender, string message)
         {
-            Console.WriteLine($"output:> {message}");
+            Console.WriteLine($"{(sender as Agent)?.Name} Output> {message}");
         }
 
         private static void Input(string message)
@@ -40,11 +41,11 @@ namespace Technologai.Agents.Core.Interaction
 
         private async static Task Run()
         {
-            Console.WriteLine("input:>");
+            Console.WriteLine($"{_agent?.Name} Input> ");
             do
             {
                 string value = await Task.Run(() =>
-                {
+                {   
                     return Console.ReadLine() ?? "";
                 });
 
@@ -52,7 +53,7 @@ namespace Technologai.Agents.Core.Interaction
 
                 Input(value);
 
-                Console.WriteLine($"sent:> {value}");
+                Console.WriteLine($"{_agent?.Name} Sent> {value}");
             }
             while (true);
 
