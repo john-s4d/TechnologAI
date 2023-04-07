@@ -1,6 +1,6 @@
 ﻿{
   "profiles": {
-    "Journal": {
+    "Optimizer": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {

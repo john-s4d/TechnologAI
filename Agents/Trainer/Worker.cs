@@ -1,4 +1,4 @@
-namespace Tokenizer
+namespace Trainer
 {
     public class Worker : BackgroundService
     {

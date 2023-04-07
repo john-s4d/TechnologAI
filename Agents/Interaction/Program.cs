@@ -14,9 +14,9 @@ namespace Technologai.Agents.Core.Interaction
                 new AgentIdentity
                 {
                     Name = "Interaction",
-                    ClientId = string.Empty,
-                    ApiKey = _config.AgentApiKey,
-                    TokenEndpoint = _config.TokenEndpoint
+                    ClientId = _config.ClientId,            
+                    ClientSecret = _config.ClientSecret,
+                    TokenEndpoint = _config.TokenEndpoint                    
                 }                
             );
             

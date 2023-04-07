@@ -1,38 +1,34 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+
 
 namespace Technologai
 {
     public class AgentIdentity
-    {   
+    {
         public string? Name { get; set; }
         public string? ClientId { get; set; }
+        public string? ClientSecret { get; set; }
         public string? TokenEndpoint { get; set; }
-        public string? ApiKey { get; set; }
-        internal string? Token { get; set; } 
+        internal string? Token { get; set; }
 
         internal async Task Authenticate()
-        {   
-            var tokenUrl = this.TokenEndpoint ?? throw new ArgumentNullException(nameof(this.TokenEndpoint));
+        {
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Base64UrlEncoder.Encode($"{ClientId}:{ClientSecret}"));
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            var tokenRequest = new TokenRequest
-            {
-                ApiKey = this.ApiKey ?? throw new ArgumentNullException(nameof(this.ApiKey))
-            };
-
-            var httpResponse = await new HttpClient().PostAsJsonAsync(tokenUrl, tokenRequest);
+            var httpResponse = await httpClient.PostAsJsonAsync(TokenEndpoint, new { grant_type = "client_credentials" });
 
             if (httpResponse.StatusCode == HttpStatusCode.OK)
             {
                 var tokenResponse = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
-                this.Token = tokenResponse?.Token;
+                this.Token = tokenResponse?.access_token;
             }
             else
             {
@@ -40,14 +36,11 @@ namespace Technologai
             }
         }
 
-        private class TokenRequest
-        {
-            public string? ApiKey { get; set; }
-        }
-
         public class TokenResponse
         {
-            public string? Token { get; set; }
+            public string? access_token { get; set; }
+            public string? token_type { get; set; } 
+            public int? expires_in { get; set; }
         }
     }
 }

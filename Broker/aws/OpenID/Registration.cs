@@ -36,6 +36,8 @@ namespace Technologai.AWS.OpenID
 
             try
             {
+                // TODO: Better null error handling, error description to caller
+
                 var clientRequest = JsonSerializer.Deserialize<ClientMetaData>(request.Body);
 
                 clientIdBytes = Base64UrlEncoder.DecodeBytes(clientRequest?.preferred_client_id);
@@ -103,8 +105,8 @@ namespace Technologai.AWS.OpenID
             }
 
 #if DEBUG   
-            LambdaLogger.Log($"clientId: {clientId}");
-            LambdaLogger.Log($"clientSecret: {Base64UrlEncoder.Encode(clientSecret)}");
+            LambdaLogger.Log($"client_id: {clientId}");
+            LambdaLogger.Log($"client_secret: {Base64UrlEncoder.Encode(clientSecret)}");
 #endif
 
             using (var rsa = new RSACryptoServiceProvider())

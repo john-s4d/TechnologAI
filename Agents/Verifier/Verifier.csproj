@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-Tokenizer-B4197B96-D8C7-4247-BC15-6C009D46AA46</UserSecretsId>
+    <UserSecretsId>dotnet-Verifier-bf818668-0cf5-4070-841f-95965484c497</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
