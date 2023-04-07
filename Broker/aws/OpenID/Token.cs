@@ -5,13 +5,16 @@ using Amazon.KeyManagementService;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Amazon.Util;
+using System.Net.Mime;
 
 namespace Technologai.AWS.OpenID
 {
@@ -19,28 +22,37 @@ namespace Technologai.AWS.OpenID
     {
         public async Task<APIGatewayHttpApiV2ProxyResponse> TokenPost(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
-            LambdaLogger.Log($"request: {JsonConvert.SerializeObject(request)}");
-            LambdaLogger.Log($"context: {JsonConvert.SerializeObject(context)}");
+            LambdaLogger.Log($"request: {JsonSerializer.Serialize(request)}");
+            LambdaLogger.Log($"context: {JsonSerializer.Serialize(context)}");
 
             string clientId;
-            byte[] clientSecret;
+            string clientSecret;
+
+            if (request.Headers[HeaderKeys.ContentTypeHeader] != "application/json")
+            {
+                return new TokenErrorResponse(415, "Unsupported Media Type");
+            }
 
             try
             {
-                var tokenRequest = JsonConvert.DeserializeObject<TokenRequest>(request.Body);
+                var tokenRequest = JsonSerializer.Deserialize<TokenRequest>(request.Body) ?? throw new ArgumentNullException(nameof(request.Body));
 
-                clientId = tokenRequest?.ClientId ?? throw new ArgumentNullException(nameof(clientId));
-                clientSecret = Base64UrlEncoder.DecodeBytes(tokenRequest?.ClientSecret ?? throw new ArgumentNullException(nameof(clientSecret)));
+                if (tokenRequest.GrantType != "client_credentials")
+                {
+                    return new TokenErrorResponse(400, "unsupported_grant_type");
+                }
+
+                string authHeader = request.Headers["Authorization"] ?? throw new ArgumentNullException(nameof(request.Body));
+                string[] credentials = Encoding.UTF8.GetString(Base64UrlEncoder.DecodeBytes(authHeader.Substring("Basic ".Length).Trim())).Split(':');
+
+                clientId = credentials[0];
+                clientSecret = credentials[1];
+
             }
             catch (Exception ex)
             {
                 LambdaLogger.Log(ex.Message);
-
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = 400,
-                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Bad Request" })
-                };
+                return new TokenErrorResponse(400, "Bad Request");
             }
 
             var dynamoDbClient = new AmazonDynamoDBClient();
@@ -62,26 +74,18 @@ namespace Technologai.AWS.OpenID
 
             if (querySaltResponse.Items.Count != 1)
             {
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = 401,
-                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "ApiKey Not Found" })
-                };
+                return new TokenErrorResponse(401, "invalid_client");
             }
 
             byte[] salt = Base64UrlEncoder.DecodeBytes(querySaltResponse.Items[0]["Salt"].S);
-            byte[] clientSecretSaltHash = SHA256.Create().ComputeHash(clientSecret.Concat(salt).ToArray());
+            byte[] clientSecretSaltHash = SHA256.Create().ComputeHash(Base64UrlEncoder.DecodeBytes(clientSecret).Concat(salt).ToArray());
 
             string inputClientSecretSaltHash = Base64UrlEncoder.Encode(clientSecretSaltHash);
             string dbClientSecretSaltHash = querySaltResponse.Items[0]["ClientSecretSaltHash"].S;
 
             if (inputClientSecretSaltHash != dbClientSecretSaltHash)
             {
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = 401,
-                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "ApiKey Not Verified" })
-                };
+                return new TokenErrorResponse(401, "invalid_client");
             }
 
             var kms = new AmazonKeyManagementServiceClient();
@@ -119,32 +123,48 @@ namespace Technologai.AWS.OpenID
 
             var tokenResponse = new TokenResponse
             {
-                Token = $"{jwtHeaderBase64}.{jwtPayloadBase64}.{jwtSignatureBase64}"
+                AccessToken = $"{jwtHeaderBase64}.{jwtPayloadBase64}.{jwtSignatureBase64}"
             };
 
-            return new APIGatewayHttpApiV2ProxyResponse
-            {
-                StatusCode = 200,
-                Body = JsonConvert.SerializeObject(tokenResponse)
-            };
+            return new TokenSuccessResponse(200, tokenResponse);
         }
-
-        // TODO: Use RFC request/response
 
         public class TokenRequest
         {
-            public string? ClientId { get; set; }
-            public string? ClientSecret { get; set; }
+            [JsonPropertyName("grant_type")]
+            public string? GrantType { get; set; }
         }
 
         public class TokenResponse
         {
-            public string? Token { get; set; }
-        }
-        
-        public class MessageResponse
+            [JsonPropertyName("access_token")]
+            public string? AccessToken { get; set; }
+
+            [JsonPropertyName("token_type")]
+            public string? TokenType { get; set; } = "urn:ietf:params:oauth:token-type:id_token";
+
+            [JsonPropertyName("expires_in")]
+            public int? ExpiresIn { get; set; } = 0;
+        }        
+
+        public class TokenErrorResponse : APIGatewayHttpApiV2ProxyResponse
         {
-            public string? Message { get; set; }
+            public TokenErrorResponse(int statusCode, string message, string? errorDescription = null)
+            {
+                this.StatusCode = statusCode;
+                var messsgeObject = new Dictionary<string, string>() { { "error", message } };
+                if (errorDescription != null) { messsgeObject.Add("error_description", errorDescription); }
+                Body = JsonSerializer.Serialize(messsgeObject);
+            }
+        }
+
+        public class TokenSuccessResponse : APIGatewayHttpApiV2ProxyResponse
+        {
+            public TokenSuccessResponse(int statusCode, TokenResponse body)
+            {
+                this.StatusCode = statusCode;                                
+                Body = JsonSerializer.Serialize(body);
+            }
         }
     }
 }

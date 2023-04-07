@@ -3,14 +3,12 @@ using Amazon.DynamoDBv2;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace Technologai.AWS.OpenID
 {
@@ -20,19 +18,13 @@ namespace Technologai.AWS.OpenID
 
         public async Task<APIGatewayHttpApiV2ProxyResponse> ClientPost(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
-            LambdaLogger.Log($"request: {JsonConvert.SerializeObject(request)}");
-            LambdaLogger.Log($"context: {JsonConvert.SerializeObject(context)}");
-
+            LambdaLogger.Log($"request: {JsonSerializer.Serialize(request)}");
+            LambdaLogger.Log($"context: {JsonSerializer.Serialize(context)}");
 
             if (request.RequestContext.Authorizer == null)
             {
                 LambdaLogger.Log("No Authorizer");
-
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = 401,
-                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Unauthorized" })
-                };
+                return new ClientErrorResponse(401, "Unauthorized");
             }
             else
             {
@@ -44,12 +36,12 @@ namespace Technologai.AWS.OpenID
 
             try
             {
-                var keyGenRequest = JsonConvert.DeserializeObject<ClientPostRequest>(request.Body);
+                var clientRequest = JsonSerializer.Deserialize<ClientMetaData>(request.Body);
 
-                clientIdBytes = Base64UrlEncoder.DecodeBytes(keyGenRequest?.ClientId);
-                jsonWebKey = new JsonWebKey(keyGenRequest?.JsonWebKey);
+                clientIdBytes = Base64UrlEncoder.DecodeBytes(clientRequest?.preferred_client_id);
+                jsonWebKey = new JsonWebKey(clientRequest?.json_web_key);
 
-                if (clientIdBytes.Length != 32) { throw new ArgumentException(nameof(ClientPostRequest.ClientId)); }
+                if (clientIdBytes.Length != 32) { throw new ArgumentException(nameof(ClientMetaData.preferred_client_id)); }
             }
             catch (Exception ex)
             {
@@ -58,21 +50,17 @@ namespace Technologai.AWS.OpenID
                 {
                     clientIdBytes = RandomNumberGenerator.GetBytes(32);
                     jsonWebKey = JsonWebKeyConverter.ConvertFromRSASecurityKey(new(RSA.Create(2048).ExportParameters(false)));
-                    var kgr = new ClientPostRequest
+                    
+                    var clientRequest = new ClientMetaData
                     {
-                        ClientId = Base64UrlEncoder.Encode(clientIdBytes),
-                        JsonWebKey = JsonExtensions.SerializeToJson(jsonWebKey)
+                        preferred_client_id = Base64UrlEncoder.Encode(clientIdBytes),
+                        json_web_key = JsonExtensions.SerializeToJson(jsonWebKey)
                     };
-                    LambdaLogger.Log(JsonConvert.SerializeObject(kgr));
+                    LambdaLogger.Log(JsonSerializer.Serialize(clientRequest));
                 }
 #else
                 LambdaLogger.Log(ex.Message);
-
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = 400,
-                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Bad Request" })
-                };
+                return new ClientErrorResponse(400, "invalid_request");
 #endif
             }
 
@@ -82,6 +70,8 @@ namespace Technologai.AWS.OpenID
 
             string clientId = Base64UrlEncoder.Encode(clientIdBytes);
 
+            DateTime clientIssuedAt = DateTime.UtcNow;
+
             var putRequest = new PutItemRequest
             {
                 TableName = Config.CLIENT_TABLE_NAME,
@@ -90,7 +80,7 @@ namespace Technologai.AWS.OpenID
                         { "ClientSecretSaltHash", new AttributeValue { S = Base64UrlEncoder.Encode(clientSecretSaltHash) } },
                         { "Salt", new AttributeValue { S = Base64UrlEncoder.Encode(salt) } },
                         { "ClientId", new AttributeValue { S = clientId } },
-                        { "CreatedDateTime", new AttributeValue { S = DateTime.UtcNow.ToString("o") } },
+                        { "CreatedDateTime", new AttributeValue { S = clientIssuedAt.ToString("o") } },
                         { "CreatedBy", new AttributeValue { S = request.RequestContext.Authorizer != null ? request.RequestContext.Authorizer.Jwt.Claims["sub"] : string.Empty } },
                         { "Active", new AttributeValue { BOOL = true } }
                     },
@@ -102,13 +92,14 @@ namespace Technologai.AWS.OpenID
             {
                 await new AmazonDynamoDBClient().PutItemAsync(putRequest);
             }
+            catch (ConditionalCheckFailedException)
+            {
+                return new ClientErrorResponse(409, "preferred_client_id_already_exists");
+            }
             catch (Exception ex)
             {
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = 500,
-                    Body = JsonConvert.SerializeObject(new MessageResponse { Message = "Could not save key" })
-                };
+                LambdaLogger.Log(ex.Message);
+                return new ClientErrorResponse(500, "internal_server_error");
             }
 
 #if DEBUG   
@@ -120,16 +111,15 @@ namespace Technologai.AWS.OpenID
             {
                 rsa.ImportParameters(JwkToRsa(jsonWebKey));
 
-                var keyGenResponse = new ClientPostResponse
-                {   
-                    EncryptedClientSecret = Base64UrlEncoder.Encode(rsa.Encrypt(clientSecret, false))
-                };
-
-                return new APIGatewayHttpApiV2ProxyResponse
+                var clientInformation = new ClientInformation
                 {
-                    StatusCode = 200,
-                    Body = JsonConvert.SerializeObject(keyGenResponse)
+                    client_id = clientId,
+                    encrypted_client_secret = Base64UrlEncoder.Encode(rsa.Encrypt(clientSecret, false)),
+                    client_id_issued_at = Convert.ToString(new DateTimeOffset(clientIssuedAt).ToUnixTimeMilliseconds()),
+                    //registration_access_token = "",
+                    registration_client_uri = Config.RegistrationEndpoint
                 };
+                return new ClientSuccessResponse(200, clientInformation);
             }
         }
         private static RSAParameters JwkToRsa(JsonWebKey jwk)
@@ -146,22 +136,40 @@ namespace Technologai.AWS.OpenID
             return rsa;
         }
 
-        // TODO: Use RFC request/response types
-
-        public class ClientPostRequest
+        public class ClientMetaData
         {
-            public string? ClientId { get; set; }
-            public string? JsonWebKey { get; set; }
+            public string? preferred_client_id { get; set; }
+            public string? json_web_key { get; set; }
         }
 
-        public class ClientPostResponse
+        public class ClientInformation
         {
-            public string? EncryptedClientSecret { get; set; }
+            public string? client_id { get; set; }
+            public string? client_secret { get; set; }
+            public string? client_id_issued_at { get; set; }
+            public string? encrypted_client_secret { get; set; }
+            public string? registration_access_token { get; set; }
+            public string? registration_client_uri { get; set; }
         }
 
-        public class MessageResponse
+        public class ClientSuccessResponse : APIGatewayHttpApiV2ProxyResponse
         {
-            public string? Message { get; set; }
+            public ClientSuccessResponse(int statusCode, ClientInformation body)
+            {
+                this.StatusCode = statusCode;                
+                Body = JsonSerializer.Serialize(body);
+            }
+        }
+
+        public class ClientErrorResponse : APIGatewayHttpApiV2ProxyResponse
+        {
+            public ClientErrorResponse(int statusCode, string message, string? errorDescription = null)
+            {
+                this.StatusCode = statusCode;
+                var messsgeObject = new Dictionary<string, string>() { { "error", message } };
+                if (errorDescription != null) { messsgeObject.Add("error_description", errorDescription); }
+                Body = JsonSerializer.Serialize(messsgeObject);
+            }
         }
     }
 }
