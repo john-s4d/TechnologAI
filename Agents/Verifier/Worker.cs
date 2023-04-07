@@ -1,4 +1,4 @@
-namespace Journal
+namespace Verifier
 {
     public class Worker : BackgroundService
     {

@@ -1,6 +1,6 @@
 ﻿{
   "profiles": {
-    "Tokenizer": {
+    "Trainer": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {

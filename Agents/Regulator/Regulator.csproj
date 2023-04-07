@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-Journal-A1670FD6-FE74-4B39-91F0-65E711C112B9</UserSecretsId>
+    <UserSecretsId>dotnet-Regulator-3faacc05-ea97-4018-a754-722810a03cc9</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

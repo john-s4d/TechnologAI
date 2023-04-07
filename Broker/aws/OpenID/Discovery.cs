@@ -14,9 +14,11 @@ using System.Text.Json;
 
 namespace Technologai.AWS.OpenID
 {
-    public class OpenIDDiscoveryController
+    public class Discovery
     {
-        public async Task<APIGatewayHttpApiV2ProxyResponse> DiscoveryGet(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+        // TODO: This needs to be cached somewhere. Cloudfront?
+
+        public APIGatewayHttpApiV2ProxyResponse DiscoveryGet(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
             return new DiscoverySuccessResponse(200, new OpenIDConfiguration());
         }

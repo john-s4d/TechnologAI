@@ -28,21 +28,23 @@ namespace Technologai.AWS.OpenID
             string clientId;
             string clientSecret;
 
-            if (request.Headers[HeaderKeys.ContentTypeHeader] != "application/json")
-            {
-                return new TokenErrorResponse(415, "Unsupported Media Type");
-            }
-
             try
             {
+                var headers = new Dictionary<string, string>(request.Headers, StringComparer.OrdinalIgnoreCase);
+
+                if (!headers.ContainsKey(HeaderKeys.ContentTypeHeader) || !headers[HeaderKeys.ContentTypeHeader].StartsWith("application/json"))
+                {
+                    return new TokenErrorResponse(415, "Unsupported Media Type");
+                }
+
                 var tokenRequest = JsonSerializer.Deserialize<TokenRequest>(request.Body) ?? throw new ArgumentNullException(nameof(request.Body));
 
-                if (tokenRequest.GrantType != "client_credentials")
+                if (tokenRequest.grant_type != "client_credentials")
                 {
                     return new TokenErrorResponse(400, "unsupported_grant_type");
                 }
 
-                string authHeader = request.Headers["Authorization"] ?? throw new ArgumentNullException(nameof(request.Body));
+                string authHeader = headers[HeaderKeys.AuthorizationHeader] ?? throw new ArgumentNullException(nameof(request.Body));
                 string[] credentials = Encoding.UTF8.GetString(Base64UrlEncoder.DecodeBytes(authHeader.Substring("Basic ".Length).Trim())).Split(':');
 
                 clientId = credentials[0];
@@ -91,17 +93,17 @@ namespace Technologai.AWS.OpenID
             var kms = new AmazonKeyManagementServiceClient();
 
             var jwtHeader = new JwtHeader();
-            jwtHeader.Add("alg", "PS256");
+            jwtHeader.Add("alg", "RS256");
             jwtHeader.Add("typ", "JWT");
+            jwtHeader.Add("kid", Config.SignatureKey);
 
             var jwtPayload = new JwtPayload();
             jwtPayload.Add("sub", clientId);
             jwtPayload.Add("exp", Convert.ToString(DateTimeOffset.UtcNow.AddSeconds(Config.JWT_EXPIRY_SECONDS).ToUnixTimeSeconds()));
             jwtPayload.Add("iat", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
-            jwtPayload.Add("nbf", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
-            jwtPayload.Add("kid", Config.SIGNATURE_KEY_ID);
-            jwtPayload.Add("iss", ""); // TODO: Need these
-            jwtPayload.Add("aud", ""); // TODO: Need these
+            jwtPayload.Add("nbf", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));            
+            jwtPayload.Add("iss", Config.Issuer);
+            jwtPayload.Add("aud", Config.TokenAudience);
 
             //jwtPayload.Add("scp", "");
 
@@ -111,8 +113,9 @@ namespace Technologai.AWS.OpenID
 
             var jwtSignRequest = new SignRequest
             {
-                KeyId = Config.SIGNATURE_KEY_ID,
-                SigningAlgorithm = SigningAlgorithmSpec.RSASSA_PSS_SHA_256,
+                KeyId = Config.SignatureKey,
+                //SigningAlgorithm = SigningAlgorithmSpec.RSASSA_PSS_SHA_256, // Not supported by AWS Authorizer
+                SigningAlgorithm = SigningAlgorithmSpec.RSASSA_PKCS1_V1_5_SHA_256,
                 MessageType = MessageType.RAW,
                 Message = new MemoryStream(Encoding.UTF8.GetBytes($"{jwtHeaderBase64}.{jwtPayloadBase64}"))
             };
@@ -123,7 +126,7 @@ namespace Technologai.AWS.OpenID
 
             var tokenResponse = new TokenResponse
             {
-                AccessToken = $"{jwtHeaderBase64}.{jwtPayloadBase64}.{jwtSignatureBase64}"
+                access_token = $"{jwtHeaderBase64}.{jwtPayloadBase64}.{jwtSignatureBase64}"
             };
 
             return new TokenSuccessResponse(200, tokenResponse);
@@ -131,21 +134,15 @@ namespace Technologai.AWS.OpenID
 
         public class TokenRequest
         {
-            [JsonPropertyName("grant_type")]
-            public string? GrantType { get; set; }
+            public string? grant_type { get; set; }
         }
 
         public class TokenResponse
         {
-            [JsonPropertyName("access_token")]
-            public string? AccessToken { get; set; }
-
-            [JsonPropertyName("token_type")]
-            public string? TokenType { get; set; } = "urn:ietf:params:oauth:token-type:id_token";
-
-            [JsonPropertyName("expires_in")]
-            public int? ExpiresIn { get; set; } = 0;
-        }        
+            public string? access_token { get; set; }
+            public string? token_type { get; set; } = "urn:ietf:params:oauth:token-type:id_token";
+            public int? expires_in { get; set; } = 0;
+        }
 
         public class TokenErrorResponse : APIGatewayHttpApiV2ProxyResponse
         {
@@ -162,7 +159,7 @@ namespace Technologai.AWS.OpenID
         {
             public TokenSuccessResponse(int statusCode, TokenResponse body)
             {
-                this.StatusCode = statusCode;                                
+                this.StatusCode = statusCode;
                 Body = JsonSerializer.Serialize(body);
             }
         }
