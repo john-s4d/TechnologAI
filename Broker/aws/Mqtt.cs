@@ -47,7 +47,7 @@ namespace Technologai.AWS
             // subscribe: <agency>/<member>/+/0/0
             // publish: <agency>/0/<context>/0/0
 
-            // Agency (Coordinator,Journal,Regulator) Topics
+            // Agency (Coordinator,Archiver,Regulator, etc..) Topics
             // subscribe: <agency>/0/+/0/0
             // publish: <agency>/<member>/<context>/0/0
 
