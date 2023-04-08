@@ -1,5 +1,7 @@
-﻿using MQTTnet;
+﻿using IdentityModel;
+using MQTTnet;
 using MQTTnet.Client;
+using System.Security.Claims;
 
 namespace Technologai
 {
@@ -7,44 +9,43 @@ namespace Technologai
     {
         private const int PORT = 8083;
 
-        private string _host;                      
+        private string? _host;
+        private string? _token;
 
         private IMqttClient _client = new MqttFactory().CreateMqttClient();
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
-        private Authentication _authentication;
+        internal event EventHandler<MqttApplicationMessageReceivedEventArgs>? MessageReceived;
 
-        internal event EventHandler<MqttApplicationMessageReceivedEventArgs>? MessageReceived;        
-
-        internal MqttClient(string host, Authentication authentication)
+   
+        public MqttClient(MemberIdentity identity)
         {
-            _host = string.IsNullOrEmpty(host) ? throw new ArgumentNullException(nameof(host)) : host;
-            _authentication = authentication == null ? throw new ArgumentNullException(nameof(authentication)) : authentication;
+            _host = identity.Authority.BrokerHost;
+            _token = identity.Token;
         }
 
         internal async Task ConnectAsync()
         {
-            if (!_client.IsConnected && _authentication.Agent != null)
-            {   
-               await _authentication.Agent.Authenticate();
-
+            if (!_client.IsConnected)
+            {
                 var options = new MqttClientOptionsBuilder()
                 .WithWebSocketServer($"{_host}:{PORT}")
                 .WithTls()
-                .WithCredentials(_authentication.Agent.Token, "password")
+                .WithCredentials(_token, "password")
                 .Build();
 
                 _client.ApplicationMessageReceivedAsync += _client_ApplicationMessageReceivedAsync;
 
-                await _client.ConnectAsync(options, _cancellationTokenSource.Token);                             
+                await _client.ConnectAsync(options, _cancellationTokenSource.Token);
             }
         }
 
-        internal async Task SubscribeAsync(string topic)
+        internal async Task SubscribeAsync(string subscribeMask)
         {
             if (!_client.IsConnected) { throw new InvalidOperationException("Not Connected"); }
 
-            await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic(topic).Build(), _cancellationTokenSource.Token);            
+            await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic(subscribeMask).Build(), _cancellationTokenSource.Token);
+
         }
 
         private async Task _client_ApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs args)

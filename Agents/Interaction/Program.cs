@@ -4,22 +4,24 @@ namespace Technologai.Agents.Core.Interaction
 {
     internal class Program
     {
-        private static Agent? _agent;
+        private static AgencyMember? _agent;
         private static AppConfig _config = new AppConfig();
 
         internal static async Task Main(string[] args)
         {
-            _agent = new Agent(
-                _config.BrokerHost ?? throw new ArgumentNullException(nameof(_config.BrokerHost)),
-                new AgentIdentity
-                {
-                    Name = "Interaction",
-                    ClientId = _config.ClientId,            
-                    ClientSecret = _config.ClientSecret,
-                    TokenEndpoint = _config.TokenEndpoint                    
-                }                
-            );
-            
+            if (_config.Authority == null) { throw new ArgumentNullException(nameof(_config.Authority)); }
+            if (_config.ClientId == null) { throw new ArgumentNullException(nameof(_config.ClientId)); }
+            if (_config.ClientSecret == null) { throw new ArgumentNullException(nameof(_config.ClientSecret)); }
+            if (_config.MemberId == null) { throw new ArgumentNullException(nameof(_config.MemberId)); }
+            if (_config.AgencyId == null) { throw new ArgumentNullException(nameof(_config.AgencyId)); }
+
+
+            var authority = new Authority(_config.Authority);
+            var agentIdentity = new AgentIdentity(_config.ClientId, _config.ClientSecret, authority);            
+            var agencyIdentity = new AgencyIdentity(_config.AgencyId, agentIdentity);
+            var memberIdentity = new MemberIdentity(_config.MemberId, agentIdentity, agencyIdentity);
+
+            _agent = new AgencyMember(memberIdentity);
             _agent.OutputReceived += _agent_OutputReceived;
 
             Console.WriteLine("Loading...");
@@ -31,7 +33,7 @@ namespace Technologai.Agents.Core.Interaction
 
         private static void _agent_OutputReceived(object? sender, string message)
         {
-            Console.WriteLine($"{(sender as Agent)?.Name} Output> {message}");
+            Console.WriteLine($"{(sender as AgencyMember)?.Name} Output> {message}");
         }
 
         private static void Input(string message)
@@ -45,7 +47,7 @@ namespace Technologai.Agents.Core.Interaction
             do
             {
                 string value = await Task.Run(() =>
-                {   
+                {
                     return Console.ReadLine() ?? "";
                 });
 

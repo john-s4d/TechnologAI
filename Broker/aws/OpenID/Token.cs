@@ -39,16 +39,68 @@ namespace Technologai.AWS.OpenID
 
                 var tokenRequest = JsonSerializer.Deserialize<TokenRequest>(request.Body) ?? throw new ArgumentNullException(nameof(request.Body));
 
-                if (tokenRequest.grant_type != "client_credentials")
+                string authHeader = headers[HeaderKeys.AuthorizationHeader] ?? throw new ArgumentNullException(nameof(request.Body));
+
+                if (tokenRequest.grant_type == "client_credentials")
+                {
+                    string[] credentials = Encoding.UTF8.GetString(Base64UrlEncoder.DecodeBytes(authHeader.Substring("Basic ".Length).Trim())).Split(':');
+                    clientId = credentials[0];
+                    clientSecret = credentials[1];
+
+                    var dynamoDbClient = new AmazonDynamoDBClient();
+
+                    var querySaltRequest = new QueryRequest
+                    {
+                        TableName = Config.CLIENT_TABLE_NAME,
+                        KeyConditionExpression = "ClientId = :clientId",
+                        FilterExpression = "Active = :active",
+                        ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                    {
+                        { ":clientId", new AttributeValue { S = clientId } },
+                        { ":active", new AttributeValue { BOOL = true } }
+                    },
+                        ProjectionExpression = "Salt,ClientSecretSaltHash"
+                    };
+
+                    QueryResponse querySaltResponse = await dynamoDbClient.QueryAsync(querySaltRequest);
+
+                    if (querySaltResponse.Items.Count != 1)
+                    {
+                        return new TokenErrorResponse(401, "invalid_client");
+                    }
+
+                    byte[] salt = Base64UrlEncoder.DecodeBytes(querySaltResponse.Items[0]["Salt"].S);
+                    byte[] clientSecretSaltHash = SHA256.Create().ComputeHash(Base64UrlEncoder.DecodeBytes(clientSecret).Concat(salt).ToArray());
+
+                    string inputClientSecretSaltHash = Base64UrlEncoder.Encode(clientSecretSaltHash);
+                    string dbClientSecretSaltHash = querySaltResponse.Items[0]["ClientSecretSaltHash"].S;
+
+                    if (inputClientSecretSaltHash == dbClientSecretSaltHash)
+                    {
+                        var claims = new Dictionary<string, string>();
+                        claims.Add("sub", clientId);
+                        claims.Add("aud", Config.TokenAudience);
+
+                        return new TokenSuccessResponse(200, new() { access_token = await getIdToken(claims) });
+                    }
+                }
+                else if (tokenRequest.grant_type == "urn:ietf:params:oauth:grant-type:token-exchange")
+                {
+                    // TODO: Verify the JWTtoken against Salesforce Data Model
+
+                    var claims = new Dictionary<string, string>();
+                    claims.Add("agent_id", "000");
+                    claims.Add("agency_id", "111");
+                    claims.Add("member_id", "222");
+                    claims.Add("aud", Config.TokenAudience);
+
+                    return new TokenSuccessResponse(200, new() { access_token = await getIdToken(claims) });
+
+                }
+                else
                 {
                     return new TokenErrorResponse(400, "unsupported_grant_type");
                 }
-
-                string authHeader = headers[HeaderKeys.AuthorizationHeader] ?? throw new ArgumentNullException(nameof(request.Body));
-                string[] credentials = Encoding.UTF8.GetString(Base64UrlEncoder.DecodeBytes(authHeader.Substring("Basic ".Length).Trim())).Split(':');
-
-                clientId = credentials[0];
-                clientSecret = credentials[1];
 
             }
             catch (Exception ex)
@@ -57,39 +109,11 @@ namespace Technologai.AWS.OpenID
                 return new TokenErrorResponse(400, "Bad Request");
             }
 
-            var dynamoDbClient = new AmazonDynamoDBClient();
+            return new TokenErrorResponse(401, "Unauthorized");
+        }
 
-            var querySaltRequest = new QueryRequest
-            {
-                TableName = Config.CLIENT_TABLE_NAME,
-                KeyConditionExpression = "ClientId = :clientId",
-                FilterExpression = "Active = :active",
-                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
-                    {
-                        { ":clientId", new AttributeValue { S = clientId } },
-                        { ":active", new AttributeValue { BOOL = true } }
-                    },
-                ProjectionExpression = "Salt,ClientSecretSaltHash"
-            };
-
-            QueryResponse querySaltResponse = await dynamoDbClient.QueryAsync(querySaltRequest);
-
-            if (querySaltResponse.Items.Count != 1)
-            {
-                return new TokenErrorResponse(401, "invalid_client");
-            }
-
-            byte[] salt = Base64UrlEncoder.DecodeBytes(querySaltResponse.Items[0]["Salt"].S);
-            byte[] clientSecretSaltHash = SHA256.Create().ComputeHash(Base64UrlEncoder.DecodeBytes(clientSecret).Concat(salt).ToArray());
-
-            string inputClientSecretSaltHash = Base64UrlEncoder.Encode(clientSecretSaltHash);
-            string dbClientSecretSaltHash = querySaltResponse.Items[0]["ClientSecretSaltHash"].S;
-
-            if (inputClientSecretSaltHash != dbClientSecretSaltHash)
-            {
-                return new TokenErrorResponse(401, "invalid_client");
-            }
-
+        private async Task<string> getIdToken(Dictionary<string, string> claims)
+        {
             var kms = new AmazonKeyManagementServiceClient();
 
             var jwtHeader = new JwtHeader();
@@ -98,15 +122,13 @@ namespace Technologai.AWS.OpenID
             jwtHeader.Add("kid", Config.SignatureKey);
 
             var jwtPayload = new JwtPayload();
-            jwtPayload.Add("sub", clientId);
+
             jwtPayload.Add("exp", Convert.ToString(DateTimeOffset.UtcNow.AddSeconds(Config.JWT_EXPIRY_SECONDS).ToUnixTimeSeconds()));
             jwtPayload.Add("iat", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
-            jwtPayload.Add("nbf", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));            
+            jwtPayload.Add("nbf", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
             jwtPayload.Add("iss", Config.Issuer);
-            jwtPayload.Add("aud", Config.TokenAudience);
 
             //jwtPayload.Add("scp", "");
-
 
             string jwtHeaderBase64 = Base64UrlEncoder.Encode(jwtHeader.SerializeToJson());
             string jwtPayloadBase64 = Base64UrlEncoder.Encode(jwtPayload.SerializeToJson());
@@ -114,7 +136,6 @@ namespace Technologai.AWS.OpenID
             var jwtSignRequest = new SignRequest
             {
                 KeyId = Config.SignatureKey,
-                //SigningAlgorithm = SigningAlgorithmSpec.RSASSA_PSS_SHA_256, // Not supported by AWS Authorizer
                 SigningAlgorithm = SigningAlgorithmSpec.RSASSA_PKCS1_V1_5_SHA_256,
                 MessageType = MessageType.RAW,
                 Message = new MemoryStream(Encoding.UTF8.GetBytes($"{jwtHeaderBase64}.{jwtPayloadBase64}"))
@@ -124,12 +145,7 @@ namespace Technologai.AWS.OpenID
 
             string jwtSignatureBase64 = Base64UrlEncoder.Encode(jwtSignResponse.Signature.ToArray());
 
-            var tokenResponse = new TokenResponse
-            {
-                access_token = $"{jwtHeaderBase64}.{jwtPayloadBase64}.{jwtSignatureBase64}"
-            };
-
-            return new TokenSuccessResponse(200, tokenResponse);
+            return $"{jwtHeaderBase64}.{jwtPayloadBase64}.{jwtSignatureBase64}";
         }
 
         public class TokenRequest
