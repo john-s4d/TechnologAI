@@ -32,7 +32,7 @@ namespace Technologai.Agents.Core.Interaction
 
         private static void Input(string message)
         {
-            _agent?.Input(message);
+            _agent?.Publish(message);
         }
 
         private async static Task Run()
