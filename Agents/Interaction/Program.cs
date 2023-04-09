@@ -1,6 +1,4 @@
-﻿using Technologai;
-
-namespace Technologai.Agents.Core.Interaction
+﻿namespace Technologai.Agents.Core.Interaction
 {
     internal class Program
     {
@@ -8,15 +6,16 @@ namespace Technologai.Agents.Core.Interaction
         private static AppConfig _config = new AppConfig();
 
         internal static async Task Main(string[] args)
-        {   
+        {
             var authorityName = _config.Authority ?? throw new ArgumentNullException(nameof(_config.Authority));
             var clientId = _config.ClientId ?? throw new ArgumentNullException(nameof(_config.ClientId));
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
-            
+
             _agent = new TechnologaiAgent(authorityName, clientId, clientSecret, memberId);
 
-            _agent.OutputReceived += _agent_OutputReceived;
+            _agent.MessageReceived += _agent_MessageReceived;
+            _agent.StatusMessage += _agent_statusMessage;
 
             Console.WriteLine("Loading...");
 
@@ -25,19 +24,25 @@ namespace Technologai.Agents.Core.Interaction
             await _agent.Stop();
         }
 
-        private static void _agent_OutputReceived(object? sender, string message)
+        private static void _agent_MessageReceived(object? sender, string message)
         {
-            Console.WriteLine($"{(sender as TechnologaiAgent)?.Name} Output> {message}");
+            Console.WriteLine($"{_agent?.Name} Received> {message}");
+        }
+
+        private static void _agent_statusMessage(object? sender, string message)
+        {
+            Console.WriteLine($"{_agent?.Name ?? "Interaction"} Status> {message}");
         }
 
         private static void Input(string message)
         {
-            _agent?.Publish(message);
+            _agent?.PublishMessageToAgency(message);
+            Console.WriteLine($"{_agent?.Name} Published> {message}");
         }
 
         private async static Task Run()
         {
-            Console.WriteLine($"{_agent?.Name} Input> ");
+            Console.WriteLine($"{_agent?.Name} Started. Enter Input or \"quit\" to stop.");
             do
             {
                 string value = await Task.Run(() =>
@@ -45,11 +50,19 @@ namespace Technologai.Agents.Core.Interaction
                     return Console.ReadLine() ?? "";
                 });
 
-                if (value.Equals("quit", StringComparison.OrdinalIgnoreCase)) { break; }
+                if (value.Equals("quit", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+
+                if (value.Equals("32Bytes", StringComparison.OrdinalIgnoreCase))
+                {
+
+                    Console.WriteLine(Utils.GenerateNewIdString(32));
+                    continue;
+                }
 
                 Input(value);
-
-                Console.WriteLine($"{_agent?.Name} Sent> {value}");
             }
             while (true);
 

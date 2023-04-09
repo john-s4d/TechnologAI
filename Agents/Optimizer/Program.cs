@@ -1,17 +1,7 @@
-namespace Optimizer
+﻿internal class Program
 {
-    public class Program
+    private static void Main(string[] args)
     {
-        public static void Main(string[] args)
-        {
-            IHost host = Host.CreateDefaultBuilder(args)
-                .ConfigureServices(services =>
-                {
-                    services.AddHostedService<Worker>();
-                })
-                .Build();
-
-            host.Run();
-        }
+        Console.WriteLine("Hello, World!");
     }
 }
