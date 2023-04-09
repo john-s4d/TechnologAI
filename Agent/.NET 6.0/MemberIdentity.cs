@@ -1,39 +1,79 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Runtime.CompilerServices;
+using System.Net;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Technologai
 {
     public class MemberIdentity : Identity
     {
-        public AgentIdentity Agent { get; set; }
-        public AgencyIdentity? Agency { get; set; }
+        internal AgentIdentity Agent { get; }
+        internal AgencyIdentity? Agency { get; set; }
+        internal Authority Authority => Agent.Authority;
+        internal string? Token { get; private set; }
+        internal override string PublishMask => $"{AgencyId}/0/+/0/0";
+        internal override string SubscribeMask => $"{AgencyId}/{Id}/+/0/0";
 
-        public override string GrantType => "urn:ietf:params:oauth:grant-type:token-exchange";
-        public override string Bearer => Agent?.Token ?? string.Empty;
-        public override string PublishMask => $"{AgencyId}/0/+/0/0";
-        public override string SubscribeMask => $"{AgencyId}/{MemberId}/+/0/0";
-
-        public MemberIdentity(string memberId, AgentIdentity agent, AgencyIdentity? agency = null)
-            : base(string.Empty, agent.Authority)
+        private string AgencyId
         {
-            MemberId = memberId;
+            get { return String.IsNullOrEmpty(Agency?.Id) ? throw new ArgumentNullException(nameof(Agency)) : Agency.Id; }
+        }
+
+        internal MemberIdentity(string id, AgentIdentity agent)
+        {
+            Id = id;
             Agent = agent;
-            Agency = agency;
         }
 
         internal async Task Authenticate()
         {
-            await Authority.Authenticate(Agent);
 
-            if (Agency != null) { await Authority.Authenticate(Agency); }
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Agent.Bearer);
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            await Authority.Authenticate(this);
+                var role = Agency == null ? "member" : "agency";
+
+                var parameters = new Dictionary<string, string>();
+                parameters.Add("grant_type", "client_credentials");
+                parameters.Add("scope", $"{role}:{Id}");
+
+                var httpResponse = await httpClient.PostAsJsonAsync(Authority?.TokenEndpoint, parameters);
+
+                if (httpResponse.StatusCode == HttpStatusCode.OK)
+                {
+                    var tokenResponse = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
+
+                    if (tokenResponse != null)
+                    {
+                        Token = tokenResponse.access_token;
+
+                        foreach (Claim claim in new JwtSecurityTokenHandler().ReadJwtToken(Token).Claims)
+                        {   
+                            if (claim.Type == "agency_id")
+                            {
+                                Agency = new AgencyIdentity(claim.Value, Agent);
+                            }
+                            if (claim.Type == "name")
+                            {
+                                Name = claim.Value;
+                            }
+                        }
+                        return;
+                    }
+                }
+                throw new HttpRequestException("Unauthorized", null, httpResponse.StatusCode);
+            }
+        }
+
+        internal class TokenResponse
+        {
+            public string? access_token { get; set; }
+            public string? token_type { get; set; }
+            public int? expires_in { get; set; }
         }
     }
 }

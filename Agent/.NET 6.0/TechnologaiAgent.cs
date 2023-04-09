@@ -1,24 +1,24 @@
 ﻿using MQTTnet;
 using MQTTnet.Client;
-using System.Security.Authentication;
 
 namespace Technologai
 {
-    public class AgencyMember
+    public class TechnologaiAgent
     {
         public string Name { get; set; } = string.Empty;
 
         public event EventHandler<string>? OutputReceived;
 
-        private MqttClient _mqtt;        
+        private MqttClient _mqtt;
 
-        private MemberIdentity _identity;        
+        private MemberIdentity _identity;
 
-        public AgencyMember(MemberIdentity identity)
+        public TechnologaiAgent(string authorityName, string clientId, string clientSecret, string memberId)
         {
-            _identity = identity;
+            _identity = new MemberIdentity(memberId, new AgentIdentity(authorityName, clientId, clientSecret));
 
             _mqtt = new MqttClient(_identity);
+
             _mqtt.MessageReceived += _mqtt_MessageReceived;
         }
 
@@ -29,7 +29,7 @@ namespace Technologai
 
         public async Task Input(string message, string context = "0")
         {
-            await _mqtt.PublishAsync($"{_identity.AgencyId}/0/{context}/0/0", message);
+            await _mqtt.PublishAsync($"{_identity.PublishMask}", message);
         }
 
         private void Output(string message)
@@ -39,15 +39,16 @@ namespace Technologai
 
         public async Task Start()
         {
-            try { 
-            await _identity.Authenticate();
-            Output($"{_identity.Name} Authenticated");
+            try
+            {
+                await _identity.Authenticate();
+                Output($"{_identity.Name} Authenticated");
 
-            await _mqtt.ConnectAsync();
-            Output($"{_identity.Name} Connected");
+                await _mqtt.ConnectAsync();
+                Output($"{_identity.Name} Connected");
 
-            await _mqtt.SubscribeAsync(_identity.SubscribeMask);
-            Output($"{_identity.Name} Subscribed");
+                await _mqtt.SubscribeAsync(_identity.SubscribeMask);
+                Output($"{_identity.Name} Subscribed");
 
             }
             catch (Exception ex)
@@ -60,5 +61,6 @@ namespace Technologai
         {
             await _mqtt.DisconnectAsync();
         }
+
     }
 }

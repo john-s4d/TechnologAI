@@ -9,8 +9,7 @@ namespace Technologai
     {
         private const int PORT = 8083;
 
-        private string? _host;
-        private string? _token;
+        MemberIdentity _identity;
 
         private IMqttClient _client = new MqttFactory().CreateMqttClient();
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -20,8 +19,7 @@ namespace Technologai
    
         public MqttClient(MemberIdentity identity)
         {
-            _host = identity.Authority.BrokerHost;
-            _token = identity.Token;
+            _identity = identity;
         }
 
         internal async Task ConnectAsync()
@@ -29,9 +27,9 @@ namespace Technologai
             if (!_client.IsConnected)
             {
                 var options = new MqttClientOptionsBuilder()
-                .WithWebSocketServer($"{_host}:{PORT}")
+                .WithWebSocketServer($"{_identity.Authority.BrokerHost}:{PORT}")
                 .WithTls()
-                .WithCredentials(_token, "password")
+                .WithCredentials(_identity.Token, "password")
                 .Build();
 
                 _client.ApplicationMessageReceivedAsync += _client_ApplicationMessageReceivedAsync;
