@@ -27,9 +27,17 @@ namespace Technologai
             Output(args.ApplicationMessage.ConvertPayloadToString());
         }
 
-        public async Task Input(string message, string context = "0")
+        public async Task Publish(string message, string context = "0")
         {
-            await _mqtt.PublishAsync($"{_identity.PublishMask}", message);
+            if (context.Contains("+") || context.Contains("/"))
+            {
+                throw new ArgumentException(nameof(context));
+            }
+
+            string topic = _identity.PublishMask.Replace("+", context); // TODO: Publish according to the roles
+
+            await _mqtt.PublishAsync(topic, message);
+            Output($"Published: {topic}");
         }
 
         private void Output(string message)
@@ -48,7 +56,12 @@ namespace Technologai
                 Output($"{_identity.Name} Connected");
 
                 await _mqtt.SubscribeAsync(_identity.SubscribeMask);
-                Output($"{_identity.Name} Subscribed");
+                Output($"Subscribed: {_identity.SubscribeMask}");
+
+                await _mqtt.SubscribeAsync(_identity.Agency?.SubscribeMask ?? string.Empty); // TODO: Subscribe according to the roles
+                Output($"Subscribed: {_identity.Agency?.SubscribeMask ?? string.Empty}");
+
+
 
             }
             catch (Exception ex)
