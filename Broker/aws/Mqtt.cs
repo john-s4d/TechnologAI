@@ -75,7 +75,7 @@ namespace Technologai.AWS
 
             if (acl == null || acl.topic == null)
             {
-                return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 401, Body = "missing_information" };
+                return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 401, Body = "missing_topics" };
             }
 
             if (acl.acc == 3)

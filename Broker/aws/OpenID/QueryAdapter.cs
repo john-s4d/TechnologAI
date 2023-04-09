@@ -65,7 +65,7 @@ namespace Technologai.AWS.OpenID
 
                 if (!string.IsNullOrEmpty(_salesforceSessionId))
                 {
-                    
+
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _salesforceSessionId);
                     httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -80,25 +80,25 @@ namespace Technologai.AWS.OpenID
 
                         if (result?.totalSize != null && result?.totalSize == 1)
                         {
-                            TokenClaims tokenClaims = new TokenClaims();
-
                             AgencyMember? record = result.records[0];
 
+                            TokenClaims tokenClaims = new TokenClaims();
                             tokenClaims.name = record?.Name;
                             tokenClaims.client_id = record?.Agent__r.Agent_ID__c;
+                            tokenClaims.member_id = record?.Member_Id__c;
+                            tokenClaims.agency_id = record?.Agency__r.Agency_Id__c;
+                            tokenClaims.roles.AddRange((record?.Roles__c as string)?.Split(';') ?? new string[0]);
 
-                            tokenClaims.roles = new List<string>();
-
-                            if (!string.IsNullOrEmpty((record?.Roles__c as string)))
+                            // Invalidate ones that are incomplete
+                            if (string.IsNullOrEmpty(tokenClaims.name) ||
+                                string.IsNullOrEmpty(tokenClaims.client_id) ||
+                                string.IsNullOrEmpty(tokenClaims.member_id) ||
+                                string.IsNullOrEmpty(tokenClaims.agency_id) ||
+                                tokenClaims.roles.Count == 0)
                             {
-                                tokenClaims.roles.AddRange(record.Roles__c.Split(';'));
+                                return null;
                             }
 
-                            if (tokenClaims.roles.Contains("member"))
-                            {
-                                tokenClaims.member_id = record?.Member_Id__c;
-                                tokenClaims.agency_id = record?.Agency__r.Agency_Id__c;                                
-                            }
                             return tokenClaims;
                         }
                     }

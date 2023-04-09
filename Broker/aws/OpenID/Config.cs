@@ -9,7 +9,7 @@ namespace Technologai.AWS.OpenID
     internal class Config
     {
         // TODO: Get from environment config
-        internal static readonly int JwtExpirySeconds = 60 * 60 * 2;
+        internal static readonly int JwtExpirySeconds = 60 * 60 * 24; // TODO: 24 hours. Need clients to refresh tokens.
         internal static readonly string SalesforceApiSecretArn = "arn:aws:secretsmanager:us-east-1:154032908746:secret:technologai/salesforce/api-EfjTYM";
         internal static readonly int SfdcSessionExpiryMinutes = 60;
         internal static readonly string AwsSecretsRegion = "us-east-1";

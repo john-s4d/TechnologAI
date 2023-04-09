@@ -215,6 +215,6 @@ namespace Technologai.AWS.OpenID
         public string? client_id { get; set; }
         public string? member_id { get; set; }
         public string? agency_id { get; set; }
-        public List<string>? roles { get; set; } 
+        public List<string> roles { get; } = new List<string>();
     }
 }

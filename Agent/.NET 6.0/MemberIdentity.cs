@@ -8,7 +8,8 @@ using System.Security.Claims;
 namespace Technologai
 {
     public class MemberIdentity : Identity
-    {
+    {   
+        internal override string RoleName => "member";
         internal AgentIdentity Agent { get; }
         internal AgencyIdentity? Agency { get; set; }
         internal Authority Authority => Agent.Authority;
@@ -19,7 +20,7 @@ namespace Technologai
         private string AgencyId
         {
             get { return String.IsNullOrEmpty(Agency?.Id) ? throw new ArgumentNullException(nameof(Agency)) : Agency.Id; }
-        }
+        }        
 
         internal MemberIdentity(string id, AgentIdentity agent)
         {
@@ -35,11 +36,11 @@ namespace Technologai
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Agent.Bearer);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                var role = Agency == null ? "member" : "agency";
+                //var role = Agency == null ? "member" : "agency";
 
                 var parameters = new Dictionary<string, string>();
                 parameters.Add("grant_type", "client_credentials");
-                parameters.Add("scope", $"{role}:{Id}");
+                parameters.Add("scope", $"{RoleName}:{Id}");
 
                 var httpResponse = await httpClient.PostAsJsonAsync(Authority?.TokenEndpoint, parameters);
 
@@ -60,6 +61,11 @@ namespace Technologai
                             if (claim.Type == "name")
                             {
                                 Name = claim.Value;
+                            }
+                            if (claim.Type == "roles") {
+
+                                AssignedRoles.Clear();
+                                AssignedRoles.AddRange(((string)claim.Value).Split(' '));                            
                             }
                         }
                         return;
