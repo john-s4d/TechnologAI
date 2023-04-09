@@ -15,6 +15,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Amazon.Util;
 using System.Net.Mime;
+using System.Runtime.CompilerServices;
+using static System.Formats.Asn1.AsnWriter;
+using Amazon.Runtime.Internal.Transform;
 
 namespace Technologai.AWS.OpenID
 {
@@ -41,67 +44,88 @@ namespace Technologai.AWS.OpenID
 
                 string authHeader = headers[HeaderKeys.AuthorizationHeader] ?? throw new ArgumentNullException(nameof(request.Body));
 
-                if (tokenRequest.grant_type == "client_credentials")
-                {
-                    string[] credentials = Encoding.UTF8.GetString(Base64UrlEncoder.DecodeBytes(authHeader.Substring("Basic ".Length).Trim())).Split(':');
-                    clientId = credentials[0];
-                    clientSecret = credentials[1];
-
-                    var dynamoDbClient = new AmazonDynamoDBClient();
-
-                    var querySaltRequest = new QueryRequest
-                    {
-                        TableName = Config.CLIENT_TABLE_NAME,
-                        KeyConditionExpression = "ClientId = :clientId",
-                        FilterExpression = "Active = :active",
-                        ExpressionAttributeValues = new Dictionary<string, AttributeValue>
-                    {
-                        { ":clientId", new AttributeValue { S = clientId } },
-                        { ":active", new AttributeValue { BOOL = true } }
-                    },
-                        ProjectionExpression = "Salt,ClientSecretSaltHash"
-                    };
-
-                    QueryResponse querySaltResponse = await dynamoDbClient.QueryAsync(querySaltRequest);
-
-                    if (querySaltResponse.Items.Count != 1)
-                    {
-                        return new TokenErrorResponse(401, "invalid_client");
-                    }
-
-                    byte[] salt = Base64UrlEncoder.DecodeBytes(querySaltResponse.Items[0]["Salt"].S);
-                    byte[] clientSecretSaltHash = SHA256.Create().ComputeHash(Base64UrlEncoder.DecodeBytes(clientSecret).Concat(salt).ToArray());
-
-                    string inputClientSecretSaltHash = Base64UrlEncoder.Encode(clientSecretSaltHash);
-                    string dbClientSecretSaltHash = querySaltResponse.Items[0]["ClientSecretSaltHash"].S;
-
-                    if (inputClientSecretSaltHash == dbClientSecretSaltHash)
-                    {
-                        var claims = new Dictionary<string, string>();
-                        claims.Add("sub", clientId);
-                        claims.Add("aud", Config.TokenAudience);
-
-                        return new TokenSuccessResponse(200, new() { access_token = await getIdToken(claims) });
-                    }
-                }
-                else if (tokenRequest.grant_type == "urn:ietf:params:oauth:grant-type:token-exchange")
-                {
-                    // TODO: Verify the JWTtoken against Salesforce Data Model
-
-                    var claims = new Dictionary<string, string>();
-                    claims.Add("agent_id", "000");
-                    claims.Add("agency_id", "111");
-                    claims.Add("member_id", "222");
-                    claims.Add("aud", Config.TokenAudience);
-
-                    return new TokenSuccessResponse(200, new() { access_token = await getIdToken(claims) });
-
-                }
-                else
+                if (tokenRequest.grant_type != "client_credentials")
                 {
                     return new TokenErrorResponse(400, "unsupported_grant_type");
                 }
 
+                string[] credentials = Encoding.UTF8.GetString(Base64UrlEncoder.DecodeBytes(authHeader.Substring("Basic ".Length).Trim())).Split(':');
+                clientId = credentials[0];
+                clientSecret = credentials[1];
+
+                var dynamoDbClient = new AmazonDynamoDBClient();
+
+                var querySaltRequest = new QueryRequest
+                {
+                    TableName = Config.AWSClientTableName,
+                    KeyConditionExpression = "ClientId = :clientId",
+                    FilterExpression = "Active = :active",
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                    {
+                        { ":clientId", new AttributeValue { S = clientId } },
+                        { ":active", new AttributeValue { BOOL = true } }
+                    },
+                    ProjectionExpression = "Salt,ClientSecretSaltHash"
+                };
+
+                QueryResponse querySaltResponse = await dynamoDbClient.QueryAsync(querySaltRequest);
+
+                if (querySaltResponse.Items.Count != 1)
+                {
+                    return new TokenErrorResponse(401, "invalid_client");
+                }
+
+                byte[] salt = Base64UrlEncoder.DecodeBytes(querySaltResponse.Items[0]["Salt"].S);
+                byte[] clientSecretSaltHash = SHA256.Create().ComputeHash(Base64UrlEncoder.DecodeBytes(clientSecret).Concat(salt).ToArray());
+
+                string inputClientSecretSaltHash = Base64UrlEncoder.Encode(clientSecretSaltHash);
+                string dbClientSecretSaltHash = querySaltResponse.Items[0]["ClientSecretSaltHash"].S;
+
+                if (inputClientSecretSaltHash == dbClientSecretSaltHash)
+                {   
+                    string query = string.Empty;
+
+                    foreach (string scope in new List<string>(tokenRequest.scope?.Split(' ') ?? new string[] { }))
+                    {
+                        if (scope == "agent")
+                        {
+                            query = $"SELECT Name FROM Agent__c WHERE Agent_Id__c = {clientId} LIMIT 1";
+                            throw new NotImplementedException(); // TODO: agents should be able to connect without a member
+                        }
+                        else if (scope.StartsWith("member:") || scope.StartsWith("agency:"))
+                        {
+                            var memberId = scope.Substring(scope.IndexOf(':') + 1).Replace("'", string.Empty); ; // Light sanitizing since this could have been constructed manually
+
+                            // TODO: Do Salesforce stuff somewhere else
+                            query = $"SELECT Member_Id__c, Name, Agency__r.Name, Agency__r.Agency_Id__c, Agent__r.Name, Agent__r.Agent_Id__c, Roles__c " +
+                                    $"FROM Agency_Member__c WHERE Member_Id__c = '{memberId}' AND Agent__r.Agent_Id__c = '{clientId}' LIMIT 1";
+                            break;
+                        }
+                    }
+
+                    TokenClaims? tokenClaims = await QueryAdapter.GetClaimsFromSalesforce(query);
+
+                    if (tokenClaims != null)
+                    {
+                        var claims = new Dictionary<string, string>();
+                        claims.Add("sub", tokenClaims.member_id ?? string.Empty);
+                        claims.Add("name", tokenClaims.name ?? string.Empty);
+                        claims.Add("roles", string.Join(' ', tokenClaims.roles?.ToArray() ?? new string[0]));
+                        claims.Add("client_id", tokenClaims.client_id ?? string.Empty);
+                        claims.Add("agency_id", tokenClaims.agency_id ?? string.Empty);
+                        claims.Add("aud", Config.TokenAudience);
+
+                        return new TokenSuccessResponse(200, new() { access_token = await getIdToken(claims) });
+                    }
+
+                    /* TODO:
+                    The authorization server MUST include the HTTP "Cache-Control"
+                    response header field [RFC2616] with a value of "no-store" in any
+                    response containing tokens, credentials, or other sensitive
+                    information, as well as the "Pragma" response header field [RFC2616]
+                    with a value of "no-cache".
+                    */
+                }
             }
             catch (Exception ex)
             {
@@ -122,11 +146,15 @@ namespace Technologai.AWS.OpenID
             jwtHeader.Add("kid", Config.SignatureKey);
 
             var jwtPayload = new JwtPayload();
-
-            jwtPayload.Add("exp", Convert.ToString(DateTimeOffset.UtcNow.AddSeconds(Config.JWT_EXPIRY_SECONDS).ToUnixTimeSeconds()));
+            jwtPayload.Add("exp", Convert.ToString(DateTimeOffset.UtcNow.AddSeconds(Config.JwtExpirySeconds).ToUnixTimeSeconds()));
             jwtPayload.Add("iat", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
             jwtPayload.Add("nbf", Convert.ToString(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
             jwtPayload.Add("iss", Config.Issuer);
+
+            foreach (string key in claims.Keys)
+            {
+                jwtPayload.Add(key, claims[key]);
+            }
 
             //jwtPayload.Add("scp", "");
 
@@ -146,11 +174,12 @@ namespace Technologai.AWS.OpenID
             string jwtSignatureBase64 = Base64UrlEncoder.Encode(jwtSignResponse.Signature.ToArray());
 
             return $"{jwtHeaderBase64}.{jwtPayloadBase64}.{jwtSignatureBase64}";
-        }
+        }       
 
         public class TokenRequest
         {
             public string? grant_type { get; set; }
+            public string? scope { get; set; }
         }
 
         public class TokenResponse
@@ -179,5 +208,13 @@ namespace Technologai.AWS.OpenID
                 Body = JsonSerializer.Serialize(body);
             }
         }
+    }
+    public class TokenClaims
+    {
+        public string? name { get; set; }
+        public string? client_id { get; set; }
+        public string? member_id { get; set; }
+        public string? agency_id { get; set; }
+        public List<string>? roles { get; set; } 
     }
 }

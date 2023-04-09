@@ -22,41 +22,12 @@ namespace Technologai
         public Authority(string host)
         {
             // TODO: Connect to Discovery Endpoint and get the correct values
-
             if (host != "auth.technologai.com") { throw new NotImplementedException(); }
 
             this.Host = host;
             this.BrokerHost = "broker.technologai.com";
             this.ClientEndpoint = "https://auth.technologai.com/client";
             this.TokenEndpoint = "https://auth.technologai.com/token";
-        }
-
-        internal async Task Authenticate(Identity identity)
-        {
-            var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", identity.Bearer);
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            var httpResponse = await httpClient.PostAsJsonAsync(TokenEndpoint, new { grant_type = identity.GrantType});
-
-            if (httpResponse.StatusCode == HttpStatusCode.OK)
-            {
-                var tokenResponse = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
-
-                if (tokenResponse != null)
-                {
-                    identity.Token = tokenResponse.access_token;
-                    return;
-                }
-            }
-            throw new HttpRequestException("Unauthorized", null, httpResponse.StatusCode);
-        }
-
-        internal class TokenResponse
-        {
-            public string? access_token { get; set; }
-            public string? token_type { get; set; }
-            public int? expires_in { get; set; }
         }
     }
 }

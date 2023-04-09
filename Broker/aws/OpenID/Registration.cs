@@ -76,7 +76,7 @@ namespace Technologai.AWS.OpenID
 
             var putRequest = new PutItemRequest
             {
-                TableName = Config.CLIENT_TABLE_NAME,
+                TableName = Config.AWSClientTableName,
                 Item = new Dictionary<string, AttributeValue>
                     {
                         { "ClientSecretSaltHash", new AttributeValue { S = Base64UrlEncoder.Encode(clientSecretSaltHash) } },

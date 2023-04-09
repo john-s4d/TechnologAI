@@ -21,6 +21,9 @@ namespace Technologai.AWS
             {
                 return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 401, Body = "Unauthorized" };
             }
+
+            // TODO: Check that token is valid: role matches the parameters provided.
+
             return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 200 };
         }
 
