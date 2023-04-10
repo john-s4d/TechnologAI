@@ -1,11 +1,12 @@
 ﻿
 
-namespace Technologai.Agents.Core.Coordinator
+namespace Technologai.Agents.Abilities.ChatGPT
 {
     internal class Program
     {
 
         private static TechnologaiAgent? _agent;
+        private static OpenAI _openAI = new OpenAI();
 
         private static AppConfig _config = new AppConfig();
 
@@ -28,39 +29,26 @@ namespace Technologai.Agents.Core.Coordinator
             await _agent.Stop();
         }
 
-        private static void _agent_StatusMessage(object? sender, string message)        {
+        private static void _agent_StatusMessage(object? sender, string message)
+        {
 
-            Console.WriteLine($"{_agent?.Name ?? "Coordinator"} Status> {message}");            
+            Console.WriteLine($"{_agent?.Name ?? "ChatGPT"} Status> {message}");
         }
 
         private static void _agent_InformationReceived(object? sender, Information information)
         {
             Console.WriteLine($"{_agent?.Name} Received> {information.Payload}");
-            HandleInformation(information);            
+            HandleInformation(information).Wait();
         }
 
-        private static void HandleInformation(Information information)
-        {            
-            if (information.Payload == "foo")
-            {
-                information.Payload = "bar";
-            }
-            else
-            {
-                if (information.OwnerId == "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q")
-                {
-                    information.OwnerId = "AfeMLYuo5zazOu9eWGnY2bUtVcuRXFW51J_tlWVTT6k";
-                }
-                else
-                {
-                    information.OwnerId = "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q";
-                }
-            }
+        private static async Task HandleInformation(Information information)
+        {
+            information.Payload = await _openAI.GetGpt3Response(information.Payload);
             SendInformation(information);
         }
 
         private static void SendInformation(Information message)
-        {   
+        {
             _agent?.PublishInformation(message);
             Console.WriteLine($"{_agent?.Name} Published> {message.Payload}");
         }
@@ -77,7 +65,7 @@ namespace Technologai.Agents.Core.Coordinator
                 });
 
                 if (value.Equals("quit", StringComparison.OrdinalIgnoreCase)) { break; }
-                                
+
             }
             while (true);
 

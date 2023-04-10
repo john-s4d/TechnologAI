@@ -97,7 +97,7 @@ namespace Technologai.AWS.OpenID
                             var memberId = scope.Substring(scope.IndexOf(':') + 1).Replace("'", string.Empty); ; // Light sanitizing since this could have been constructed manually
 
                             // TODO: Do Salesforce stuff somewhere else
-                            query = $"SELECT Member_Id__c, Name, Agency__r.Name, Agency__r.Agency_Id__c, Agent__r.Name, Agent__r.Agent_Id__c, Roles__c " +
+                            query = $"SELECT Member_Id__c, Name, Agency__r.Name, Agency__r.Agency_Id__c, Agent__r.Name, Agent__r.Agent_Id__c, Role__c " +
                                     $"FROM Agency_Member__c WHERE Member_Id__c = '{memberId}' AND Agent__r.Agent_Id__c = '{clientId}' LIMIT 1";
                             break;
                         }
@@ -110,7 +110,7 @@ namespace Technologai.AWS.OpenID
                         var claims = new Dictionary<string, string>();
                         claims.Add("sub", tokenClaims.member_id ?? string.Empty);
                         claims.Add("name", tokenClaims.name ?? string.Empty);
-                        claims.Add("roles", string.Join(' ', tokenClaims.roles?.ToArray() ?? new string[0]));
+                        claims.Add("role", tokenClaims.role ?? string.Empty);
                         claims.Add("client_id", tokenClaims.client_id ?? string.Empty);
                         claims.Add("agency_id", tokenClaims.agency_id ?? string.Empty);
                         claims.Add("aud", Config.TokenAudience);
@@ -215,6 +215,6 @@ namespace Technologai.AWS.OpenID
         public string? client_id { get; set; }
         public string? member_id { get; set; }
         public string? agency_id { get; set; }
-        public List<string> roles { get; } = new List<string>();
+        public string? role { get; set; }
     }
 }

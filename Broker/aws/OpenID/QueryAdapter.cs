@@ -87,14 +87,15 @@ namespace Technologai.AWS.OpenID
                             tokenClaims.client_id = record?.Agent__r.Agent_ID__c;
                             tokenClaims.member_id = record?.Member_Id__c;
                             tokenClaims.agency_id = record?.Agency__r.Agency_Id__c;
-                            tokenClaims.roles.AddRange((record?.Roles__c as string)?.Split(';') ?? new string[0]);
+                            tokenClaims.role = record?.Role__c;
 
                             // Invalidate ones that are incomplete
                             if (string.IsNullOrEmpty(tokenClaims.name) ||
                                 string.IsNullOrEmpty(tokenClaims.client_id) ||
                                 string.IsNullOrEmpty(tokenClaims.member_id) ||
                                 string.IsNullOrEmpty(tokenClaims.agency_id) ||
-                                tokenClaims.roles.Count == 0)
+                                string.IsNullOrEmpty(tokenClaims.role)
+                                )
                             {
                                 return null;
                             }
@@ -114,7 +115,7 @@ namespace Technologai.AWS.OpenID
             public string Name { get; set; }
             public Agency Agency__r { get; set; }
             public Agent Agent__r { get; set; }
-            public string Roles__c { get; set; }
+            public string Role__c { get; set; }
         }
 
         public class Attributes

@@ -1,4 +1,7 @@
-﻿namespace Technologai.Agents.Core.Interaction
+﻿using System.Runtime.CompilerServices;
+using System.Text.Json;
+
+namespace Technologai.Agents.Core.Interaction
 {
     internal class Program
     {
@@ -14,7 +17,7 @@
 
             _agent = new TechnologaiAgent(authorityName, clientId, clientSecret, memberId);
 
-            _agent.MessageReceived += _agent_MessageReceived;
+            _agent.InformationReceived += _agent_InformationReceived;
             _agent.StatusMessage += _agent_statusMessage;
 
             Console.WriteLine("Loading...");
@@ -24,9 +27,9 @@
             await _agent.Stop();
         }
 
-        private static void _agent_MessageReceived(object? sender, Message message)
+        private static void _agent_InformationReceived(object? sender, Information information)
         {
-            Console.WriteLine($"{_agent?.Name} Received> {message.Payload}");
+            Console.WriteLine($"{_agent?.Name} Received> {information?.Payload}");
         }
 
         private static void _agent_statusMessage(object? sender, string message)
@@ -36,16 +39,15 @@
 
         private static void Input(string input)
         {
-            if (_agent == null) { return; }
+            if (_agent == null) { throw new ArgumentNullException(nameof(_agent)); }
 
-            var message = new Message(_agent.Identity)
+            var information = new Information()
             {
-                Payload = input,
-                Context = Context.Create()
+                Payload = input
             };
             
-            _agent?.PublishMessage(message);
-            Console.WriteLine($"{_agent?.Name} Published> {message.Payload}");
+            _agent?.PublishInformation(information);
+            Console.WriteLine($"{_agent?.Name} Published> {information.Payload}");
         }
 
         private async static Task Run()

@@ -4,7 +4,7 @@ namespace Technologai
 {
     public abstract class Identity
     {
-        internal List<string> AssignedRoles { get; } = new List<string>();
+        internal string? AssignedRole { get; set; }
         internal string? Name { get; set; }
         public string? Id { get; set; }
         internal abstract string RoleName { get; }
