@@ -35,27 +35,15 @@ namespace Technologai.Agents.Core.Coordinator
 
         private static void _agent_InformationReceived(object? sender, Information information)
         {
-            Console.WriteLine($"{_agent?.Name} Received> {information.Payload}");
+            Console.WriteLine($"{_agent?.Name} Received>{information.ContextId}:{information.OwnerId}:{information.Payload}");
             HandleInformation(information);            
         }
 
         private static void HandleInformation(Information information)
         {            
-            if (information.Payload == "foo")
-            {
-                information.Payload = "bar";
-            }
-            else
-            {
-                if (information.OwnerId == "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q")
-                {
-                    information.OwnerId = "AfeMLYuo5zazOu9eWGnY2bUtVcuRXFW51J_tlWVTT6k";
-                }
-                else
-                {
-                    information.OwnerId = "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q";
-                }
-            }
+            string CHAT_GPT_ID = "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q";
+            information.OwnerId = CHAT_GPT_ID;
+            
             SendInformation(information);
         }
 

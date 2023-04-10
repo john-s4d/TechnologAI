@@ -1,22 +1,14 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using System;
-using System.ComponentModel;
-using System.Globalization;
-using System.Security.Cryptography;
 
 namespace Technologai
 {
-    public class ContextId : IComparable
+    public struct ContextId : IComparable<ContextId>
     {
-        private string _id;
-        private ulong _unixTimestamp;
-        private ulong _random;
+        private readonly string _id;
+        private readonly ulong _unixTimestamp;
+        private readonly ulong _random;
 
         internal SortedList<ContextId, ContextId> Related { get; } = new SortedList<ContextId, ContextId>();
-
-        private ContextId()
-            : this(ContextProvider.GetTimestampTicks(), ContextProvider.GetRandomUlong()) { }
 
         public ContextId(ulong unixTimestamp, ulong random)
         {
@@ -43,19 +35,27 @@ namespace Technologai
 
             _unixTimestamp = BitConverter.ToUInt64(timestampBytes);
             _random = BitConverter.ToUInt64(randomBytes);
-        }       
+        }
 
-        public int CompareTo(object? obj)
+        public int CompareTo(ContextId other)
         {
-            var context = obj as ContextId;
-
-            var result = _unixTimestamp.CompareTo(context?._unixTimestamp);
+            var result = _unixTimestamp.CompareTo(other._unixTimestamp);
 
             if (result == 0)
             {
-                return _random.CompareTo(context?._random);
+                return _random.CompareTo(other._random);
             }
             return result;
+        }
+
+        public static implicit operator ContextId(string contextId)
+        {
+            return new ContextId(contextId);
+        }
+
+        public static implicit operator string(ContextId contextId)
+        {
+            return contextId._id;
         }
 
         public override string ToString()
