@@ -8,19 +8,15 @@ using System.Security.Claims;
 namespace Technologai
 {
     public class MemberIdentity : Identity
-    {   
+    {
         internal override string RoleName => "member";
-        internal AgentIdentity Agent { get; }
-        internal AgencyIdentity? Agency { get; set; }
-        internal Authority Authority => Agent.Authority;
-        internal string? Token { get; private set; }
-        internal override string PublishMask => $"{AgencyId}/0/+/0/0";
-        internal override string SubscribeMask => $"{AgencyId}/{Id}/+/0/0";
+        public AgentIdentity Agent { get; }
 
-        private string AgencyId
-        {
-            get { return String.IsNullOrEmpty(Agency?.Id) ? throw new ArgumentNullException(nameof(Agency)) : Agency.Id; }
-        }        
+        public AgencyIdentity? Agency { get; internal set; }
+        public Authority Authority => Agent.Authority;
+        internal string? Token { get; private set; }
+        internal override string PublishMask => $"{Agency.Id}/0/0/0";
+        internal override string SubscribeMask => $"{Agency.Id}/{Id}/0/0";
 
         internal MemberIdentity(string id, AgentIdentity agent)
         {
@@ -53,7 +49,7 @@ namespace Technologai
                         Token = tokenResponse.access_token;
 
                         foreach (Claim claim in new JwtSecurityTokenHandler().ReadJwtToken(Token).Claims)
-                        {   
+                        {
                             if (claim.Type == "agency_id")
                             {
                                 Agency = new AgencyIdentity(claim.Value, Agent);
@@ -62,10 +58,11 @@ namespace Technologai
                             {
                                 Name = claim.Value;
                             }
-                            if (claim.Type == "roles") {
+                            if (claim.Type == "roles")
+                            {
 
                                 AssignedRoles.Clear();
-                                AssignedRoles.AddRange(((string)claim.Value).Split(' '));                            
+                                AssignedRoles.AddRange(((string)claim.Value).Split(' '));
                             }
                         }
                         return;

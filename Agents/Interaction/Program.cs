@@ -24,9 +24,9 @@
             await _agent.Stop();
         }
 
-        private static void _agent_MessageReceived(object? sender, string message)
+        private static void _agent_MessageReceived(object? sender, Message message)
         {
-            Console.WriteLine($"{_agent?.Name} Received> {message}");
+            Console.WriteLine($"{_agent?.Name} Received> {message.Payload}");
         }
 
         private static void _agent_statusMessage(object? sender, string message)
@@ -34,10 +34,18 @@
             Console.WriteLine($"{_agent?.Name ?? "Interaction"} Status> {message}");
         }
 
-        private static void Input(string message)
+        private static void Input(string input)
         {
-            _agent?.PublishMessageToAgency(message);
-            Console.WriteLine($"{_agent?.Name} Published> {message}");
+            if (_agent == null) { return; }
+
+            var message = new Message(_agent.Identity)
+            {
+                Payload = input,
+                Context = Context.Create()
+            };
+            
+            _agent?.PublishMessage(message);
+            Console.WriteLine($"{_agent?.Name} Published> {message.Payload}");
         }
 
         private async static Task Run()

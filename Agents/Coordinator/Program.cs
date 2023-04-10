@@ -28,21 +28,24 @@ namespace Technologai.Agents.Core.Coordinator
             await _agent.Stop();
         }
 
-        private static void _agent_StatusMessage(object? sender, string message)
-        {
+        private static void _agent_StatusMessage(object? sender, string message)        {
+
             Console.WriteLine($"{_agent?.Name ?? "Coordinator"} Status> {message}");            
         }
 
-        private static void _agent_MessageReceived(object? sender, string message)
+        private static void _agent_MessageReceived(object? sender, Message message)
         {
-            Console.WriteLine($"{_agent?.Name} Received> {message}");
-            SendMessage(message, _config?.InteractionMemberId);
+            Console.WriteLine($"{_agent?.Name} Received> {message.Payload}");
+
+            message.MemberId = _config?.InteractionMemberId;
+
+            SendMessage(message);
         }
 
-        private static void SendMessage(string message, string? memberId)
+        private static void SendMessage(Message message)
         {   
-            _agent?.PublishMessageToMember(message, memberId);
-            Console.WriteLine($"{_agent?.Name} Published> {message}");
+            _agent?.PublishMessage(message);
+            Console.WriteLine($"{_agent?.Name} Published> {message.Payload}");
         }
 
         private async static Task Run()

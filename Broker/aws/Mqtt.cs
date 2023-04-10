@@ -54,20 +54,7 @@ namespace Technologai.AWS
                 return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 401, Body = message };
             }
 
-            // TODO: Validate Timestamp in Topic
-            // STRUCTURE: agency/member/context/agent/subagent
-
-            // Private Agent Topic
-            // subscribe: 0/0/0/<agent>/+
-            // publish: 0/0/0/<agent>/+
-
-            // Agent Member Topics
-            // subscribe: <agency>/<member>/+/0/0
-            // publish: <agency>/0/<context>/0/0
-
-            // Agency (Coordinator,Archiver,Regulator, etc..) Topics
-            // subscribe: <agency>/0/+/0/0
-            // publish: <agency>/<member>/<context>/0/0
+            // STRUCTURE: agency/member/agent/subagent
 
             // acc: - 1 is read, 2 is write, 3 is readwrite, 4 is subscribe
 
@@ -91,8 +78,8 @@ namespace Technologai.AWS
             {
                 if (role == "agent")
                 {
-                    string publishMask = $"0/0/0/{agentId}/+";
-                    string subscribeMask = $"0/0/0/{agentId}/+";
+                    string publishMask = $"0/0/{agentId}/+";
+                    string subscribeMask = $"0/0/{agentId}/+";
 
                     if ((acl.acc == 1 || acl.acc == 4) && TopicAllowed(acl.topic, subscribeMask))
                     {
@@ -105,8 +92,8 @@ namespace Technologai.AWS
                 }
                 if (role == "member")
                 {
-                    string publishMask = $"{agencyId}/0/+/0/0";
-                    string subscribeMask = $"{agencyId}/{memberId}/+/0/0";
+                    string publishMask = $"{agencyId}/0/0/0";
+                    string subscribeMask = $"{agencyId}/{memberId}/0/0";
 
                     if ((acl.acc == 1 || acl.acc == 4) && TopicAllowed(acl.topic, subscribeMask))
                     {
@@ -119,8 +106,8 @@ namespace Technologai.AWS
                 }
                 if (role == "agency")
                 {
-                    string publishMask = $"{agencyId}/+/+/0/0";
-                    string subscribeMask = $"{agencyId}/0/+/0/0";
+                    string publishMask = $"{agencyId}/+/0/0";
+                    string subscribeMask = $"{agencyId}/0/0/0";
 
                     if ((acl.acc == 1 || acl.acc == 4) && TopicAllowed(acl.topic, subscribeMask))
                     {
