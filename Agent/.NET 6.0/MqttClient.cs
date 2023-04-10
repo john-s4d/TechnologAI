@@ -9,7 +9,7 @@ namespace Technologai
     {
         private const int PORT = 8083;
 
-        MemberIdentity _identity;
+        private MemberIdentity _identity;
 
         private IMqttClient _client = new MqttFactory().CreateMqttClient();
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -19,7 +19,7 @@ namespace Technologai
    
         public MqttClient(MemberIdentity identity)
         {
-            _identity = identity;
+            _identity = identity; 
         }
 
         internal async Task ConnectAsync()
@@ -32,7 +32,7 @@ namespace Technologai
                 .WithCredentials(_identity.Token, "password")
                 .Build();
 
-                _client.ApplicationMessageReceivedAsync += _client_ApplicationMessageReceivedAsync;
+                _client.ApplicationMessageReceivedAsync += _client_ApplicationMessageReceivedAsync;                
 
                 await _client.ConnectAsync(options, _cancellationTokenSource.Token);
             }
@@ -47,7 +47,7 @@ namespace Technologai
         }
 
         private async Task _client_ApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
-        {
+        {            
             await Task.Run(() => MessageReceived?.Invoke(this, args));
         }
 

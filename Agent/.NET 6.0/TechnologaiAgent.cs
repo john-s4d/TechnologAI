@@ -9,102 +9,61 @@ namespace Technologai
     {
         public string? Name { get; private set; }
 
-        public event EventHandler<string>? MessageReceived;
+        public event EventHandler<Message>? MessageReceived;
         public event EventHandler<string>? StatusMessage;
 
         private MqttClient _mqtt;
+        //private ContextProvider _context;
 
-        private readonly MemberIdentity _identity;
+        public MemberIdentity Identity { get; }
+
         // TODO: Connect as an Agent, without memberId
 
         public TechnologaiAgent(string authorityName, string clientId, string clientSecret, string memberId)
         {
-            _identity = new MemberIdentity(memberId, new AgentIdentity(authorityName, clientId, clientSecret));
+            Identity = new MemberIdentity(memberId, new AgentIdentity(authorityName, clientId, clientSecret));
 
-            _mqtt = new MqttClient(_identity);
+            //_context = new ContextProvider(Identity);
 
+            _mqtt = new MqttClient(Identity);
             _mqtt.MessageReceived += _mqtt_MessageReceived;
         }
 
         private void _mqtt_MessageReceived(object? sender, MqttApplicationMessageReceivedEventArgs args)
         {
-            // TODO: Get details of the message. Convert into Standardized Message Type
-            ReceiveMessage(args.ApplicationMessage.ConvertPayloadToString());
+            ReceiveMessage(Message.FromMqttArgs(args));
         }
 
-        public async Task PublishMessageToAgency(string message, string context = "0")
+        public async Task<bool> PublishMessage(Message message, Identity? identity)
         {
-            if (_identity.AssignedRoles.Contains(_identity.RoleName))
-            {
-                if (context.Contains("+") || context.Contains("/"))
-                {
-                    throw new ArgumentException(nameof(context));
-                }
+            if (identity == null) {  throw new ArgumentNullException(nameof(identity)); }
 
-                string topic = _identity.PublishMask.Replace("+", context);
-                await _mqtt.PublishAsync(topic, message);
-                //SendStatusMessage($"Published: {_identity.RoleName}:{_identity.SubscribeMask}");
-            }
-            else
-            {
-                // Only Members 
-                // Let client know it's not allowed
-            }
+            string topic = identity.GetMaskedTopic(message.Topic);
+            await _mqtt.PublishAsync(topic, message.Payload);
+            //SendStatusMessage($"Published: {Identity.RoleName}:{topic}");
+
+            return true;
         }
 
-        public async Task PublishMessageToMember(string message, string? memberId, string context = "0")
+        public async Task<bool> PublishMessage(Message message)
         {
-            if (_identity.Agency != null && _identity.AssignedRoles.Contains(_identity.Agency.RoleName))
+            if (Identity.AssignedRoles.Contains("agency"))
             {
-                try
-                {
-                    if (memberId != null)
-                    {
-                        Base64UrlEncoder.DecodeBytes(memberId);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new ArgumentException(nameof(memberId));
-                }
-
-                if (context.Contains("+") || context.Contains("/"))
-                {
-                    throw new ArgumentException(nameof(context));
-                }
-                var topicParts = _identity.Agency.PublishMask.Split('/');
-                topicParts[1] = topicParts[1].Replace("+", memberId ?? _identity.Id);
-                topicParts[2] = topicParts[2].Replace("+", context);
-                await _mqtt.PublishAsync(string.Join('/', topicParts), message);
-                //SendStatusMessage($"Published: {_identity.Agency.RoleName}:{_identity.Agency.SubscribeMask}");
+                return await PublishMessage(message, Identity.Agency);
             }
-            else
+            if (Identity.AssignedRoles.Contains("member"))
             {
-                // Let client know it's not allowed
+                return await PublishMessage(message, Identity);
             }
+            if (Identity.AssignedRoles.Contains("agent"))
+            {
+                return await PublishMessage(message, Identity.Agent);
+            }
+            return false;
         }
+      
 
-        public async Task PublishMessageToAgent(string message, string subagent = "0")
-        {
-            if (_identity.AssignedRoles.Contains(_identity.Agent.RoleName))
-            {
-                if (subagent.Contains("+") || subagent.Contains("/"))
-                {
-                    throw new ArgumentException(nameof(subagent));
-                }
-
-                string topic = _identity.Agent.PublishMask.Replace("+", subagent);
-                await _mqtt.PublishAsync(topic, message);
-                //SendStatusMessage($"Published: {_identity.Agent.RoleName}:{_identity.Agent.SubscribeMask}");
-            }
-            else
-            {   
-                // Let client know it's not allowed
-            }
-        }
-
-
-        private void ReceiveMessage(string message)
+        private void ReceiveMessage(Message message)
         {
             MessageReceived?.Invoke(this, message);
         }
@@ -120,12 +79,12 @@ namespace Technologai
             {
                 // TODO: Fix in AI-17
                 SendStatusMessage($"Warming up...");
-                await new HttpClient().GetAsync($"https://{_identity.Authority.Host}/.well-known/jwks.json");
-                await new HttpClient().GetAsync($"https://{_identity.Authority.Host}/.well-known/openid-configuration");
+                await new HttpClient().GetAsync($"https://{Identity.Authority.Host}/.well-known/jwks.json");
+                await new HttpClient().GetAsync($"https://{Identity.Authority.Host}/.well-known/openid-configuration");
 
-                await _identity.Authenticate();
+                await Identity.Authenticate();
 
-                this.Name = _identity.Name;
+                this.Name = Identity.Name;
 
                 SendStatusMessage($"Authenticated");
 
@@ -133,24 +92,24 @@ namespace Technologai
                 SendStatusMessage($"Connected");
 
                 // Subscribe to Member Topics
-                if (_identity.AssignedRoles.Contains(_identity.RoleName))
+                if (Identity.AssignedRoles.Contains(Identity.RoleName))
                 {
-                    await _mqtt.SubscribeAsync(_identity.SubscribeMask);
-                    SendStatusMessage($"Subscribed: {_identity.RoleName}:{_identity.SubscribeMask}");
+                    await _mqtt.SubscribeAsync(Identity.SubscribeMask);
+                    SendStatusMessage($"Subscribed: {Identity.RoleName}:{Identity.SubscribeMask}");
                 }
 
                 // Subscribe to Agency Topics
-                if (_identity.Agency != null && _identity.AssignedRoles.Contains(_identity.Agency.RoleName))
+                if (Identity.Agency != null && Identity.AssignedRoles.Contains(Identity.Agency.RoleName))
                 {
-                    await _mqtt.SubscribeAsync(_identity.Agency.SubscribeMask);
-                    SendStatusMessage($"Subscribed: {_identity.Agency.RoleName}:{_identity.Agency.SubscribeMask}");
+                    await _mqtt.SubscribeAsync(Identity.Agency.SubscribeMask);
+                    SendStatusMessage($"Subscribed: {Identity.Agency.RoleName}:{Identity.Agency.SubscribeMask}");
                 }
 
                 // Subscribe to Agent Topics
-                if (_identity.Agent != null && _identity.AssignedRoles.Contains(_identity.Agent.RoleName))
+                if (Identity.Agent != null && Identity.AssignedRoles.Contains(Identity.Agent.RoleName))
                 {
-                    await _mqtt.SubscribeAsync(_identity.Agent.SubscribeMask);
-                    SendStatusMessage($"Subscribed: {_identity.Agent.RoleName}:{_identity.Agent.SubscribeMask}");
+                    await _mqtt.SubscribeAsync(Identity.Agent.SubscribeMask);
+                    SendStatusMessage($"Subscribed: {Identity.Agent.RoleName}:{Identity.Agent.SubscribeMask}");
                 }
 
             }
