@@ -42,15 +42,19 @@ namespace Technologai.Agents.Abilities.ChatGPT
         }
 
         private static async Task HandleInformation(Information information)
-        {
+        {   
+            Information newInfo = _agent.Spawn(information);
+            newInfo.Payload = "bar";
+            SendInformation(newInfo);
+            
             information.Payload = await _openAI.GetGpt3Response(information.Payload);
             SendInformation(information);
         }
 
-        private static void SendInformation(Information message)
+        private static void SendInformation(Information information)
         {
-            _agent?.PublishInformation(message);
-            Console.WriteLine($"{_agent?.Name} Published> {message.Payload}");
+            _agent?.PublishInformation(information);
+            Console.WriteLine($"{_agent?.Name} Published> {information.Payload}");
         }
 
         private async static Task Run()

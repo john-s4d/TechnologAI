@@ -41,11 +41,8 @@ namespace Technologai.Agents.Core.Interaction
         {
             if (_agent == null) { throw new ArgumentNullException(nameof(_agent)); }
 
-            var information = new Information()
-            {
-                Payload = input
-            };
-            
+            var information = new Information() { Payload = input };
+
             _agent?.PublishInformation(information);
             Console.WriteLine($"{_agent?.Name} Published> {information.Payload}");
         }

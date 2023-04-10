@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using IdentityModel;
+using Microsoft.IdentityModel.Tokens;
 using MQTTnet;
 using MQTTnet.Client;
 using System.Net.Http;
@@ -29,67 +30,66 @@ namespace Technologai
 
         private void _mqtt_MessageReceived(object? sender, MqttApplicationMessageReceivedEventArgs args)
         {
-            ReceiveMessage(BrokerMessage.FromMqttArgs(args));            
+            ReceiveInformation(BrokerMessage.FromMqttArgs(args).Information);
         }
 
-        private async Task<bool> PublishMessage(BrokerMessage message, Identity? identity)
+        private void ReceiveInformation(Information? information)
         {
-            if (identity == null || message.Information?.Payload == null)
+            if (information != null)
             {
-                return false;
+                _contexts.OnReceive(information);
+                InformationReceived?.Invoke(this, information);                
             }
-
-            string topic = identity.GetMaskedTopic(message.Topic);
-
-            await _mqtt.PublishAsync(topic, message.Information.ToJson());
-
-            SendStatusMessage($"Published to: {topic}");
-
-            return true;
-        }
-
-        private async Task<bool> PublishMessage(BrokerMessage message)
-        {
-            if (Identity.AssignedRole?.Equals("agency") ?? false)
-            {
-                return await PublishMessage(message, Identity.Agency);
-            }
-            if (Identity.AssignedRole?.Equals("member") ?? false)
-            {
-                return await PublishMessage(message, Identity);
-            }
-            if (Identity.AssignedRole?.Contains("agent") ?? false)
-            {
-                return await PublishMessage(message, Identity.Agent);
-            }
-            return false;
         }
 
         public async Task<bool> PublishInformation(Information information)
         {
-            var message = new BrokerMessage(Identity);
-            message.Information = information;
+            _contexts.OnPublish(information);
 
-            //_contexts.SetContextOrOwner(information);
-
-            message.MemberId = information.OwnerId;
+            var message = new BrokerMessage(Identity)
+            {
+                Information = information,
+                MemberId = information.OwnerId
+            };
 
             return await PublishMessage(message);
         }
 
-        private void ReceiveMessage(BrokerMessage message)
+        private async Task<bool> PublishMessage(BrokerMessage message)
         {
-            if (message.Information != null)
+            if (message.Information?.Payload == null)
             {
-                ReceiveInformation(message.Information);
+                return false;
             }
-        }
 
-        private void ReceiveInformation(Information information)
-        {
-            //_contexts.RecordContext(information);
-            InformationReceived?.Invoke(this, information);
-        }
+            Identity? publishIdentity = null;
+
+            if ((Identity.Agency != null) && (Identity.AssignedRole?.Equals("agency") ?? false))
+            {
+                publishIdentity = Identity.Agency;
+            }
+            if (Identity.AssignedRole?.Equals("member") ?? false)
+            {
+                publishIdentity = Identity;
+            }
+            if (Identity.AssignedRole?.Contains("agent") ?? false)
+            {
+                publishIdentity = Identity.Agent;
+            }
+
+            if (publishIdentity != null)
+            {
+                string? topic = publishIdentity?.GetMaskedTopic(message.Topic);
+
+                await _mqtt.PublishAsync(topic ?? string.Empty, message.Information.ToJson());
+
+                SendStatusMessage($"Published: {message.Information.ContextId} {message.Information.OwnerId} {topic}");
+
+                return true;
+            }
+
+            return false;            
+        }      
 
         private void SendStatusMessage(string message)
         {
@@ -147,9 +147,9 @@ namespace Technologai
             await _mqtt.DisconnectAsync();
         }
 
-        public void NewContext(Information information)
+        public Information Spawn(Information information)
         {
-            _contexts.NewContext(information);            
+            return _contexts.Spawn(information);
         }
     }
 }
