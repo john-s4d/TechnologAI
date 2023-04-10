@@ -6,6 +6,7 @@ namespace Technologai
     {
         internal override string RoleName => "agent";
         public Authority Authority { get; }
+        public AgentIdentity? SubAgent { get; }
         protected string ClientSecret { get;  }
         internal string Bearer => Base64UrlEncoder.Encode($"{this.Id}:{ClientSecret}");
         internal override string PublishMask => $"0/0/{this.Id}/+";

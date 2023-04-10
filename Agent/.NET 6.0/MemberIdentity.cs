@@ -32,8 +32,6 @@ namespace Technologai
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Agent.Bearer);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                //var role = Agency == null ? "member" : "agency";
-
                 var parameters = new Dictionary<string, string>();
                 parameters.Add("grant_type", "client_credentials");
                 parameters.Add("scope", $"{RoleName}:{Id}");
@@ -58,11 +56,9 @@ namespace Technologai
                             {
                                 Name = claim.Value;
                             }
-                            if (claim.Type == "roles")
+                            if (claim.Type == "role")
                             {
-
-                                AssignedRoles.Clear();
-                                AssignedRoles.AddRange(((string)claim.Value).Split(' '));
+                                AssignedRole = claim.Value;
                             }
                         }
                         return;
