@@ -37,24 +37,26 @@ namespace Technologai.Agents.Abilities.ChatGPT
 
         private static void _agent_InformationReceived(object? sender, Information information)
         {
-            Console.WriteLine($"{_agent?.Name} Received> {information.Payload}");
+            Console.WriteLine($"{_agent?.Name} Received> {information.Input} | {information.Output}");
             HandleInformation(information).Wait();
         }
 
         private static async Task HandleInformation(Information information)
         {   
-            Information newInfo = _agent.Spawn(information);
-            newInfo.Payload = "bar";
-            SendInformation(newInfo);
-            
-            information.Payload = await _openAI.GetGpt3Response(information.Payload);
-            SendInformation(information);
+            if (_agent == null || string.IsNullOrEmpty(information.Input)) { return;  }
+
+            Information information_new = _agent.Spawn(information);
+            information_new.Input = "bar";
+//            Publish(information_new);
+                        
+            information.Complete(await _openAI.GetGpt3Response(information.Input));
+            Publish(information);
         }
 
-        private static void SendInformation(Information information)
+        private static void Publish(Information information)
         {
-            _agent?.PublishInformation(information);
-            Console.WriteLine($"{_agent?.Name} Published> {information.Payload}");
+            _agent?.Publish(information);
+            Console.WriteLine($"{_agent?.Name} Published> {information.Input} | {information.Output}");
         }
 
         private async static Task Run()

@@ -35,22 +35,23 @@ namespace Technologai.Agents.Core.Coordinator
 
         private static void _agent_InformationReceived(object? sender, Information information)
         {
-            Console.WriteLine($"{_agent?.Name} Received>{information.ContextId}:{information.OwnerId}:{information.Payload}");
+            Console.WriteLine($"{_agent?.Name} Received>{information.ContextId}:{information.Input}:{information.Output}");
             HandleInformation(information);            
         }
 
         private static void HandleInformation(Information information)
         {            
+            // TODO: Coordinator things, basically routing
+            // Coordinator has the master Member, Actions, and Prompts lists                       
+
             string CHAT_GPT_ID = "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q";
-            information.OwnerId = CHAT_GPT_ID;
-            
-            SendInformation(information);
+            Publish(information, CHAT_GPT_ID);
         }
 
-        private static void SendInformation(Information message)
+        private static void Publish(Information information, string? memberId = null)
         {   
-            _agent?.PublishInformation(message);
-            Console.WriteLine($"{_agent?.Name} Published> {message.Payload}");
+            _agent?.Publish(information, memberId);
+            Console.WriteLine($"{_agent?.Name} Published> {information.Input} | {information.Output}");
         }
 
         private async static Task Run()

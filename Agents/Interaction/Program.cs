@@ -29,7 +29,7 @@ namespace Technologai.Agents.Core.Interaction
 
         private static void _agent_InformationReceived(object? sender, Information information)
         {
-            Console.WriteLine($"{_agent?.Name} Received> {information?.Payload}");
+            Console.WriteLine($"{_agent?.Name} Received> {information.Input} | {information.Output}");
         }
 
         private static void _agent_statusMessage(object? sender, string message)
@@ -41,10 +41,11 @@ namespace Technologai.Agents.Core.Interaction
         {
             if (_agent == null) { throw new ArgumentNullException(nameof(_agent)); }
 
-            var information = new Information() { Payload = input };
+            var information = _agent.CreateInformation(input);
 
-            _agent?.PublishInformation(information);
-            Console.WriteLine($"{_agent?.Name} Published> {information.Payload}");
+            _agent?.Publish(information);
+
+            Console.WriteLine($"{_agent?.Name} Published> {information.Input} | {information.Output}");
         }
 
         private async static Task Run()

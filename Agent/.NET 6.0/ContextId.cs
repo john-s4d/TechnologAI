@@ -1,49 +1,43 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 
 namespace Technologai
 {
     public struct ContextId : IComparable<ContextId>
     {
+        // hash compute of an id allows to verify which party created this contextId. If that's ever needed.
+
         private readonly string _id;
-        private readonly ulong _unixTimestamp;
-        private readonly ulong _random;
+        private readonly byte[] _unixTimestampBytes = new byte[8];
+        private readonly byte[] _hashComputeBytes = new byte[8];
 
-        internal SortedList<ContextId, ContextId> Related { get; } = new SortedList<ContextId, ContextId>();
-
-        public ContextId(ulong unixTimestamp, ulong random)
+        public ContextId(ulong unixTimestamp, byte[] idHash)
         {
-            _unixTimestamp = unixTimestamp;
-            _random = random;
-
-            var timestampBytes = BitConverter.GetBytes(_unixTimestamp);
-            var randomBytes = BitConverter.GetBytes(_random);
-
-            _id = Base64UrlEncoder.Encode(timestampBytes.Concat(randomBytes).ToArray());
+            _unixTimestampBytes = BitConverter.GetBytes(unixTimestamp);
+            _hashComputeBytes = MD5.HashData(idHash.Concat(_unixTimestampBytes).ToArray());
+            _id = Base64UrlEncoder.Encode(_unixTimestampBytes.Concat(_hashComputeBytes).ToArray());
         }
 
         public ContextId(string contextId)
         {
             _id = contextId;
-
             var contextBytes = Base64UrlEncoder.DecodeBytes(_id);
 
-            byte[] timestampBytes = new byte[8];
-            byte[] randomBytes = new byte[8];
-
-            Array.Copy(contextBytes, timestampBytes, 8);
-            Array.Copy(contextBytes, 8, randomBytes, 0, 8);
-
-            _unixTimestamp = BitConverter.ToUInt64(timestampBytes);
-            _random = BitConverter.ToUInt64(randomBytes);
+            Array.Copy(contextBytes, _unixTimestampBytes, 8);
+            Array.Copy(contextBytes, 8, _hashComputeBytes, 0, 8);
         }
 
         public int CompareTo(ContextId other)
         {
-            var result = _unixTimestamp.CompareTo(other._unixTimestamp);
+            var result = BitConverter.ToInt64(_unixTimestampBytes).CompareTo(
+                BitConverter.ToInt64(other._unixTimestampBytes)
+            );
 
             if (result == 0)
             {
-                return _random.CompareTo(other._random);
+                return BitConverter.ToInt64(_hashComputeBytes).CompareTo(
+                    BitConverter.ToInt64(other._hashComputeBytes)
+                );
             }
             return result;
         }
