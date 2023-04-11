@@ -30,9 +30,8 @@ namespace Technologai
 
         internal BrokerMessage(MemberIdentity identity)
         {
-            AgencyId = identity.Agency?.Id;
+            AgencyId = identity.Agency?.Id;            
             AgentId = identity.Agent.Id;
-            MemberId = identity.Id;            
         }
 
         internal BrokerMessage(AgencyIdentity identity)

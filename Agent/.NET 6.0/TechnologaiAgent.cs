@@ -1,6 +1,4 @@
-﻿using IdentityModel;
-using Microsoft.IdentityModel.Tokens;
-using MQTTnet;
+﻿using MQTTnet;
 using MQTTnet.Client;
 using System.Net.Http;
 
@@ -30,34 +28,52 @@ namespace Technologai
 
         private void _mqtt_MessageReceived(object? sender, MqttApplicationMessageReceivedEventArgs args)
         {
-            ReceiveInformation(BrokerMessage.FromMqttArgs(args).Information);
+            _ = Receive(BrokerMessage.FromMqttArgs(args).Information);
         }
 
-        private void ReceiveInformation(Information? information)
+        private async Task Receive(Information? information)
         {
-            if (information != null)
-            {
-                _contexts.OnReceive(information);
-                InformationReceived?.Invoke(this, information);                
+            if (information == null) { return; }
+
+            if (information.CreatorId == Identity.Id)
+            { 
+                if (information.State == InformationState.OPEN)
+                {
+                    // It came back. Try something else. Don't send it out again as is though.                    
+                }
+                if (information.State == InformationState.INCOMPLETE)
+                {
+                    // It came back partially done. Either keep going or wrap it up.
+                }
             }
+
+            if (information.State == InformationState.COMPLETE && (information.CreatorId == Identity.Id))
+            {
+                _contexts.MarkComplete(information);
+            }
+            else if (information.State == InformationState.COMPLETE && (information.CreatorId != Identity.Id))
+            {
+                await Publish(information, information.CreatorId); // It's complete but not for this agent. Forward it along.
+                return;
+            }
+
+            InformationReceived?.Invoke(this, information);
         }
 
-        public async Task<bool> PublishInformation(Information information)
+        public async Task<bool> Publish(Information information, string? memberId = null)
         {
-            _contexts.OnPublish(information);
-
             var message = new BrokerMessage(Identity)
             {
                 Information = information,
-                MemberId = information.OwnerId
+                MemberId = memberId
             };
 
-            return await PublishMessage(message);
+            return await Publish(message);
         }
 
-        private async Task<bool> PublishMessage(BrokerMessage message)
+        private async Task<bool> Publish(BrokerMessage message)
         {
-            if (message.Information?.Payload == null)
+            if (message.Information == null)
             {
                 return false;
             }
@@ -83,13 +99,13 @@ namespace Technologai
 
                 await _mqtt.PublishAsync(topic ?? string.Empty, message.Information.ToJson());
 
-                SendStatusMessage($"Published: {message.Information.ContextId} {message.Information.OwnerId} {topic}");
+                SendStatusMessage($"Published: {message.Information.ContextId} {topic}");
 
                 return true;
             }
 
-            return false;            
-        }      
+            return false;
+        }
 
         private void SendStatusMessage(string message)
         {
@@ -147,9 +163,14 @@ namespace Technologai
             await _mqtt.DisconnectAsync();
         }
 
-        public Information Spawn(Information information)
+        public Information Spawn(Information information, InformationState state = InformationState.OPEN, string? input = null)
         {
-            return _contexts.Spawn(information);
+            return _contexts.Spawn(information, state, input);
+        }
+
+        public Information CreateInformation(string input)
+        {
+            return _contexts.CreateInformation(input);
         }
     }
 }
