@@ -1,21 +1,10 @@
 ﻿using System.Management;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Xml.Serialization;
 
 namespace Technologai
 {
-
-    /*
-    public enum InformationState
-    {
-        OPEN, // Ready to start as soon as we can find a worker
-        WORKING, // Actively working on it by this worker
-        DELEGATED, // Open and worker has passed parts down to other workers        
-        INCOMPLETE, // Stays with the worker. Might be completed in the future.        
-        COMPLETE, // Done and returning or with Creator
-        ANALYSIS, // Rating, training, etc..
-        CLOSED // Archive/d
-    }*/
-
     public enum InformationState
     {
         DRAFT,
@@ -25,32 +14,54 @@ namespace Technologai
 
     public class Information
     {
-        public ContextId ContextId { get; }
-        public string CreatorId { get; }        
-        public InformationState State { get; set; }
-        public string? OwnerId { get; set; }        
-        public string Input { get; set; }
-        public string? SchemaIn { get; set; }
-        public string? Output { get; set; }
-        public string? SchemaOut { get; set; }
-        public string? Feedback { get; set; }
+        public string ContextId { get; private set; }
+        public string CreatorId { get; private set; }
+        public InformationState State { get; internal set; }
+        public string? OwnerId { get; internal set; }
+        public string? Input { get; internal set; }
+        public string? SchemaIn { get; internal set; }
+        public string? Output { get; internal set; }
+        public string? SchemaOut { get; internal set; }
+        public string? Feedback { get; internal set; }
 
-        // TODO History, Signatures, ReadOnly fields ?
+        // TODO History, Signatures, ReadOnly fields ?        
 
-        public Information(string creatorId, string input)
+        private Information() { }
+
+        [JsonConstructor]
+        public Information(string contextId, string creatorId, InformationState state, 
+            string? ownerId = null, string? input = null, string? schemaIn = null, 
+            string? output = null, string? schemaOut = null, string? feedback = null)
         {
-            Input = string.IsNullOrEmpty(input) ? throw new ArgumentNullException(nameof(input)) : input;
-            State = InformationState.OPEN;
-            ContextId = new ContextId(creatorId);
+            ContextId = contextId;
+            CreatorId = creatorId;
+            State = state;
+            OwnerId = ownerId;
+            Input = input;            
+            SchemaIn = schemaIn;
+            Output = output;
+            SchemaOut = schemaOut;
+            Feedback = feedback;                
+        }
+
+        public Information(string creatorId)
+            : this(creatorId, null) { }
+
+        public Information(string creatorId, string? input = null)
+        {
+            Input = input;
+            State = InformationState.DRAFT;
+            ContextId = Technologai.ContextId.Create(creatorId);
             CreatorId = creatorId;
         }
+
         public static Information? FromJson(string json)
         {
             return JsonSerializer.Deserialize<Information>(json);
         }
 
         public string ToJson()
-        {
+        {   
             return JsonSerializer.Serialize(this);
         }
     }

@@ -6,8 +6,8 @@ namespace Technologai
 {
     public class ContextProvider
     {   
-        private Dictionary<ContextId, ContextId> _contextHierarchy = new();
-        private Dictionary<ContextId, Information> _completedInformation = new();
+        private Dictionary<string, string> _contextHierarchy = new();
+        private Dictionary<string, Information> _completedInformation = new();
 
         private Identity _identity;
 
@@ -16,13 +16,13 @@ namespace Technologai
             _identity = identity;
         }
 
-        internal Information CreateInformation(string input)
+        internal Information CreateInformation(string? input = null)
         {
             var creatorId = _identity.Id ?? throw new ArgumentNullException(nameof(_identity.Id));
             return new Information(creatorId, input);           
         }
 
-        internal Information Spawn(Information information, string input)
+        internal Information Spawn(Information information, string? input = null)
         {
             var information_new = CreateInformation(input);            
 

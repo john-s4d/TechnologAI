@@ -15,7 +15,7 @@ namespace Technologai.Agents.Core.Interaction
         { }
 
         public override Task Handle(Information information)
-        {
+        {   
             Console.WriteLine($"{Name} Handle> {information.State} | {information.Input} | {information.Output}");            
             
             return Task.CompletedTask;

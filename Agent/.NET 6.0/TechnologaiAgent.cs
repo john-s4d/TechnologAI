@@ -1,11 +1,22 @@
 ﻿using Microsoft.VisualBasic;
 using MQTTnet;
 using MQTTnet.Client;
+using System.CodeDom.Compiler;
 using System.ComponentModel.Design;
+using System.IO.Compression;
 using System.Net.Http;
+using System.Reflection.Metadata.Ecma335;
+using System.Security.Principal;
 
 namespace Technologai
 {
+    public enum Role
+    {
+        Agency,
+        Member,
+        Agent
+    }
+
     public class TechnologaiAgent
     {
         public string? Name { get; private set; }
@@ -15,7 +26,11 @@ namespace Technologai
         private MqttClient _mqtt;
         private ContextProvider _contexts;
         private ActionCatalog _actions;
-        //private PromptCatalog _prompts;
+
+        private Dictionary<string, Information> _information = new Dictionary<string, Information>();
+
+        private Queue<string> _workingQueue = new Queue<string>();
+        private Queue<string> _archiveQueue = new Queue<string>();        
 
         public MemberIdentity Identity { get; } // TODO: Connect as an Agent, without memberId
 
@@ -47,63 +62,63 @@ namespace Technologai
             if (await BeforeHandle(information))
             {
                 await Handle(information);
+                await Publish(information);
             }
-            await AfterHandle(information);
         }
 
         private async Task<bool> BeforeHandle(Information information)
         {
-            if (information.State == InformationState.DRAFT)
+            var isNullOwned = information.OwnerId == null;
+            var isSelfOwned = information.OwnerId == IdentityId;
+            var isElseOwned = information.OwnerId != IdentityId && information.OwnerId != null;
+            var isDraft = information.State == InformationState.DRAFT;
+            var isOpen = information.State == InformationState.OPEN;
+            var isClosed = information.State == InformationState.CLOSED;
+            var isAgency = Identity.AssignedRole == TechnologaiRole.agency;
+            var isMember = Identity.AssignedRole == TechnologaiRole.member;
+            var isCreator = information.CreatorId == IdentityId;
+
+            if (isDraft)
             {
-                // Problem. Agents should not receive drafts from other agents.
                 return false;
             }
 
-            if (information.OwnerId == null)
+            if (isElseOwned)
             {
-                // There is no owner
-                if (information.State == InformationState.OPEN)
+                await SendToBroker(information, information.OwnerId);
+                return false;
+            }
+
+            if (_information.ContainsKey(information.ContextId)) {
+                _information.Add(information.ContextId, information);
+            }
+
+            if (isMember)
+            {
+                if (isCreator && isOpen)
                 {
-                    // MEMBER-CREATOR: Self-Assign.
-                    // MEMBER-WORKER: Handle. Determine if I can own this.
-                    // AGENCY: Handle. Find an owner.
+                    Close(information); // Incomplete
+                    Defer(information);
+                    return false;
                 }
-                else if (information.State == InformationState.CLOSED)
+
+                if (isCreator && isClosed)
                 {
-                    // MEMBER-CREATOR: Self-Assign.
-                    // MEMBER-WORKER: Redirect. TODO: Send to Agency.
-                    // AGENCY: Handle. Post-processing & analysis. Note: multiple instances.
+                    Compile(information);
+                    return false;
+                }
+
+                if (isClosed)
+                {
+                    await SendToBroker(information, information.CreatorId);
+                    return false;
                 }
             }
-            else if (information.OwnerId == IdentityId)
+
+            else if (isAgency && isNullOwned && isClosed)
             {
-                // I am the owner
-                if (information.State == InformationState.OPEN)
-                {
-                    // MEMBER-CREATOR: Handle. This was returned to me and is incomplete.
-                    // MEMBER-WORKER: Handle. TODO: Add to my work queue.
-                    // AGENCY: Problem. Agencies should not own open work.
-                }
-                else if (information.State == InformationState.CLOSED)
-                {
-                    // MEMBER-CREATOR: Handle. This was returned to me and is complete.
-                    // MEMBER-WORKER: Redirect. TODO: Send to creator.
-                    // AGENCY: Handle. Post-processing & analysis.
-                }
-            }
-            else
-            {
-                // Someone else is the owner
-                if (information.State == InformationState.OPEN)
-                {
-                    // MEMBER: Redirect. TODO: Redirect to Owner
-                    // AGENCY: Redirect. TODO: Redirect to Owner
-                }
-                else if (information.State == InformationState.CLOSED)
-                {
-                    // MEMBER: Redirect. TODO: Redirect to Owner
-                    // AGENCY: Redirect. TODO: Redirect to Owner 
-                }
+                Archive(information);
+                return false;
             }
 
             return true;
@@ -114,89 +129,111 @@ namespace Technologai
             return Task.CompletedTask;
         }
 
-        private async Task AfterHandle(Information information)
+        public async Task Publish(Information information)
         {
+            var isNullOwned = information.OwnerId == null;
+            var isSelfOwned = information.OwnerId == IdentityId;
+            var isElseOwned = information.OwnerId != IdentityId && information.OwnerId != null;
+            var isDraft = information.State == InformationState.DRAFT;
+            var isOpen = information.State == InformationState.OPEN;
+            var isClosed = information.State == InformationState.CLOSED;
+            var isAgency = Identity.AssignedRole == TechnologaiRole.agency;
+            var isMember = Identity.AssignedRole == TechnologaiRole.member;
+            var isCreator = information.CreatorId == IdentityId;
 
-            if (information.State == InformationState.DRAFT)
+            if (isDraft)
             {
-                if (information.OwnerId == IdentityId)
-                {
-                    // TODO: Save to my drafts. Will this ever happen?
-                }
-                return;                
+                information.State = InformationState.OPEN;
             }
 
-            if (information.OwnerId == null)
-            {
-                // There is no owner
-                 if (information.State == InformationState.OPEN)
-                {
-                    // MEMBER: Publish. To Agency for assignment.
-                    // AGENCY: Problem. Couldn't find an owner. // Candidate for system capability improvements.
-                }
-                else if (information.State == InformationState.CLOSED)
-                {
-                    // MEMBER: Publish. To Agency for archiving.
-                    // AGENCY: Problem. This should have already been handled.
-                }
+            if (_information.ContainsKey(information.ContextId)) {
+                _information.Add(information.ContextId, information);
             }
-            else if (information.OwnerId == IdentityId)
+
+            if (isElseOwned)
             {
-                // I am the owner
-                if (information.State == InformationState.OPEN)
-                {
-                    // MEMBER: Add to my work queue. Don't publish.
-                    // AGENCY: Problem. Agencies should not own open information.
-                }
-                else if (information.State == InformationState.CLOSED)
-                {
-                    // MEMBER: Update upstream contexts
-                    // AGENCY: Post-processing & analysis 
-                }
+                await SendToBroker(information, information.OwnerId);
+                return;
             }
-            else
+
+            if (isSelfOwned && isOpen)
             {
-                // Someone else is the owner
-                if (information.State == InformationState.OPEN)
-                {
-                    // MEMBER: Publish. 
-                    // AGENCY: Publish. 
-                }
-                else if (information.State == InformationState.CLOSED)
-                {
-                    // MEMBER: Publish. 
-                    // AGENCY: Publish. 
-                }
+                Defer(information);
+                return;
             }
+
+            if (isMember)
+            {
+                if (isNullOwned && (isCreator || isOpen))
+                {
+                    await SendToBroker(information);
+                    return;
+                }
+                await SendToBroker(information, information.CreatorId);
+                return;
+            }
+
+            if (isAgency)
+            {
+                Archive(information);
+                return;
+            }
+
+            throw new NotImplementedException("information was not routed");
+            
+            // TODO: What if I am an agent.
+
         }
 
         // Information Handling
-        public async Task Spawn(Information information, string input)
+
+        private void Compile(Information information)
         {
-            Information new_information = _contexts.Spawn(information, input);
-            SendStatusMessage($"{Name} Spawn> {information.ContextId} | {information.Input} ");
-            await Publish(new_information);
+            SendStatusMessage($"Compile > {information.ContextId} | {information.Input} | {information.Output}");
+            // TODO: Compile & dispatch parent events
         }
 
-        public async Task CreateInformation(string input)
+        private void Archive(Information information)
         {
-            Information new_information = _contexts.CreateInformation(input);
-            SendStatusMessage($"{Name} Create> {new_information.ContextId} | {new_information.Input} ");
-            await Publish(new_information);
+            SendStatusMessage($"Archive > {information.ContextId} | {information.Input} | {information.Output}");
+            _archiveQueue.Enqueue(information.ContextId);
         }
 
-        public void Complete(Information information, string output)
+        private void Defer(Information information)
         {
-            information.State = InformationState.COMPLETE;
+            SendStatusMessage($"Defer > {information.ContextId} | {information.Input} | {information.Output}");
+            _workingQueue.Enqueue(information.ContextId);
+        }
+        
+        public Information Spawn(Information information, string? input = null)
+        {
+            var new_information = _contexts.Spawn(information, input);
+            SendStatusMessage($"Spawn > {information.ContextId} | {information.Input} | {information.Output}");
+            return new_information;
+        }
+
+        public Information CreateInformation(string? input = null)
+        {
+            var information = _contexts.CreateInformation(input);
+            SendStatusMessage($"CreateInformation > {information.ContextId} | {information.Input} | {information.Output}");
+            return information;
+        }
+
+        public void Close(Information information, string? output = null)
+        {   
             information.Output = output;
+            information.State = InformationState.CLOSED;
+            information.OwnerId = information.CreatorId;
+            SendStatusMessage($"Close > {information.ContextId} | {information.Input} | {information.Output}");
         }
 
         public void Assign(Information information, string ownerId)
         {
             information.OwnerId = ownerId;
+            SendStatusMessage($"Assign > {information.ContextId} | {information.Input} | {information.Output}");
         }
 
-        private async Task<bool> Publish(Information information, string? memberId = null)
+        private async Task<bool> SendToBroker(Information information, string? memberId = null)
         {
             var message = new BrokerMessage(Identity)
             {
@@ -204,10 +241,10 @@ namespace Technologai
                 MemberId = memberId
             };
 
-            return await Publish(message);
+            return await SendToBroker(message);
         }
 
-        private async Task<bool> Publish(BrokerMessage message)
+        private async Task<bool> SendToBroker(BrokerMessage message)
         {
             if (message.Information == null)
             {
@@ -216,15 +253,15 @@ namespace Technologai
 
             Identity? publishIdentity = null;
 
-            if ((Identity.Agency != null) && (Identity.AssignedRole?.Equals("agency") ?? false))
+            if (Identity.AssignedRole == TechnologaiRole.agency)
             {
                 publishIdentity = Identity.Agency;
             }
-            if (Identity.AssignedRole?.Equals("member") ?? false)
+            if (Identity.AssignedRole == TechnologaiRole.member)
             {
                 publishIdentity = Identity;
             }
-            if (Identity.AssignedRole?.Contains("agent") ?? false)
+            if (Identity.AssignedRole == TechnologaiRole.agent)
             {
                 publishIdentity = Identity.Agent;
             }
@@ -235,7 +272,7 @@ namespace Technologai
 
                 await _mqtt.PublishAsync(topic ?? string.Empty, message.Information.ToJson());
 
-                SendStatusMessage($"Published: {message.Information.ContextId} {topic}");
+                //SendStatusMessage($"Published: {message.Information.ContextId} {topic}");
 
                 return true;
             }
@@ -267,21 +304,21 @@ namespace Technologai
                 SendStatusMessage($"Connected");
 
                 // Subscribe to Member Topics
-                if (Identity.AssignedRole?.Equals(Identity.RoleName) ?? false)
+                if (Identity.AssignedRole == TechnologaiRole.member)
                 {
                     await _mqtt.SubscribeAsync(Identity.SubscribeMask);
                     SendStatusMessage($"Subscribed: {Identity.RoleName}:{Identity.SubscribeMask}");
                 }
 
                 // Subscribe to Agency Topics
-                if (Identity.Agency != null && (Identity.AssignedRole?.Equals(Identity.Agency.RoleName) ?? false))
+                if (Identity.AssignedRole == TechnologaiRole.agency)
                 {
                     await _mqtt.SubscribeAsync(Identity.Agency.SubscribeMask);
                     SendStatusMessage($"Subscribed: {Identity.Agency.RoleName}:{Identity.Agency.SubscribeMask}");
                 }
 
                 // Subscribe to Agent Topics
-                if (Identity.Agent != null && (Identity.AssignedRole?.Equals(Identity.Agent.RoleName) ?? false))
+                if (Identity.AssignedRole == TechnologaiRole.agent)
                 {
                     await _mqtt.SubscribeAsync(Identity.Agent.SubscribeMask);
                     SendStatusMessage($"Subscribed: {Identity.Agent.RoleName}:{Identity.Agent.SubscribeMask}");
