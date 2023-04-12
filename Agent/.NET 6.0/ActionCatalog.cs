@@ -33,7 +33,7 @@ namespace Technologai
 
                 new Action()
                 {
-                    Name = "find_action_in_catalog",
+                    Name = "find_actions_in_catalog",
                     SchemaIn = "search:string,hints:string",
                     SchemaOut = "[name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id]",
                     Description = "Find and return Actions in the local Action Catalog based on the search string",
@@ -45,6 +45,11 @@ namespace Technologai
         public void Add_Action(Action action)
         {
             Actions.Add(action);
+        }
+
+        public List<Action> Find_Actions_In_Catalog(Action action)
+        {
+            return new List<Action>();
         }
 
     }

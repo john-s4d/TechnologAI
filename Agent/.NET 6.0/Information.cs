@@ -3,6 +3,8 @@ using System.Text.Json;
 
 namespace Technologai
 {
+
+    /*
     public enum InformationState
     {
         OPEN, // Ready to start as soon as we can find a worker
@@ -12,27 +14,35 @@ namespace Technologai
         COMPLETE, // Done and returning or with Creator
         ANALYSIS, // Rating, training, etc..
         CLOSED // Archive/d
+    }*/
+
+    public enum InformationState
+    {
+        DRAFT,
+        OPEN,
+        CLOSED
     }
 
     public class Information
     {
         public ContextId ContextId { get; }
-        public string CreatorId { get; }
+        public string CreatorId { get; }        
         public InformationState State { get; set; }
-        public string? Input { get; set; }
+        public string? OwnerId { get; set; }        
+        public string Input { get; set; }
         public string? SchemaIn { get; set; }
         public string? Output { get; set; }
         public string? SchemaOut { get; set; }
         public string? Feedback { get; set; }
 
+        // TODO History, Signatures, ReadOnly fields ?
 
-        // TODO History, Signatures, ReadOnly fields
-
-        public Information(ContextId contextId, string creatorId, InformationState state = InformationState.OPEN)
+        public Information(string creatorId, string input)
         {
-            ContextId = contextId;
+            Input = string.IsNullOrEmpty(input) ? throw new ArgumentNullException(nameof(input)) : input;
+            State = InformationState.OPEN;
+            ContextId = new ContextId(creatorId);
             CreatorId = creatorId;
-            State = state;
         }
         public static Information? FromJson(string json)
         {
@@ -42,12 +52,6 @@ namespace Technologai
         public string ToJson()
         {
             return JsonSerializer.Serialize(this);
-        }
-
-        public void Complete(string output)
-        {
-            Output = output;
-            State = InformationState.COMPLETE;
         }
     }
 }

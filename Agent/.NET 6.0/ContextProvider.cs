@@ -16,45 +16,20 @@ namespace Technologai
             _identity = identity;
         }
 
-        public ContextId CreateContextId()
-        {
-            return new ContextId(GetTimestampTicksBytes(), GetIdentityBytes(8));
-        }
-
         internal Information CreateInformation(string input)
-        {   
-            var information = new Information(CreateContextId(), _identity.Id ?? 
-                throw new ArgumentNullException(nameof(_identity.Id)));
-            information.Input = input;
-
-            return information;
+        {
+            var creatorId = _identity.Id ?? throw new ArgumentNullException(nameof(_identity.Id));
+            return new Information(creatorId, input);           
         }
 
-        internal Information CreateInformation()            
+        internal Information Spawn(Information information, string input)
         {
-            return CreateInformation(string.Empty);
-        }
+            var information_new = CreateInformation(input);            
 
-        public static ulong GetTimestampTicksBytes()
-        {
-            return (ulong)(DateTimeOffset.UnixEpoch - DateTimeOffset.UtcNow).Ticks;
-        }
+            _contextHierarchy.Add(information_new.ContextId, information.ContextId);
 
-        public byte[] GetIdentityBytes(int count)
-        {
-            return Base64UrlEncoder.DecodeBytes(_identity.Id).Take(count).ToArray();
-        }
-
-        internal Information Spawn(Information information, InformationState state = InformationState.OPEN, string? input = null)
-        {
-            string contextId = CreateContextId();
-            
-            _contextHierarchy.Add(contextId, information.ContextId);
-
-            var information_new = new Information(contextId, _identity.Id ?? throw new ArgumentNullException(nameof(_identity.Id)));
-            information_new.Input = string.IsNullOrEmpty(input) ? null : input;
             return information_new;
-        }
+        }     
 
        internal void MarkComplete(Information information) {
 

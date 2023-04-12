@@ -1,11 +1,9 @@
-﻿
-
-namespace Technologai.Agents.Core.Coordinator
+﻿namespace Technologai.Agents.Core.Coordinator
 {
     internal class Program
     {
 
-        private static TechnologaiAgent? _agent;
+        private static Coordinator? _coordinator;
 
         private static AppConfig _config = new AppConfig();
 
@@ -16,47 +14,25 @@ namespace Technologai.Agents.Core.Coordinator
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
 
-            _agent = new TechnologaiAgent(authorityName, clientId, clientSecret, memberId);
+            _coordinator = new Coordinator(authorityName, clientId, clientSecret, memberId);
 
-            _agent.InformationReceived += _agent_InformationReceived;
-            _agent.StatusMessage += _agent_StatusMessage;
+            _coordinator.StatusMessage += _coordinator_StatusMessage;
 
             Console.WriteLine("Loading...");
 
-            await _agent.Start();
+            await _coordinator.Start();
             await Program.Run();
-            await _agent.Stop();
+            await _coordinator.Stop();
         }
 
-        private static void _agent_StatusMessage(object? sender, string message)        {
+        private static void _coordinator_StatusMessage(object? sender, string message)        {
 
-            Console.WriteLine($"{_agent?.Name ?? "Coordinator"} Status> {message}");            
-        }
-
-        private static void _agent_InformationReceived(object? sender, Information information)
-        {
-            Console.WriteLine($"{_agent?.Name} Received>{information.ContextId}:{information.Input}:{information.Output}");
-            HandleInformation(information);            
-        }
-
-        private static void HandleInformation(Information information)
-        {            
-            // TODO: Coordinator things, basically routing
-            // Coordinator has the master Member, Actions, and Prompts lists                       
-
-            string CHAT_GPT_ID = "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q";
-            Publish(information, CHAT_GPT_ID);
-        }
-
-        private static void Publish(Information information, string? memberId = null)
-        {   
-            _agent?.Publish(information, memberId);
-            Console.WriteLine($"{_agent?.Name} Published> {information.Input} | {information.Output}");
+            Console.WriteLine($"{_coordinator?.Name ?? "Coordinator.Local"} Status> {message}");            
         }
 
         private async static Task Run()
         {
-            Console.WriteLine($"{_agent?.Name} Started. \"quit\" to stop.");
+            Console.WriteLine($"{_coordinator?.Name} Started. \"quit\" to stop.");
 
             do
             {
