@@ -19,13 +19,11 @@ namespace Technologai.Agents.Core.Coordinator
             Console.WriteLine($"{Name} Handle> {information.State} | {information.Input} | {information.Output}");
 
             // TODO: Coordinator things, basically routing
-            // Coordinator has the master Member, Actions, and Prompts lists
-            // 
-            if (information.OwnerId == null)
-            {
-                string CHAT_GPT_ID = "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q";
-                Assign(information, CHAT_GPT_ID);
-            }
+            // Coordinator has the master Member, Actions, and Prompts lists            
+
+            string CHAT_GPT_ID = "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q";
+
+            Assign(information, CHAT_GPT_ID);
         }
     }
 }

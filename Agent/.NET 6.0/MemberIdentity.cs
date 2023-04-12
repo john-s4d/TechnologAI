@@ -9,14 +9,14 @@ namespace Technologai
 {
     public class MemberIdentity : Identity
     {
-        internal override string RoleName => "member";
+        //internal override string RoleName => "member";
+        internal override TechnologaiRole RoleName => TechnologaiRole.member;
         public AgentIdentity Agent { get; }
-
         public AgencyIdentity? Agency { get; internal set; }
         public Authority Authority => Agent.Authority;
         internal string? Token { get; private set; }
-        internal override string PublishMask => $"{Agency.Id}/0/0/0";
-        internal override string SubscribeMask => $"{Agency.Id}/{Id}/0/0";
+        internal override string PublishMask => $"{Agency?.Id ?? "0"}/0/0/0";
+        internal override string SubscribeMask => $"{Agency?.Id ?? "0"}/{Id}/0/0";
 
         internal MemberIdentity(string id, AgentIdentity agent)
         {
@@ -58,7 +58,7 @@ namespace Technologai
                             }
                             if (claim.Type == "role")
                             {
-                                AssignedRole = claim.Value;
+                                AssignedRole = Enum.Parse<TechnologaiRole>(claim.Value);
                             }
                         }
                         return;

@@ -20,10 +20,10 @@ namespace Technologai.Agents.Abilities.ChatGPT
         {
             Console.WriteLine($"{Name} Received> {information.Input} | {information.Output}");
 
-            Spawn(information, "woot woot");
-            Complete(information, await _openAI.GetGpt3Response(information.Input));
+            await Publish(Spawn(information, "woot woot"));
 
-            Console.WriteLine($"{Name} Completed > {information.Input} | {information.Output}");            
+            Close(information, await _openAI.GetGpt3Response(information.Input));
+            
         }
        
     }

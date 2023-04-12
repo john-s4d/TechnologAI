@@ -4,7 +4,7 @@ namespace Technologai
 {
     public class AgentIdentity : Identity
     {
-        internal override string RoleName => "agent";
+        internal override TechnologaiRole RoleName => TechnologaiRole.agent;
         public Authority Authority { get; }
         public AgentIdentity? SubAgent { get; }
         protected string ClientSecret { get;  }

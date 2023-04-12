@@ -35,7 +35,7 @@ namespace Technologai.Agents.Core.Interaction
         {
             if (_agent == null) { throw new ArgumentNullException(nameof(_agent)); }
 
-            _ = _agent.CreateInformation(input);            
+            _ = _agent.Publish(_agent.CreateInformation(input));
         }
 
         private async static Task Run()

@@ -1,6 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
+using System.Text.Json.Serialization;
 
 namespace Technologai
 {
@@ -12,19 +13,14 @@ namespace Technologai
         private readonly byte[] _unixTimestampBytes = new byte[8];
         private readonly byte[] _hashComputeBytes = new byte[8];
 
-        public ContextId()
-        {
-            throw new InvalidOperationException();
-        }
-
         internal ContextId(ulong unixTimestamp, byte[] idHash)
         {
             _unixTimestampBytes = BitConverter.GetBytes(unixTimestamp);
-            _hashComputeBytes = MD5.HashData(idHash.Concat(_unixTimestampBytes).ToArray());
+            _hashComputeBytes = MD5.HashData(idHash.Concat(_unixTimestampBytes).ToArray()).Take(8).ToArray();
             _id = Base64UrlEncoder.Encode(_unixTimestampBytes.Concat(_hashComputeBytes).ToArray());
         }
-
-        internal ContextId(string contextId)
+                
+        public ContextId(string contextId)
         {
             _id = contextId;
             var contextBytes = Base64UrlEncoder.DecodeBytes(_id);
@@ -63,15 +59,9 @@ namespace Technologai
             return result;
         }
 
-        public static implicit operator ContextId(string contextId)
-        {
-            return new ContextId(contextId);
-        }
+        public static implicit operator ContextId(string value) => new ContextId(value);
 
-        public static implicit operator string(ContextId contextId)
-        {
-            return contextId._id;
-        }
+        public static implicit operator string(ContextId value) => value.ToString();      
 
         public override string ToString()
         {

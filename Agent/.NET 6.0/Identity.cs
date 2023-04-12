@@ -2,12 +2,19 @@
 
 namespace Technologai
 {
+    public enum TechnologaiRole
+    {
+        agency,
+        member,
+        agent
+    }
+
     public abstract class Identity
     {
-        internal string? AssignedRole { get; set; }
+        internal TechnologaiRole AssignedRole { get; set; }
         internal string? Name { get; set; }
         public string? Id { get; set; }
-        internal abstract string RoleName { get; }
+        internal abstract TechnologaiRole RoleName { get; }
         internal abstract string PublishMask { get; }
         internal abstract string SubscribeMask { get; }
 
