@@ -19,7 +19,7 @@ namespace Technologai
    
         public MqttClient(MemberIdentity identity)
         {
-            _identity = identity; 
+            _identity = identity;
         }
 
         internal async Task ConnectAsync()

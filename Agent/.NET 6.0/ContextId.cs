@@ -1,4 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 
 namespace Technologai
@@ -11,20 +12,40 @@ namespace Technologai
         private readonly byte[] _unixTimestampBytes = new byte[8];
         private readonly byte[] _hashComputeBytes = new byte[8];
 
-        public ContextId(ulong unixTimestamp, byte[] idHash)
+        public ContextId()
+        {
+            throw new InvalidOperationException();
+        }
+
+        internal ContextId(ulong unixTimestamp, byte[] idHash)
         {
             _unixTimestampBytes = BitConverter.GetBytes(unixTimestamp);
             _hashComputeBytes = MD5.HashData(idHash.Concat(_unixTimestampBytes).ToArray());
             _id = Base64UrlEncoder.Encode(_unixTimestampBytes.Concat(_hashComputeBytes).ToArray());
         }
 
-        public ContextId(string contextId)
+        internal ContextId(string contextId)
         {
             _id = contextId;
             var contextBytes = Base64UrlEncoder.DecodeBytes(_id);
 
             Array.Copy(contextBytes, _unixTimestampBytes, 8);
             Array.Copy(contextBytes, 8, _hashComputeBytes, 0, 8);
+        }
+
+        internal static ContextId Create(string creatorIdBase64)        {
+
+            return new ContextId(GetTimestampTicksBytes(), GetBase64Bytes(creatorIdBase64, 8));
+        }
+
+        public static ulong GetTimestampTicksBytes()
+        {
+            return (ulong)(DateTimeOffset.UnixEpoch - DateTimeOffset.UtcNow).Ticks;
+        }
+
+        public static byte[] GetBase64Bytes(string creatorIdBase64, int count)
+        {
+            return Base64UrlEncoder.DecodeBytes(creatorIdBase64).Take(count).ToArray();
         }
 
         public int CompareTo(ContextId other)

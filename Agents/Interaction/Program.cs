@@ -17,7 +17,6 @@ namespace Technologai.Agents.Core.Interaction
 
             _agent = new TechnologaiAgent(authorityName, clientId, clientSecret, memberId);
 
-            _agent.InformationReceived += _agent_InformationReceived;
             _agent.StatusMessage += _agent_statusMessage;
 
             Console.WriteLine("Loading...");
@@ -26,26 +25,17 @@ namespace Technologai.Agents.Core.Interaction
             await Program.Run();
             await _agent.Stop();
         }
-
-        private static void _agent_InformationReceived(object? sender, Information information)
-        {
-            Console.WriteLine($"{_agent?.Name} Received> {information.Input} | {information.Output}");
-        }
-
+ 
         private static void _agent_statusMessage(object? sender, string message)
         {
-            Console.WriteLine($"{_agent?.Name ?? "Interaction"} Status> {message}");
+            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} Status> {message}");
         }
 
         private static void Input(string input)
         {
             if (_agent == null) { throw new ArgumentNullException(nameof(_agent)); }
 
-            var information = _agent.CreateInformation(input);
-
-            _agent?.Publish(information);
-
-            Console.WriteLine($"{_agent?.Name} Published> {information.Input} | {information.Output}");
+            _ = _agent.CreateInformation(input);            
         }
 
         private async static Task Run()
