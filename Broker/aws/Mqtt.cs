@@ -69,56 +69,32 @@ namespace Technologai.AWS
             {
                 return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 401, Body = "readwrite_not_allowed" };
             }
-
-            string agentId = claims["client_id"];
+            
             string memberId = claims["sub"];
             string agencyId = claims["agency_id"];
             string role = claims["role"];
 
-            if (role == "agent")
-            {
-                string publishMask = $"0/0/{agentId}/+";
-                string subscribeMask = $"0/0/{agentId}/+";
-
-                if ((acl.acc == 1 || acl.acc == 4) && TopicAllowed(acl.topic, subscribeMask))
-                {
-                    return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 200 };
-                }
-                if (acl.acc == 2 && !acl.topic.Contains('+') && TopicAllowed(acl.topic, publishMask))
-                {
-                    return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 200 };
-                }
-            }
             if (role == "member")
             {
-                string publishMask = $"{agencyId}/0/0/0";
-                string subscribeMask = $"{agencyId}/{memberId}/0/0";
+                string publishMask = $"{agencyId}/+";
+                string subscribeAgencyMask = $"{agencyId}/0";
+                string subscribeMemberMask = $"{agencyId}/{memberId}";
 
-                if ((acl.acc == 1 || acl.acc == 4) && TopicAllowed(acl.topic, subscribeMask))
+                if ((acl.acc == 1 || acl.acc == 4) && TopicAllowed(acl.topic, subscribeAgencyMask))
                 {
                     return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 200 };
                 }
-                if (acl.acc == 2 && !acl.topic.Contains('+') && TopicAllowed(acl.topic, publishMask))
+
+                if ((acl.acc == 1 || acl.acc == 4) && TopicAllowed(acl.topic, subscribeMemberMask))
+                {
+                    return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 200 };
+                }
+
+                if (acl.acc == 2 && TopicAllowed(acl.topic, publishMask))
                 {
                     return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 200 };
                 }
             }
-            if (role == "agency")
-            {
-                string publishMask = $"{agencyId}/+/0/0";
-                string subscribeMask = $"{agencyId}/0/0/0";
-
-                if ((acl.acc == 1 || acl.acc == 4) && TopicAllowed(acl.topic, subscribeMask))
-                {
-                    return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 200 };
-                }
-                if (acl.acc == 2 && !acl.topic.Contains('+') && TopicAllowed(acl.topic, publishMask))
-                {
-                    return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 200 };
-                }
-
-            }
-
             return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 401 };
         }
 

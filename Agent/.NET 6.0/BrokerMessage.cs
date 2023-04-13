@@ -5,12 +5,10 @@ namespace Technologai
 {
     public class BrokerMessage
     {
-        public string Topic => $"{AgencyId}/{MemberId}/{AgentId}/{SubagentId}";
+        public string Topic => $"{AgencyId}/{MemberId}";
         public Information? Information { get; set; }
         public string? AgencyId { get; set; }
         public string? MemberId { get; set; }
-        public string? AgentId { get; set; }
-        public string? SubagentId { get; set; }
 
         private BrokerMessage() { }
 
@@ -22,28 +20,14 @@ namespace Technologai
             {
                 AgencyId = topicParts[0],
                 MemberId = topicParts[1],
-                AgentId = topicParts[2],
-                SubagentId = topicParts[3],
                 Information = Information.FromJson(args.ApplicationMessage.ConvertPayloadToString())
             };
         }
 
-        internal BrokerMessage(MemberIdentity identity)
+        internal BrokerMessage(Identity identity)
         {
-            AgencyId = identity.Agency?.Id ?? throw new ArgumentNullException(nameof(identity.Agency));
-            AgentId = identity.Agent.Id;
-        }
-
-        internal BrokerMessage(AgencyIdentity identity)
-        {
-            AgencyId = identity.Id;
-            AgentId = identity.Agent.Id;
-        }
-
-        internal BrokerMessage(AgentIdentity identity)
-        {
-            AgentId = identity.Id;
-            SubagentId = identity.SubAgent?.Id;
-        }
+            AgencyId = identity.AgencyId;
+            MemberId = identity.Id;
+        }        
     }
 }
