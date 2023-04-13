@@ -8,8 +8,7 @@ using System.Security.Claims;
 namespace Technologai
 {
     public class MemberIdentity : Identity
-    {
-        //internal override string RoleName => "member";
+    {   
         internal override TechnologaiRole RoleName => TechnologaiRole.member;
         public AgentIdentity Agent { get; }
         public AgencyIdentity? Agency { get; internal set; }
