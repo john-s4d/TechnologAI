@@ -9,7 +9,7 @@ namespace Technologai
     {
         private const int PORT = 8083;
 
-        private MemberIdentity _identity;
+        private Identity _identity;
 
         private IMqttClient _client = new MqttFactory().CreateMqttClient();
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -17,7 +17,7 @@ namespace Technologai
         internal event EventHandler<MqttApplicationMessageReceivedEventArgs>? MessageReceived;
 
    
-        public MqttClient(MemberIdentity identity)
+        public MqttClient(Identity identity)
         {
             _identity = identity;
         }

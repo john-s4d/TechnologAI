@@ -11,16 +11,14 @@ namespace Technologai
         internal ContextProvider Context { get; private set; }
 
         private MqttClient _mqtt;
-        
-        private Dictionary<string, Information> _localInformation = new Dictionary<string, Information>();
-        private Queue<string> _workingQueue = new Queue<string>();
-        private Queue<string> _archiveQueue = new Queue<string>();
 
-        public MemberIdentity Identity { get; } // TODO: Connect as an Agent, without memberId
+        private Dictionary<string, Information> _localInformation = new Dictionary<string, Information>();        
+
+        public Identity Identity { get; }
 
         public TechnologaiAgent(string authorityName, string clientId, string clientSecret, string memberId)
         {
-            Identity = new MemberIdentity(memberId, new AgentIdentity(authorityName, clientId, clientSecret));
+            Identity = new Identity(authorityName, clientId, clientSecret, memberId);
             Abilities = new AbilityCatalog(Identity);
             Context = new ContextProvider(Identity);
 
@@ -42,11 +40,11 @@ namespace Technologai
         {
             if (await BeforeHandle(information))
             {
-                if (!string.IsNullOrEmpty(information.AbilityName) && 
+                if (!string.IsNullOrEmpty(information.AbilityName) &&
                     Abilities.ContainsKey(information.AbilityName))
                 {
                     await Execute(Abilities[information.AbilityName], information);
-                }                
+                }
                 await Handle(information);
                 await Publish(information);
             }
@@ -60,8 +58,6 @@ namespace Technologai
             var isDraft = information.State == InformationState.DRAFT;
             var isOpen = information.State == InformationState.OPEN;
             var isClosed = information.State == InformationState.CLOSED;
-            var isAgency = Identity.AssignedRole == TechnologaiRole.agency;
-            var isMember = Identity.AssignedRole == TechnologaiRole.member;
             var isCreator = information.CreatorId == Identity.Id;
 
             if (isDraft)
@@ -75,35 +71,28 @@ namespace Technologai
                 return false;
             }
 
-            if (!_localInformation.ContainsKey(information.ContextId)) {
+            if (!_localInformation.ContainsKey(information.ContextId))
+            {
                 _localInformation.Add(information.ContextId, information);
             }
 
-            if (isMember)
+
+            if (isCreator && isOpen)
             {
-                if (isCreator && isOpen)
-                {
-                    information.Close(); // Incomplete
-                    information.Defer();
-                    return false;
-                }
-
-                if (isCreator && isClosed)
-                {
-                    information.Compile();
-                    return false;
-                }
-
-                if (isClosed)
-                {
-                    await SendToBroker(information, information.CreatorId);
-                    return false;
-                }
+                information.Close(); // Incomplete
+                information.Defer();
+                return false;
             }
 
-            else if (isAgency && isNullOwned && isClosed)
+            if (isCreator && isClosed)
             {
-                information.Archive();
+                information.Compile();
+                return false;
+            }
+
+            if (isClosed)
+            {
+                await SendToBroker(information, information.CreatorId);
                 return false;
             }
 
@@ -111,7 +100,6 @@ namespace Technologai
         }
 
         public abstract Task Handle(InformationHandler information);
-        
 
         public async Task Publish(InformationHandler information)
         {
@@ -121,8 +109,6 @@ namespace Technologai
             var isDraft = information.State == InformationState.DRAFT;
             var isOpen = information.State == InformationState.OPEN;
             var isClosed = information.State == InformationState.CLOSED;
-            var isAgency = Identity.AssignedRole == TechnologaiRole.agency;
-            var isMember = Identity.AssignedRole == TechnologaiRole.member;
             var isCreator = information.CreatorId == Identity.Id;
 
             if (isDraft)
@@ -130,7 +116,8 @@ namespace Technologai
                 information.State = InformationState.OPEN;
             }
 
-            if (!_localInformation.ContainsKey(information.ContextId)) {
+            if (!_localInformation.ContainsKey(information.ContextId))
+            {
                 _localInformation.Add(information.ContextId, information);
             }
 
@@ -146,27 +133,9 @@ namespace Technologai
                 return;
             }
 
-            if (isMember)
-            {
-                if (isNullOwned && (isCreator || isOpen))
-                {
-                    await SendToBroker(information);
-                    return;
-                }
-                await SendToBroker(information, information.CreatorId);
-                return;
-            }
-
-            if (isAgency)
-            {
-                information.Archive();
-                return;
-            }
-
-            throw new NotImplementedException("information was not routed");                        
-            // TODO: What if I am an agent.
+            await SendToBroker(information, information.CreatorId);            
         }
-        
+
         public abstract Task Execute(Ability ability, InformationHandler information);
 
         public InformationHandler CreateInformation(string? input = null)
@@ -176,7 +145,7 @@ namespace Technologai
 
         // Message Handling
 
-        private async Task<bool> SendToBroker(Information information, string? memberId = null)
+        private async Task<bool> SendToBroker(Information information, string memberId)
         {
             var message = new BrokerMessage(Identity)
             {
@@ -184,43 +153,13 @@ namespace Technologai
                 MemberId = memberId
             };
 
-            return await SendToBroker(message);
-        }
+            string? topic = Identity.GetMaskedTopic(message.Topic);
 
-        private async Task<bool> SendToBroker(BrokerMessage message)
-        {
-            if (message.Information == null)
-            {
-                return false;
-            }
+            await _mqtt.PublishAsync(topic ?? string.Empty, message.Information.ToJson());
 
-            Identity? publishIdentity = null;
+            SendStatusMessage($"Publish> {message.Information.ContextId} | {message.Information.Input} | {message.Information.Output}");
 
-            if (Identity.AssignedRole == TechnologaiRole.agency)
-            {
-                publishIdentity = Identity.Agency;
-            }
-            if (Identity.AssignedRole == TechnologaiRole.member)
-            {
-                publishIdentity = Identity;
-            }
-            if (Identity.AssignedRole == TechnologaiRole.agent)
-            {
-                publishIdentity = Identity.Agent;
-            }
-
-            if (publishIdentity != null)
-            {
-                string? topic = publishIdentity?.GetMaskedTopic(message.Topic);
-
-                await _mqtt.PublishAsync(topic ?? string.Empty, message.Information.ToJson());
-
-                SendStatusMessage($"Publish> {message.Information.ContextId} | {message.Information.Input} | {message.Information.Output}");
-
-                return true;
-            }
-
-            return false;
+            return true;
         }
 
         internal void SendStatusMessage(string message)
@@ -248,26 +187,11 @@ namespace Technologai
                 await _mqtt.ConnectAsync();
                 SendStatusMessage($"Connected");
 
-                // Subscribe to Member Topics
-                if (Identity.AssignedRole == TechnologaiRole.member)
-                {
-                    await _mqtt.SubscribeAsync(Identity.SubscribeMask);
-                    SendStatusMessage($"Subscribed> {Identity.RoleName}:{Identity.SubscribeMask}");
-                }
+                await _mqtt.SubscribeAsync(Identity.SubscribeAgencyMask);
+                SendStatusMessage($"Agency Subscribed> {Identity.SubscribeAgencyMask}");
 
-                // Subscribe to Agency Topics
-                if (Identity.AssignedRole == TechnologaiRole.agency && Identity.Agency != null)
-                {
-                    await _mqtt.SubscribeAsync(Identity.Agency.SubscribeMask);
-                    SendStatusMessage($"Subscribed> {Identity.Agency.RoleName}:{Identity.Agency.SubscribeMask}");
-                }
-
-                // Subscribe to Agent Topics
-                if (Identity.AssignedRole == TechnologaiRole.agent)
-                {
-                    await _mqtt.SubscribeAsync(Identity.Agent.SubscribeMask);
-                    SendStatusMessage($"Subscribed> {Identity.Agent.RoleName}:{Identity.Agent.SubscribeMask}");
-                }
+                await _mqtt.SubscribeAsync(Identity.SubscribeMemberMask);
+                SendStatusMessage($"Member Subscribed> {Identity.SubscribeMemberMask}");
 
             }
             catch (Exception ex)
