@@ -1,48 +1,31 @@
-﻿using Microsoft.VisualBasic;
-using MQTTnet;
-using MQTTnet.Client;
-using System.CodeDom.Compiler;
-using System.ComponentModel.Design;
-using System.IO.Compression;
-using System.Net.Http;
-using System.Reflection.Metadata.Ecma335;
-using System.Security.Principal;
+﻿using MQTTnet.Client;
 
 namespace Technologai
 {
-    public enum Role
-    {
-        Agency,
-        Member,
-        Agent
-    }
-
-    public class TechnologaiAgent
+    public abstract class TechnologaiAgent
     {
         public string? Name { get; private set; }
-
         public event EventHandler<string>? StatusMessage;
 
-        private MqttClient _mqtt;
-        private ContextProvider _contexts;
-        private ActionCatalog _actions;
+        public AbilityCatalog Abilities { get; private set; }
 
-        private Dictionary<string, Information> _information = new Dictionary<string, Information>();
+        private MqttClient _mqtt;
+        private ContextProvider _contexts;        
+
+        private Dictionary<string, Information> _localInformation = new Dictionary<string, Information>();
 
         private Queue<string> _workingQueue = new Queue<string>();
-        private Queue<string> _archiveQueue = new Queue<string>();        
+        private Queue<string> _archiveQueue = new Queue<string>();
 
         public MemberIdentity Identity { get; } // TODO: Connect as an Agent, without memberId
-
-        public string IdentityId { get { return string.IsNullOrEmpty(Identity.Id) ? throw new NullReferenceException(nameof(Identity.Id)) : Identity.Id; } }
 
         public TechnologaiAgent(string authorityName, string clientId, string clientSecret, string memberId)
         {
             Identity = new MemberIdentity(memberId, new AgentIdentity(authorityName, clientId, clientSecret));
+            Abilities = new AbilityCatalog(Identity);
 
             _contexts = new ContextProvider(Identity);
             _mqtt = new MqttClient(Identity);
-            _actions = new ActionCatalog();
 
             _mqtt.MessageReceived += _mqtt_MessageReceived;
         }
@@ -61,6 +44,11 @@ namespace Technologai
         {
             if (await BeforeHandle(information))
             {
+                if (!string.IsNullOrEmpty(information.AbilityName) && 
+                    Abilities.ContainsKey(information.AbilityName))
+                {
+                    await Execute(Abilities[information.AbilityName], information);
+                }                
                 await Handle(information);
                 await Publish(information);
             }
@@ -69,14 +57,14 @@ namespace Technologai
         private async Task<bool> BeforeHandle(Information information)
         {
             var isNullOwned = information.OwnerId == null;
-            var isSelfOwned = information.OwnerId == IdentityId;
-            var isElseOwned = information.OwnerId != IdentityId && information.OwnerId != null;
+            var isSelfOwned = information.OwnerId == Identity.Id;
+            var isElseOwned = information.OwnerId != Identity.Id && information.OwnerId != null;
             var isDraft = information.State == InformationState.DRAFT;
             var isOpen = information.State == InformationState.OPEN;
             var isClosed = information.State == InformationState.CLOSED;
             var isAgency = Identity.AssignedRole == TechnologaiRole.agency;
             var isMember = Identity.AssignedRole == TechnologaiRole.member;
-            var isCreator = information.CreatorId == IdentityId;
+            var isCreator = information.CreatorId == Identity.Id;
 
             if (isDraft)
             {
@@ -89,8 +77,8 @@ namespace Technologai
                 return false;
             }
 
-            if (_information.ContainsKey(information.ContextId)) {
-                _information.Add(information.ContextId, information);
+            if (!_localInformation.ContainsKey(information.ContextId)) {
+                _localInformation.Add(information.ContextId, information);
             }
 
             if (isMember)
@@ -132,22 +120,22 @@ namespace Technologai
         public async Task Publish(Information information)
         {
             var isNullOwned = information.OwnerId == null;
-            var isSelfOwned = information.OwnerId == IdentityId;
-            var isElseOwned = information.OwnerId != IdentityId && information.OwnerId != null;
+            var isSelfOwned = information.OwnerId == Identity.Id;
+            var isElseOwned = information.OwnerId != Identity.Id && information.OwnerId != null;
             var isDraft = information.State == InformationState.DRAFT;
             var isOpen = information.State == InformationState.OPEN;
             var isClosed = information.State == InformationState.CLOSED;
             var isAgency = Identity.AssignedRole == TechnologaiRole.agency;
             var isMember = Identity.AssignedRole == TechnologaiRole.member;
-            var isCreator = information.CreatorId == IdentityId;
+            var isCreator = information.CreatorId == Identity.Id;
 
             if (isDraft)
             {
                 information.State = InformationState.OPEN;
             }
 
-            if (_information.ContainsKey(information.ContextId)) {
-                _information.Add(information.ContextId, information);
+            if (!_localInformation.ContainsKey(information.ContextId)) {
+                _localInformation.Add(information.ContextId, information);
             }
 
             if (isElseOwned)
@@ -179,13 +167,12 @@ namespace Technologai
                 return;
             }
 
-            throw new NotImplementedException("information was not routed");
-            
+            throw new NotImplementedException("information was not routed");                        
             // TODO: What if I am an agent.
-
         }
 
         // Information Handling
+        public abstract Task Execute(Ability ability, Information information);
 
         private void Compile(Information information)
         {
@@ -212,6 +199,13 @@ namespace Technologai
             return new_information;
         }
 
+        public Information Spawn(Information information, Ability ability)
+        {
+            var new_information = _contexts.Spawn(information, ability);
+            SendStatusMessage($"Spawn > {information.ContextId} | {information.AbilityName} | {information.Input}");
+            return new_information;
+        }
+
         public Information CreateInformation(string? input = null)
         {
             var information = _contexts.CreateInformation(input);
@@ -232,6 +226,8 @@ namespace Technologai
             information.OwnerId = ownerId;
             SendStatusMessage($"Assign > {information.ContextId} | {information.Input} | {information.Output}");
         }
+
+        // Message Handling
 
         private async Task<bool> SendToBroker(Information information, string? memberId = null)
         {
@@ -272,7 +268,7 @@ namespace Technologai
 
                 await _mqtt.PublishAsync(topic ?? string.Empty, message.Information.ToJson());
 
-                //SendStatusMessage($"Published: {message.Information.ContextId} {topic}");
+                SendStatusMessage($"Publish> {message.Information.ContextId} | {message.Information.Input} | {message.Information.Output}");
 
                 return true;
             }
@@ -284,6 +280,8 @@ namespace Technologai
         {
             StatusMessage?.Invoke(this, message);
         }
+
+        // Startup
 
         public async Task Start()
         {
@@ -311,7 +309,7 @@ namespace Technologai
                 }
 
                 // Subscribe to Agency Topics
-                if (Identity.AssignedRole == TechnologaiRole.agency)
+                if (Identity.AssignedRole == TechnologaiRole.agency && Identity.Agency != null)
                 {
                     await _mqtt.SubscribeAsync(Identity.Agency.SubscribeMask);
                     SendStatusMessage($"Subscribed: {Identity.Agency.RoleName}:{Identity.Agency.SubscribeMask}");
