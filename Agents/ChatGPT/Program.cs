@@ -29,7 +29,7 @@ namespace Technologai.Agents.Abilities.ChatGPT
         private static void _agent_StatusMessage(object? sender, string message)
         {
 
-            Console.WriteLine($"{_agent?.Name ?? "ChatGPT"} Status> {message}");
+            Console.WriteLine($"{_agent?.Name ?? "ChatGPT"} {message}");
         }
 
         private async static Task Run()

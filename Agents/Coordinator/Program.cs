@@ -27,7 +27,7 @@
 
         private static void _coordinator_StatusMessage(object? sender, string message)        {
 
-            Console.WriteLine($"{_coordinator?.Name ?? "Coordinator.Local"} Status> {message}");            
+            Console.WriteLine($"{_coordinator?.Name ?? "Coordinator.Local"} {message}");            
         }
 
         private async static Task Run()

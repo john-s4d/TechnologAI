@@ -1,12 +1,14 @@
 ﻿using IdentityModel;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualBasic;
+using System.ComponentModel;
 using System.Security.Cryptography;
 
 namespace Technologai
 {
     public class ContextProvider
     {   
-        private Dictionary<string, string> _contextHierarchy = new();
+        private Dictionary<string, List<string>> _contextHierarchy = new();
         private Dictionary<string, Information> _completedInformation = new();
 
         private Identity _identity;
@@ -16,36 +18,13 @@ namespace Technologai
             _identity = identity;
         }
 
-        internal Information CreateInformation(string? input = null)
+        internal void Link(Information newInformation, Information oldInformation)
         {
-            var creatorId = _identity.Id;
-            return new Information(creatorId, input);           
-        }
-
-        internal Information Spawn(Information information, string? input = null)
-        {
-            var information_new = CreateInformation(input);            
-
-            _contextHierarchy.Add(information_new.ContextId, information.ContextId);
-
-            return information_new;
-        }
-
-        internal Information Spawn(Information information, Ability ability)
-        {
-            // TODO: Serialize the input
-            var information_new = CreateInformation(information.Input);
-            information_new.AbilityName = ability.Name;
-            _contextHierarchy.Add(information_new.ContextId, information.ContextId);
-            return information_new;
-        }
-
-        internal void MarkComplete(Information information) {
-
-            if (!_completedInformation.ContainsKey(information.ContextId))
+            if (!_contextHierarchy.ContainsKey(newInformation.ContextId))
             {
-                _completedInformation.Add(information.ContextId, information);
+                _contextHierarchy.Add(newInformation.ContextId, new List<string>());
             }
+            _contextHierarchy[newInformation.ContextId].Add(oldInformation.ContextId);
         }
     }
 }

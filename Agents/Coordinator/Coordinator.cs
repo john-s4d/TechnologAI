@@ -16,7 +16,7 @@ namespace Technologai.Agents.Core.Coordinator
             Abilities.Add(
                 new Ability()
                 {
-                    Name = "choose_ability",                    
+                    Name = "choose_ability",
                     SchemaIn = "{\"input\":string,\"abilities\":[{\"name\":string,\"description\":string}]}",
                     SchemaOut = "{\"name\":string}",
                     Description = "From the provided list, choose the ability to use for the response.",
@@ -32,23 +32,23 @@ namespace Technologai.Agents.Core.Coordinator
                     SchemaIn = "{\"input\":string}",
                     SchemaOut = "{\"name\":string}",                    
                     MemberId = "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q"
-                }
+                } 
             );
         }
 
-        public override Task Execute(Ability ability, Information information)
+        public override Task Execute(Ability ability, InformationHandler information)
         {
-            Console.WriteLine($"{Name} Handle> {information.State} | {information.Input} | {information.Output}");
+            Console.WriteLine($"{Name} Execute> {information.ContextId} | {information.AbilityName} | {information.Input}");
 
             return Task.CompletedTask;
         }
 
-        public override async Task Handle(Information information)
+        public override async Task Handle(InformationHandler information)
         {
-            Console.WriteLine($"{Name} Handle> {information.State} | {information.Input} | {information.Output}");
+            Console.WriteLine($"{Name} Handle> {information.ContextId} | {information.Input} | {information.Output}");
 
-            // If we've received a message, it's probably lost. Find out how to handle it.
-            await Publish(Spawn(information, Abilities["choose_ability"]));
+            // If we've received a message, it's looking for an owner. Find out how to handle it.
+            await information.Spawn(Abilities["choose_ability"]).Publish();
             
         }
     }

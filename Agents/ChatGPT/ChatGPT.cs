@@ -18,6 +18,17 @@ namespace Technologai.Agents.Abilities.ChatGPT
         public ChatGPT(string authorityName, string clientId, string clientSecret, string memberId)
             : base(authorityName, clientId, clientSecret, memberId)
         {
+
+            Abilities.Add(
+                new Ability()
+                {
+                    Name = "choose_ability",
+                    Description = "From the provided list, choose the ability to use for the response.",
+                    SchemaIn = "{\"input\":string,\"abilities\":[{\"name\":string,\"description\":string}]}",
+                    SchemaOut = "{\"name\":string}"
+                }
+            );
+
             Abilities.Add(
                 new Ability()
                 {
@@ -29,20 +40,28 @@ namespace Technologai.Agents.Abilities.ChatGPT
             );
         }
 
-        public override async Task Execute(Ability ability, Information information)
+        public override async Task Execute(Ability ability, InformationHandler information)
         {
-            Console.WriteLine($"{Name} Execute> {information.Input} | {information.Output}");
+            Console.WriteLine($"{Name} Execute> {information.ContextId} | {information.AbilityName} | {information.Input}");
 
             if (ability.Name == "chatgpt_prompt" && !string.IsNullOrEmpty(information.Input))
             {
                 // TODO: De/Serialize according to schemas
-                Close(information, await _openAI.GetGpt3Response(information.Input));                
+                information.Close(await _openAI.GetGpt3Response(information.Input));
+            }
+
+            if (ability.Name == "choose_ability" && !string.IsNullOrEmpty(information.Input))
+            {
+                // TODO: De/Serialize according to schemas
+                information.Close(await _openAI.GetGpt3Response(information.Input));
             }
         }
 
-        public override Task Handle(Information information)
+        public override Task Handle(InformationHandler information)
         {
-            Console.WriteLine($"{Name} Handle> {information.Input} | {information.Output}");
+            //SendStatusMessage($"Handle> {ContextId} | {Input} | {Output}");
+            Console.WriteLine($"{Name} Handle> {information.ContextId} | {information.Input} | {information.Output}");
+
             return Task.CompletedTask;
         }
     }

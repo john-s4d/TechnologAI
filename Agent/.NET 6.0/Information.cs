@@ -26,7 +26,7 @@ namespace Technologai
 
         // TODO History, Signatures, ReadOnly fields ?        
 
-        private Information() { }
+        protected Information() { }
 
         [JsonConstructor]
         public Information(string contextId, string creatorId, InformationState state, 

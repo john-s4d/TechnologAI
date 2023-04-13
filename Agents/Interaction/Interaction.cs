@@ -16,23 +16,23 @@
             );
         }
 
-        public override async Task Execute(Ability ability, Information information)
+        public override async Task Execute(Ability ability, InformationHandler information)
         {
-            Console.WriteLine($"{Name} Execute> {information.AbilityName} | {information.Input} ");
+            Console.WriteLine($"{Name} Execute> {information.ContextId} | {information.AbilityName} | {information.Input}");
 
             if (ability.Name == "get_user_input")
             {
                 Console.WriteLine(information.Input);
                 await Task.Run(() =>
                 {
-                    Close(information, Console.ReadLine());
+                    information.Close(Console.ReadLine());
                 });
             }
         }
 
-        public override Task Handle(Information information)
+        public override Task Handle(InformationHandler information)
         {
-            Console.WriteLine($"{Name} Handle> {information.State} | {information.Input} | {information.Output}");
+            Console.WriteLine($"{Name} Handle> {information.ContextId} | {information.Input} | {information.Output}");
 
             return Task.CompletedTask;
         }

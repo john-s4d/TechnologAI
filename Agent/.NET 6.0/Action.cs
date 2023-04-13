@@ -8,12 +8,15 @@ namespace Technologai
 {
     public class Ability 
     {
-        public string Name { get; set; }
-        public string Description { get; set; }        
-        public string SchemaIn { get; set; }
-        public string SchemaOut { get; set; }
-        public string DoneWhen { get; set; }        
-        public string MemberId { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }        
+        public string? SchemaIn { get; set; }
+        public string? SchemaOut { get; set; }
+        public string? DoneWhen { get; set; }        
+        public string? MemberId { get; set; }
+
+        //public string Serialize() { }
+        //public string Deserialize() { }
         
     }
 }
