@@ -5,7 +5,7 @@ namespace Technologai.Agents.Core.Interaction
 {
     internal class Program
     {
-        private static TechnologaiAgent? _agent;
+        private static Interaction? _agent;
         private static AppConfig _config = new AppConfig();
 
         internal static async Task Main(string[] args)
@@ -15,7 +15,7 @@ namespace Technologai.Agents.Core.Interaction
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
 
-            _agent = new TechnologaiAgent(authorityName, clientId, clientSecret, memberId);
+            _agent = new Interaction(authorityName, clientId, clientSecret, memberId);
 
             _agent.StatusMessage += _agent_statusMessage;
 
@@ -33,9 +33,7 @@ namespace Technologai.Agents.Core.Interaction
 
         private static void Input(string input)
         {
-            if (_agent == null) { throw new ArgumentNullException(nameof(_agent)); }
-
-            _ = _agent.Publish(_agent.CreateInformation(input));
+            _ = _agent?.Publish(_agent.CreateInformation(input)) ?? throw new ArgumentNullException(nameof(_agent));
         }
 
         private async static Task Run()
@@ -65,7 +63,5 @@ namespace Technologai.Agents.Core.Interaction
             while (true);
 
         }
-
-
     }
 }

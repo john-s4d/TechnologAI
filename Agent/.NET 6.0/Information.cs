@@ -22,7 +22,7 @@ namespace Technologai
         public string? SchemaIn { get; internal set; }
         public string? Output { get; internal set; }
         public string? SchemaOut { get; internal set; }
-        public string? Feedback { get; internal set; }
+        public string? AbilityName { get; internal set; }
 
         // TODO History, Signatures, ReadOnly fields ?        
 
@@ -31,7 +31,7 @@ namespace Technologai
         [JsonConstructor]
         public Information(string contextId, string creatorId, InformationState state, 
             string? ownerId = null, string? input = null, string? schemaIn = null, 
-            string? output = null, string? schemaOut = null, string? feedback = null)
+            string? output = null, string? schemaOut = null, string? abilityName = null)
         {
             ContextId = contextId;
             CreatorId = creatorId;
@@ -41,7 +41,7 @@ namespace Technologai
             SchemaIn = schemaIn;
             Output = output;
             SchemaOut = schemaOut;
-            Feedback = feedback;                
+            AbilityName = abilityName;                
         }
 
         public Information(string creatorId)

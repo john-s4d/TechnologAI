@@ -18,7 +18,7 @@ namespace Technologai
 
         internal Information CreateInformation(string? input = null)
         {
-            var creatorId = _identity.Id ?? throw new ArgumentNullException(nameof(_identity.Id));
+            var creatorId = _identity.Id;
             return new Information(creatorId, input);           
         }
 
@@ -29,9 +29,18 @@ namespace Technologai
             _contextHierarchy.Add(information_new.ContextId, information.ContextId);
 
             return information_new;
-        }     
+        }
 
-       internal void MarkComplete(Information information) {
+        internal Information Spawn(Information information, Ability ability)
+        {
+            // TODO: Serialize the input
+            var information_new = CreateInformation(information.Input);
+            information_new.AbilityName = ability.Name;
+            _contextHierarchy.Add(information_new.ContextId, information.ContextId);
+            return information_new;
+        }
+
+        internal void MarkComplete(Information information) {
 
             if (!_completedInformation.ContainsKey(information.ContextId))
             {

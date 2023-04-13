@@ -13,10 +13,15 @@ namespace Technologai
     {
         internal TechnologaiRole AssignedRole { get; set; }
         internal string? Name { get; set; }
-        public string? Id { get; set; }
+        public string Id { get; set; }
         internal abstract TechnologaiRole RoleName { get; }
         internal abstract string PublishMask { get; }
         internal abstract string SubscribeMask { get; }
+
+        public Identity (string id)
+        {
+            Id = id;
+        }
 
         public string GetMaskedTopic(string topic)
         {

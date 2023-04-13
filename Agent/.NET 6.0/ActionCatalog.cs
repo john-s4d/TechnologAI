@@ -7,50 +7,47 @@ using System.Threading.Tasks;
 
 namespace Technologai
 {
-    internal class ActionCatalog
+    public class AbilityCatalog : Dictionary<string, Ability>
     {
+        private Identity _identity;
 
-        public List<Action> Actions { get; private set; } = new List<Action>();
-
-
-        public ActionCatalog()
+        public AbilityCatalog(Identity identity)
         {
-            Actions.AddRange(DefaultActions());
-        }
+            _identity = identity;
 
-        private List<Action> DefaultActions()
-        {
-            return new List<Action>
+            Add(new Ability()
             {
-                new Action()
-                {
-                    Name = "add_action_to_catalog",
-                    SchemaIn = "{name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id}",
-                    SchemaOut = "{success:bool}",
-                    Description = "Add an Action to the local Action Catalog",
-                    DoneWhen = "(success=true)"
-                },
+                Name = "add_ability_to_catalog",
+                SchemaIn = "{name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id}",
+                SchemaOut = "{success:bool}",
+                Description = "Add an ability to the local action catalog.",
+                DoneWhen = "(success=true)",
+                MemberId = _identity.Id
+            });
 
-                new Action()
-                {
-                    Name = "find_actions_in_catalog",
-                    SchemaIn = "search:string,hints:string",
-                    SchemaOut = "[name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id]",
-                    Description = "Find and return Actions in the local Action Catalog based on the search string",
-                    DoneWhen = "(name.count>0)",
-                }
-            };
+            Add(new Ability()
+            {
+                Name = "find_abilities_in_catalog",
+                SchemaIn = "search:string,hints:string",
+                SchemaOut = "[name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id]",
+                Description = "Find and return Actions in the local Action Catalog based on the search string",
+                DoneWhen = "(name.count>0)",
+                MemberId = _identity.Id
+            });
         }
 
-        public void Add_Action(Action action)
+
+        public void Add(Ability ability)
         {
-            Actions.Add(action);
+            Add(ability.Name, ability);
         }
 
-        public List<Action> Find_Actions_In_Catalog(Action action)
+        public void AddRange(IEnumerable<Ability> abilities)
         {
-            return new List<Action>();
+            foreach(Ability ability in abilities)
+            {
+                Add(ability);
+            }
         }
-
     }
 }

@@ -5,7 +5,7 @@ namespace Technologai
 {
     public class BrokerMessage
     {
-        public string Topic => $"{AgencyId ?? "0"}/{MemberId ?? "0"}/{AgentId ?? "0"}/{SubagentId ?? "0"}";
+        public string Topic => $"{AgencyId}/{MemberId}/{AgentId}/{SubagentId}";
         public Information? Information { get; set; }
         public string? AgencyId { get; set; }
         public string? MemberId { get; set; }
@@ -30,7 +30,7 @@ namespace Technologai
 
         internal BrokerMessage(MemberIdentity identity)
         {
-            AgencyId = identity.Agency?.Id;            
+            AgencyId = identity.Agency?.Id ?? throw new ArgumentNullException(nameof(identity.Agency));
             AgentId = identity.Agent.Id;
         }
 

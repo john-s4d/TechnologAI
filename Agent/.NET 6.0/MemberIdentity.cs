@@ -18,9 +18,11 @@ namespace Technologai
         internal override string PublishMask => $"{Agency?.Id ?? "0"}/0/0/0";
         internal override string SubscribeMask => $"{Agency?.Id ?? "0"}/{Id}/0/0";
 
-        internal MemberIdentity(string id, AgentIdentity agent)
-        {
-            Id = id;
+
+
+        internal MemberIdentity(string id, AgentIdentity agent) :
+            base(id)
+        {   
             Agent = agent;
         }
 
