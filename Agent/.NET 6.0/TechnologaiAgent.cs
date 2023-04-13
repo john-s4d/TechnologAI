@@ -8,12 +8,11 @@ namespace Technologai
         public event EventHandler<string>? StatusMessage;
 
         public AbilityCatalog Abilities { get; private set; }
+        internal ContextProvider Context { get; private set; }
 
         private MqttClient _mqtt;
-        private ContextProvider _contexts;        
-
+        
         private Dictionary<string, Information> _localInformation = new Dictionary<string, Information>();
-
         private Queue<string> _workingQueue = new Queue<string>();
         private Queue<string> _archiveQueue = new Queue<string>();
 
@@ -23,10 +22,9 @@ namespace Technologai
         {
             Identity = new MemberIdentity(memberId, new AgentIdentity(authorityName, clientId, clientSecret));
             Abilities = new AbilityCatalog(Identity);
+            Context = new ContextProvider(Identity);
 
-            _contexts = new ContextProvider(Identity);
             _mqtt = new MqttClient(Identity);
-
             _mqtt.MessageReceived += _mqtt_MessageReceived;
         }
 
@@ -36,11 +34,11 @@ namespace Technologai
 
             if (information != null)
             {
-                _ = Receive(information);
+                Receive(new InformationHandler(information, this)).Wait();
             }
         }
 
-        private async Task Receive(Information information)
+        private async Task Receive(InformationHandler information)
         {
             if (await BeforeHandle(information))
             {
@@ -54,7 +52,7 @@ namespace Technologai
             }
         }
 
-        private async Task<bool> BeforeHandle(Information information)
+        private async Task<bool> BeforeHandle(InformationHandler information)
         {
             var isNullOwned = information.OwnerId == null;
             var isSelfOwned = information.OwnerId == Identity.Id;
@@ -85,14 +83,14 @@ namespace Technologai
             {
                 if (isCreator && isOpen)
                 {
-                    Close(information); // Incomplete
-                    Defer(information);
+                    information.Close(); // Incomplete
+                    information.Defer();
                     return false;
                 }
 
                 if (isCreator && isClosed)
                 {
-                    Compile(information);
+                    information.Compile();
                     return false;
                 }
 
@@ -105,19 +103,17 @@ namespace Technologai
 
             else if (isAgency && isNullOwned && isClosed)
             {
-                Archive(information);
+                information.Archive();
                 return false;
             }
 
             return true;
         }
 
-        public virtual Task Handle(Information information)
-        {
-            return Task.CompletedTask;
-        }
+        public abstract Task Handle(InformationHandler information);
+        
 
-        public async Task Publish(Information information)
+        public async Task Publish(InformationHandler information)
         {
             var isNullOwned = information.OwnerId == null;
             var isSelfOwned = information.OwnerId == Identity.Id;
@@ -146,7 +142,7 @@ namespace Technologai
 
             if (isSelfOwned && isOpen)
             {
-                Defer(information);
+                information.Defer();
                 return;
             }
 
@@ -163,68 +159,19 @@ namespace Technologai
 
             if (isAgency)
             {
-                Archive(information);
+                information.Archive();
                 return;
             }
 
             throw new NotImplementedException("information was not routed");                        
             // TODO: What if I am an agent.
         }
-
-        // Information Handling
-        public abstract Task Execute(Ability ability, Information information);
-
-        private void Compile(Information information)
-        {
-            SendStatusMessage($"Compile > {information.ContextId} | {information.Input} | {information.Output}");
-            // TODO: Compile & dispatch parent events
-        }
-
-        private void Archive(Information information)
-        {
-            SendStatusMessage($"Archive > {information.ContextId} | {information.Input} | {information.Output}");
-            _archiveQueue.Enqueue(information.ContextId);
-        }
-
-        private void Defer(Information information)
-        {
-            SendStatusMessage($"Defer > {information.ContextId} | {information.Input} | {information.Output}");
-            _workingQueue.Enqueue(information.ContextId);
-        }
         
-        public Information Spawn(Information information, string? input = null)
-        {
-            var new_information = _contexts.Spawn(information, input);
-            SendStatusMessage($"Spawn > {information.ContextId} | {information.Input} | {information.Output}");
-            return new_information;
-        }
+        public abstract Task Execute(Ability ability, InformationHandler information);
 
-        public Information Spawn(Information information, Ability ability)
+        public InformationHandler CreateInformation(string? input = null)
         {
-            var new_information = _contexts.Spawn(information, ability);
-            SendStatusMessage($"Spawn > {information.ContextId} | {information.AbilityName} | {information.Input}");
-            return new_information;
-        }
-
-        public Information CreateInformation(string? input = null)
-        {
-            var information = _contexts.CreateInformation(input);
-            SendStatusMessage($"CreateInformation > {information.ContextId} | {information.Input} | {information.Output}");
-            return information;
-        }
-
-        public void Close(Information information, string? output = null)
-        {   
-            information.Output = output;
-            information.State = InformationState.CLOSED;
-            information.OwnerId = information.CreatorId;
-            SendStatusMessage($"Close > {information.ContextId} | {information.Input} | {information.Output}");
-        }
-
-        public void Assign(Information information, string ownerId)
-        {
-            information.OwnerId = ownerId;
-            SendStatusMessage($"Assign > {information.ContextId} | {information.Input} | {information.Output}");
+            return InformationHandler.CreateInformation(this, input);
         }
 
         // Message Handling
@@ -276,7 +223,7 @@ namespace Technologai
             return false;
         }
 
-        private void SendStatusMessage(string message)
+        internal void SendStatusMessage(string message)
         {
             StatusMessage?.Invoke(this, message);
         }
@@ -305,21 +252,21 @@ namespace Technologai
                 if (Identity.AssignedRole == TechnologaiRole.member)
                 {
                     await _mqtt.SubscribeAsync(Identity.SubscribeMask);
-                    SendStatusMessage($"Subscribed: {Identity.RoleName}:{Identity.SubscribeMask}");
+                    SendStatusMessage($"Subscribed> {Identity.RoleName}:{Identity.SubscribeMask}");
                 }
 
                 // Subscribe to Agency Topics
                 if (Identity.AssignedRole == TechnologaiRole.agency && Identity.Agency != null)
                 {
                     await _mqtt.SubscribeAsync(Identity.Agency.SubscribeMask);
-                    SendStatusMessage($"Subscribed: {Identity.Agency.RoleName}:{Identity.Agency.SubscribeMask}");
+                    SendStatusMessage($"Subscribed> {Identity.Agency.RoleName}:{Identity.Agency.SubscribeMask}");
                 }
 
                 // Subscribe to Agent Topics
                 if (Identity.AssignedRole == TechnologaiRole.agent)
                 {
                     await _mqtt.SubscribeAsync(Identity.Agent.SubscribeMask);
-                    SendStatusMessage($"Subscribed: {Identity.Agent.RoleName}:{Identity.Agent.SubscribeMask}");
+                    SendStatusMessage($"Subscribed> {Identity.Agent.RoleName}:{Identity.Agent.SubscribeMask}");
                 }
 
             }

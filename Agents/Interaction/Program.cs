@@ -28,7 +28,7 @@ namespace Technologai.Agents.Core.Interaction
  
         private static void _agent_statusMessage(object? sender, string message)
         {
-            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} Status> {message}");
+            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} {message}");
         }
 
         private static void Input(string input)
