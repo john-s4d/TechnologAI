@@ -1,4 +1,5 @@
-﻿using MQTTnet.Client;
+﻿using Microsoft.VisualBasic;
+using MQTTnet.Client;
 
 namespace Technologai
 {
@@ -12,7 +13,7 @@ namespace Technologai
 
         private MqttClient _mqtt;
 
-        private Dictionary<string, Information> _localInformation = new Dictionary<string, Information>();        
+        private Dictionary<string, Information> _localInformation = new Dictionary<string, Information>();
 
         public Identity Identity { get; }
 
@@ -36,111 +37,142 @@ namespace Technologai
             }
         }
 
-        private async Task Receive(InformationHandler information)
+        public async Task Receive(InformationHandler information)
         {
             if (await BeforeHandle(information))
-            {
-                if (!string.IsNullOrEmpty(information.AbilityName) &&
-                    Abilities.ContainsKey(information.AbilityName))
-                {
-                    await Execute(Abilities[information.AbilityName], information);
-                }
-                await Handle(information);
+            {   
                 await Publish(information);
             }
         }
 
+        // This is information received on the member channel, addressed to me.
         private async Task<bool> BeforeHandle(InformationHandler information)
         {
-            var isNullOwned = information.OwnerId == null;
-            var isSelfOwned = information.OwnerId == Identity.Id;
-            var isElseOwned = information.OwnerId != Identity.Id && information.OwnerId != null;
-            var isDraft = information.State == InformationState.DRAFT;
-            var isOpen = information.State == InformationState.OPEN;
-            var isClosed = information.State == InformationState.CLOSED;
-            var isCreator = information.CreatorId == Identity.Id;
-
-            if (isDraft)
+            // Reject Drafts
+            if (information.State == InformationState.DRAFT)
             {
                 return false;
             }
 
-            if (isElseOwned)
+            // Forward information that doesn't belong to me. Shouldn't receive these. 
+            if (information.OwnerId != Identity.Id)
             {
                 await SendToBroker(information, information.OwnerId);
                 return false;
             }
 
-            if (!_localInformation.ContainsKey(information.ContextId))
-            {
-                _localInformation.Add(information.ContextId, information);
-            }
+            // I'm the owner
 
-
-            if (isCreator && isOpen)
+            // Incomplete
+            if (information.CreatorId == Identity.Id && information.State == InformationState.OPEN)
             {
-                information.Close(); // Incomplete
-                information.Defer();
+                information.Close();
+                information.Archive();
                 return false;
             }
 
-            if (isCreator && isClosed)
+            // Complete
+            if (information.CreatorId == Identity.Id && information.State == InformationState.CLOSED)
             {
-                information.Compile();
+                await information.Compile();
                 return false;
             }
 
-            if (isClosed)
+            // Needs Work. Try to close it.
+            if (information.State == InformationState.OPEN)
             {
-                await SendToBroker(information, information.CreatorId);
-                return false;
+                if (string.IsNullOrEmpty(information.AbilityName))
+                {                    
+                    // TODO: do we only pass abilities around?
+                }
+                else
+                {
+                    if (Abilities.ContainsKey(information.AbilityName))
+                    {
+                        await Execute(Abilities[information.AbilityName], information);
+                    }
+                    else
+                    {
+                        // Can't handle it. Return to creator.
+                        information.Close($"No ability named {information.AbilityName} on {Name}.");
+                        return false;
+                    }
+                }
+                return true;
             }
 
-            return true;
+            // Needs Analysis.Do something.
+            if (information.State == InformationState.CLOSED)
+            {
+                await Review(information);
+                return true;
+            }
+
+            throw new Exception("Unhandled Information");
         }
 
-        public abstract Task Handle(InformationHandler information);
+        //
+       // public abstract Task Handle(InformationHandler information);
+        public abstract Task Review(InformationHandler information);
+        public abstract Task Execute(Ability ability, InformationHandler information);
+        public abstract Task Compile(InformationHandler information);
+
+        public async Task Execute(string abilityName, InformationHandler information)
+        {
+            if (Abilities.ContainsKey(abilityName))
+            {
+                await Execute(Abilities[abilityName], information);
+            }
+            else
+            {
+                // Can't handle it. Return to creator.
+                //await SendToBroker(information, information.CreatorId);                
+            }
+        }
 
         public async Task Publish(InformationHandler information)
         {
-            var isNullOwned = information.OwnerId == null;
-            var isSelfOwned = information.OwnerId == Identity.Id;
-            var isElseOwned = information.OwnerId != Identity.Id && information.OwnerId != null;
-            var isDraft = information.State == InformationState.DRAFT;
-            var isOpen = information.State == InformationState.OPEN;
-            var isClosed = information.State == InformationState.CLOSED;
-            var isCreator = information.CreatorId == Identity.Id;
 
-            if (isDraft)
+            // Open drafts
+            if (information.State == InformationState.DRAFT)
             {
                 information.State = InformationState.OPEN;
             }
 
-            if (!_localInformation.ContainsKey(information.ContextId))
-            {
-                _localInformation.Add(information.ContextId, information);
-            }
+            // TODO: If this is an ability I can do, short circuit it here.
 
-            if (isElseOwned)
+            // Forward to someone else
+            if (information.OwnerId != Identity.Id)
             {
                 await SendToBroker(information, information.OwnerId);
                 return;
             }
 
-            if (isSelfOwned && isOpen)
-            {
+            if (information.OwnerId == Identity.Id && information.State == InformationState.OPEN)
+            {                
                 information.Defer();
                 return;
             }
 
-            await SendToBroker(information, information.CreatorId);            
+            await SendToBroker(information, information.CreatorId);
         }
 
-        public abstract Task Execute(Ability ability, InformationHandler information);
+
+        /*
 
         public InformationHandler CreateInformation(string? input = null)
         {
             return InformationHandler.CreateInformation(this, input);
+        }
+
+        public InformationHandler CreateInformation(Ability ability, string? input = null)
+        {
+            return InformationHandler.CreateInformation(this, ability, input);
+        }*/
+
+        public InformationHandler CreateInformation(string ability, string? input = null)
+        {
+            return InformationHandler.CreateInformation(this, Abilities[ability], input);
         }
 
         // Message Handling

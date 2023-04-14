@@ -1,10 +1,7 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿
 using Microsoft.VisualBasic;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Technologai
 {
@@ -12,12 +9,9 @@ namespace Technologai
     {
         internal ContextProvider Context => _agent.Context;
         private TechnologaiAgent _agent;
+        //private Ability _ability;
 
-        protected InformationHandler(TechnologaiAgent agent)
-            : base()
-        {
-            _agent = agent;
-        }
+        //internal Ability? Ability { get; set; }
 
         private InformationHandler(TechnologaiAgent agent, string? input = null)
             : base(agent.Identity.Id, input)
@@ -32,32 +26,29 @@ namespace Technologai
                   information.State,
                   information.OwnerId,
                   information.Input,
-                  information.SchemaIn,
+                  information.SampleJsonIn,
                   information.Output,
-                  information.SchemaOut,
+                  information.SampleJsonOut,
                   information.AbilityName
                   )
-        {   
+        {
             _agent = agent;
         }
 
-        internal static InformationHandler CreateInformation(TechnologaiAgent _agent, string? input = null)
+        internal static InformationHandler CreateInformation(TechnologaiAgent _agent, Ability ability, string? input = null)
         {
-            var information = new InformationHandler(_agent, input);
+            var information = new InformationHandler(_agent, input); ;
+            information.AbilityName = ability.Name;
+            information.SampleJsonIn = ability.SampleJsonIn;
+            information.SampleJsonOut = ability.SampleJsonOut;
+            information.OwnerId = ability.MemberId ?? throw new ArgumentNullException(nameof(ability.MemberId));
             _agent.SendStatusMessage($"CreateInformation > {information.ContextId} | {information.Input}");
             return information;
         }
-
-        internal InformationHandler CreateInformation(string? input = null)
+        
+        internal InformationHandler CreateInformation(TechnologaiAgent _agent, string ability, string? input = null)
         {
-            return InformationHandler.CreateInformation(_agent, input);
-        }
-
-        public InformationHandler Compile()
-        {
-            _agent.SendStatusMessage($"Compile> {ContextId} | {Input} | {Output}");
-            // TODO: Compile & dispatch parent events
-            return this;
+            return InformationHandler.CreateInformation(_agent, _agent.Abilities[ability], input);
         }
 
         public InformationHandler Archive()
@@ -74,6 +65,7 @@ namespace Technologai
             return this;
         }
 
+        /*
         public InformationHandler Spawn(string? input = null)
         {
             _agent.SendStatusMessage($"Spawn> {ContextId} | {Input}");
@@ -81,14 +73,12 @@ namespace Technologai
             Context.Link(new_information, this);
             return new_information;
         }
+        */
+        public InformationHandler Spawn(string ability, string? input = null)
+        {   
+            _agent.SendStatusMessage($"Spawn> {ContextId} | {ability} | {Input}");
 
-        public InformationHandler Spawn(Ability ability)
-        {
-            // TODO: Merge Input JSON
-            _agent.SendStatusMessage($"Spawn> {ContextId} | {AbilityName} | {Input}");
-            var new_information = CreateInformation(Input);
-            new_information.AbilityName = ability.Name;
-            new_information.OwnerId = ability.MemberId ?? _agent.Identity.Id;
+            var new_information = CreateInformation(_agent, ability, input);           
             Context.Link(new_information, this);
             return new_information;
         }
@@ -109,10 +99,33 @@ namespace Technologai
             return this;
         }
 
+        public async Task<InformationHandler> Execute()
+        {
+
+            await _agent.Execute(AbilityName, this);
+            return this;
+        }
+
+        public async Task<InformationHandler> Compile()
+        {
+            await _agent.Compile(this);
+            return this;
+        }
+
         public async Task<InformationHandler> Publish()
         {
             await _agent.Publish(this);
             return this;
+        }
+
+        public T? DeserializeInput<T>()
+        {
+            return JsonConvert.DeserializeObject<T>(Input ?? string.Empty);
+        }
+
+        public T? DeserializeOutput<T>()
+        {
+            return JsonConvert.DeserializeObject<T>(Output ?? string.Empty);
         }
     }
 }
