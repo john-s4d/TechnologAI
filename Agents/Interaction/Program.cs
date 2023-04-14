@@ -22,18 +22,30 @@ namespace Technologai.Agents.Core.Interaction
             Console.WriteLine("Loading...");
 
             await _agent.Start();
-            await Program.Run();
-            await _agent.Stop();
+            //await Program.Run();
+
+            do
+            {
+                _agent.CreateInformation("get_user_input", "Input>").Execute().Wait();
+            }
+            while (true);
+
+            //await _agent.Stop();
+
         }
- 
+
         private static void _agent_statusMessage(object? sender, string message)
         {
             Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} {message}");
         }
 
+        /*
         private static void Input(string input)
         {
-            _ = _agent?.Publish(_agent.CreateInformation(input)) ?? throw new ArgumentNullException(nameof(_agent));
+
+
+            // TODO: Determine the first action and where to send it.
+            //_ = _agent?.Publish(_agent.CreateInformation(_agent.Abilities["choose_ability"], input)) ?? throw new ArgumentNullException(nameof(_agent));
         }
 
         private async static Task Run()
@@ -46,10 +58,7 @@ namespace Technologai.Agents.Core.Interaction
                     return Console.ReadLine() ?? "";
                 });
 
-                if (value.Equals("quit", StringComparison.OrdinalIgnoreCase))
-                {
-                    break;
-                }
+
 
                 if (value.Equals("32Bytes", StringComparison.OrdinalIgnoreCase))
                 {
@@ -62,6 +71,6 @@ namespace Technologai.Agents.Core.Interaction
             }
             while (true);
 
-        }
+        }*/
     }
 }
