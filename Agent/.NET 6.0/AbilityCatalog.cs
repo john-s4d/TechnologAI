@@ -14,32 +14,30 @@ namespace Technologai
         public AbilityCatalog(Identity identity)
         {
             _identity = identity;
-
+            
             Add(new Ability()
             {
                 Name = "add_ability_to_catalog",
-                SchemaIn = "{name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id}",
-                SchemaOut = "{success:bool}",
-                Description = "Add an ability to the local action catalog.",
-                DoneWhen = "(success=true)",
-                MemberId = _identity.Id
+                SampleJsonIn = "{name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id}",
+                SampleJsonOut = "{success:bool}",
+                Description = "Add an ability to the local action catalog.",                
             });
 
             Add(new Ability()
             {
                 Name = "find_abilities_in_catalog",
-                SchemaIn = "search:string,hints:string",
-                SchemaOut = "[name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id]",
-                Description = "Find and return Actions in the local Action Catalog based on the search string",
-                DoneWhen = "(name.count>0)",
-                MemberId = _identity.Id
+                SampleJsonIn = "search:string,hints:string",
+                SampleJsonOut = "[name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id]",
+                Description = "Find and return Actions in the local Action Catalog based on the search string",                
             });
         }
 
-
         public void Add(Ability ability)
-        {
-            Add(ability.Name, ability);
+        {   
+            if (!string.IsNullOrEmpty(ability.Name))
+            {
+                Add(ability.Name, ability);
+            }
         }
 
         public void AddRange(IEnumerable<Ability> abilities)
