@@ -1,13 +1,13 @@
-﻿using Microsoft.VisualBasic;
+﻿using Microsoft.IdentityModel.Tokens;
 using MQTTnet.Client;
 
 namespace Technologai
 {
     public abstract class TechnologaiAgent
     {
-        public string? Name { get; private set; }
         public event EventHandler<string>? StatusMessage;
 
+        public string? Name { get; private set; }
         public AbilityCatalog Abilities { get; private set; }
         internal ContextProvider Context { get; private set; }
 
@@ -33,22 +33,22 @@ namespace Technologai
 
             if (information != null)
             {
-                Receive(new InformationHandler(information, this)).Wait();
+                Receive(new InformationAdapter(information, this)).Wait();
             }
         }
 
-        public async Task Receive(InformationHandler information)
+        private async Task Receive(InformationAdapter information)
         {
-            if (await BeforeHandle(information))
-            {   
+            if (await OnReceive(information))
+            {
                 await Publish(information);
             }
         }
 
         // This is information received on the member channel, addressed to me.
-        private async Task<bool> BeforeHandle(InformationHandler information)
+        private async Task<bool> OnReceive(InformationAdapter information)
         {
-            // Reject Drafts
+            // Kill Drafts
             if (information.State == InformationState.DRAFT)
             {
                 return false;
@@ -57,128 +57,81 @@ namespace Technologai
             // Forward information that doesn't belong to me. Shouldn't receive these. 
             if (information.OwnerId != Identity.Id)
             {
-                await SendToBroker(information, information.OwnerId);
+                await Publish(information);
                 return false;
             }
 
-            // I'm the owner
+            // Creator
 
-            // Incomplete
             if (information.CreatorId == Identity.Id && information.State == InformationState.OPEN)
             {
-                information.Close();
-                information.Archive();
+                await information.Execute();
+                await information.Assess();
                 return false;
             }
 
-            // Complete
             if (information.CreatorId == Identity.Id && information.State == InformationState.CLOSED)
             {
-                await information.Compile();
+                await information.Assess();
                 return false;
             }
 
-            // Needs Work. Try to close it.
+            // Owner Open (Not Creator)
+
             if (information.State == InformationState.OPEN)
             {
-                if (string.IsNullOrEmpty(information.AbilityName))
-                {                    
-                    // TODO: do we only pass abilities around?
-                }
-                else
-                {
-                    if (Abilities.ContainsKey(information.AbilityName))
-                    {
-                        await Execute(Abilities[information.AbilityName], information);
-                    }
-                    else
-                    {
-                        // Can't handle it. Return to creator.
-                        information.Close($"No ability named {information.AbilityName} on {Name}.");
-                        return false;
-                    }
-                }
+                // Work on it
+                await information.Execute();
                 return true;
             }
 
-            // Needs Analysis.Do something.
+            // Owner Closed (Not Creator)
+
             if (information.State == InformationState.CLOSED)
             {
-                await Review(information);
+                // Someone sent me something inetresting.
+                await information.Review();
                 return true;
             }
 
             throw new Exception("Unhandled Information");
         }
 
-        //
-       // public abstract Task Handle(InformationHandler information);
-        public abstract Task Review(InformationHandler information);
-        public abstract Task Execute(Ability ability, InformationHandler information);
-        public abstract Task Compile(InformationHandler information);
+        protected internal abstract Task Execute(Ability ability, InformationAdapter information);
+        protected internal abstract Task Assess(InformationAdapter information);
+        protected internal abstract Task Review(InformationAdapter information);
 
-        public async Task Execute(string abilityName, InformationHandler information)
+        public async Task Publish(InformationAdapter information)
         {
-            if (Abilities.ContainsKey(abilityName))
-            {
-                await Execute(Abilities[abilityName], information);
-            }
-            else
-            {
-                // Can't handle it. Return to creator.
-                //await SendToBroker(information, information.CreatorId);                
-            }
-        }
-
-        public async Task Publish(InformationHandler information)
-        {
-
             // Open drafts
             if (information.State == InformationState.DRAFT)
             {
                 information.State = InformationState.OPEN;
             }
 
-            // TODO: If this is an ability I can do, short circuit it here.
-
-            // Forward to someone else
-            if (information.OwnerId != Identity.Id)
+            if (Identity.Id == information.OwnerId)
             {
-                await SendToBroker(information, information.OwnerId);
+                await Receive(information);
                 return;
             }
 
-            if (information.OwnerId == Identity.Id && information.State == InformationState.OPEN)
-            {                
-                information.Defer();
-                return;
-            }
-
-            await SendToBroker(information, information.CreatorId);
-        }
-
-        public InformationHandler CreateInformation(string ability, string? input = null)
-        {
-            return InformationHandler.Create(this, Abilities[ability], input);
-        }
-
-        // Message Handling
-
-        private async Task<bool> SendToBroker(Information information, string memberId)
-        {
             var message = new BrokerMessage(Identity)
             {
                 Information = information,
-                MemberId = memberId
+                MemberId = information.OwnerId
             };
 
-            string? topic = Identity.GetMaskedTopic(message.Topic);
+            string? topic = Identity.GetMaskedTopic(message.TopicMember);
 
             await _mqtt.PublishAsync(topic ?? string.Empty, message.Information.ToJson());
 
-            SendStatusMessage($"Publish> {message.Information.ContextId} | {message.Information.AbilityName} | {message.Information.Input} | {message.Information.Output}");
+            SendStatusMessage($"{message.Information.ContextId} Publish>  {message.Information.AbilityName} | {message.Information.Input} | {message.Information.Output}");
+        }
 
-            return true;
+        public InformationAdapter Create(string ability, string? input = null)
+        {
+            // TODO: We might need to find the ability first.
+            return InformationAdapter.Create(this, Abilities[ability], input);
         }
 
         internal void SendStatusMessage(string message)
@@ -206,8 +159,8 @@ namespace Technologai
                 await _mqtt.ConnectAsync();
                 SendStatusMessage($"Connected");
 
-                await _mqtt.SubscribeAsync(Identity.SubscribeAgencyMask);
-                SendStatusMessage($"Agency Subscribed> {Identity.SubscribeAgencyMask}");
+                //await _mqtt.SubscribeAsync(Identity.SubscribeAgencyMask);
+                //SendStatusMessage($"Agency Subscribed> {Identity.SubscribeAgencyMask}");
 
                 await _mqtt.SubscribeAsync(Identity.SubscribeMemberMask);
                 SendStatusMessage($"Member Subscribed> {Identity.SubscribeMemberMask}");
