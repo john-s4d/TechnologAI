@@ -1,4 +1,4 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 
@@ -8,8 +8,15 @@ namespace Technologai
     {
         internal ContextProvider Context => _agent.Context;
         private TechnologaiAgent _agent;
+        //private Ability _ability;
 
-        private InformationAdapter(TechnologaiAgent agent, string? input = null)
+        protected InformationHandler(TechnologaiAgent agent)
+            : base()
+        {
+            _agent = agent;
+        }
+
+        private InformationHandler(TechnologaiAgent agent, string? input = null)
             : base(agent.Identity.Id, input)
         {
             _agent = agent;

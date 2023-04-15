@@ -66,9 +66,9 @@ namespace Technologai.Agents.Core.Interaction
             if (ability.Name == "get_user_input")
             {
                 Console.WriteLine(information.Input);
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
-                    information.Close(Console.ReadLine());
+                    await Receive(information.Close(Console.ReadLine()));
                 });
             }
             /*
