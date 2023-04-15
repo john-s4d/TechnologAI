@@ -34,7 +34,7 @@ namespace Technologai.Agents.Abilities.ChatGPT
 
         private async static Task Run()
         {
-            Console.WriteLine($"{_agent?.Name} Started. \"quit\" to stop.");
+            Console.WriteLine($"{_agent?.Name} Started.");
 
             do
             {
@@ -43,7 +43,7 @@ namespace Technologai.Agents.Abilities.ChatGPT
                     return Console.ReadLine() ?? "";
                 });
 
-                if (value.Equals("quit", StringComparison.OrdinalIgnoreCase)) { break; }
+                //if (value.Equals("quit", StringComparison.OrdinalIgnoreCase)) { break; }
 
             }
             while (true);

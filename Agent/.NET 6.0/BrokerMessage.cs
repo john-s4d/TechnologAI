@@ -5,7 +5,8 @@ namespace Technologai
 {
     public class BrokerMessage
     {
-        public string Topic => $"{AgencyId}/{MemberId}";
+        public string TopicMember => $"{AgencyId}/{MemberId}";
+        public string TopicAgency => $"{AgencyId}/0";
         public Information? Information { get; set; }
         public string? AgencyId { get; set; }
         public string? MemberId { get; set; }

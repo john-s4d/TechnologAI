@@ -72,7 +72,6 @@ namespace Technologai
                 throw new HttpRequestException("Unauthorized", null, httpResponse.StatusCode);
             }
         }
-
         public string GetMaskedTopic(string topic)
         {
             string[] topicParts = topic.Split('/');

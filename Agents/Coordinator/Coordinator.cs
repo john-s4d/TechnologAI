@@ -16,21 +16,21 @@ namespace Technologai.Agents.Core.Coordinator
            
         }
 
-        public override Task Compile(InformationHandler information)
+        protected override Task Assess(InformationAdapter information)
         {
             Console.WriteLine($"{Name} Compile> {information.ContextId} | {information.Input} | {information.Output}");
 
             return Task.CompletedTask;
         }
 
-        public override Task Execute(Ability ability, InformationHandler information)
+        protected override Task Execute(Ability ability, InformationAdapter information)
         {
             Console.WriteLine($"{Name} Execute> {information.ContextId} | {information.Input} | {information.Output}");
 
             return Task.CompletedTask;
         }
 
-        public override Task Review(InformationHandler information)
+        protected override Task Review(InformationAdapter information)
         {
             Console.WriteLine($"{Name} Review> {information.ContextId} | {information.Input} | {information.Output}");
 

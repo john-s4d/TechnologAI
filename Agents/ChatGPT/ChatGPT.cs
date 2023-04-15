@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.VisualBasic;
+using Newtonsoft.Json;
 using System.Linq;
 
 namespace Technologai.Agents.Abilities.ChatGPT
@@ -14,7 +15,8 @@ namespace Technologai.Agents.Abilities.ChatGPT
                 new Ability()
                 {
                     Name = "chatgpt_prompt",
-                    Description = "Send a prompt to ChatGPT and receive a response."                    
+                    Description = "Send a prompt to ChatGPT and receive a response."
+
                 }
             );
 
@@ -23,7 +25,11 @@ namespace Technologai.Agents.Abilities.ChatGPT
                 {
                     Name = "choose_agency_ability",
                     SampleJsonOut = "{\"name\":\"string\"}",
-                    Description = "Choose an agency-wide ability to use for the response."
+                    Description = "Choose an agency-wide ability to use for the response.",
+                    Prompt = "Your response MUST be a compliant machine-readable JSON document.\r\n\r\n" +
+                             "{Input}" +
+                             "\r\n\r\nGiven the list of abilities provided, specify which one you would like to use to respond to the input. " +
+                             "Your response should consist of a single JSON object with the name of the selected ability. For example: {SampleJsonOut}"
                 }
             );
         }
@@ -34,12 +40,12 @@ namespace Technologai.Agents.Abilities.ChatGPT
             public List<KeyValuePair<string, string>>? abilities { get; set; } = new List<KeyValuePair<string, string>>();
         }
 
-        public override async Task Execute(Ability ability, InformationHandler information)
+        protected override async Task Execute(Ability ability, InformationAdapter information)
         {
-            Console.WriteLine($"{Name} Execute> {information.ContextId} | {information.AbilityName} | {information.Input}");
+            //Console.WriteLine($"{Name} Execute> {information.ContextId} | {information.AbilityName} | {information.Input}");
 
             //-----------------------------------//
-            
+
             if (ability.Name == "chatgpt_prompt")
             {
                 information.Close(await _openAI.GetGpt3Response(information.Input ?? string.Empty));
@@ -49,31 +55,31 @@ namespace Technologai.Agents.Abilities.ChatGPT
             {
                 choose_agency_ability_input choose_ability = new choose_agency_ability_input();
                 choose_ability.input = information.Input;
-                foreach(string abilityName in Abilities.Keys)
+                foreach (string abilityName in Abilities.Keys)
                 {
                     choose_ability.abilities?.Add(new KeyValuePair<string, string>(abilityName, Abilities[abilityName].Description ?? string.Empty));
                 }
-                
+                /*
                 var prompt = $"Your response MUST be a compliant machine-readable JSON document.\r\n\r\n" +
                              $"{JsonConvert.SerializeObject(choose_ability)}" +
                              $"\r\n\r\nGiven the list of abilities provided, specify which one you would like to use to respond to the input. " +
                              $"Your response should consist of a single JSON object with the name of the selected ability. For example: {information.SampleJsonOut}";
-
-                information.Close(await _openAI.GetGpt3Response(prompt));
+                */
+                information.Close(await _openAI.GetGpt3Response(ability.Prompt));
             }
             //-----------------------------------//
         }
 
-        public override Task Compile(InformationHandler information)
+        protected override Task Assess(InformationAdapter information)
         {
-            Console.WriteLine($"{Name} Compile> {information.ContextId} | {information.Input} | {information.Output}");
+            //Console.WriteLine($"{Name} Assess> {information.ContextId} | {information.Input} | {information.Output}");
 
             return Task.CompletedTask;
         }
 
-        public override Task Review(InformationHandler information)
+        protected override Task Review(InformationAdapter information)
         {
-            Console.WriteLine($"{Name} Review> {information.ContextId} | {information.Input} | {information.Output}");
+            //Console.WriteLine($"{Name} Review> {information.ContextId} | {information.Input} | {information.Output}");
 
             return Task.CompletedTask;
         }

@@ -9,5 +9,5 @@ public class Ability
     public string? SampleJsonIn { get; set; }
     public string? SampleJsonOut { get; set; }
     public string? MemberId { get; set; }
-
+    public string? Prompt { get; set; }
 }

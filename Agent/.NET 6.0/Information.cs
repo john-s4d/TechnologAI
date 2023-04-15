@@ -21,7 +21,7 @@ namespace Technologai
         public string? SampleJsonIn { get; internal set; }
         public string? Output { get; internal set; }
         public string? SampleJsonOut { get; internal set; }
-        public string? AbilityName { get; internal set; }
+        public string AbilityName { get; internal set; }
 
         // TODO History, Signatures, ReadOnly fields ?        
 

@@ -1,20 +1,21 @@
-﻿
+﻿using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 
 namespace Technologai
 {
-    public class InformationHandler : Information
+    public class InformationAdapter : Information
     {
         internal ContextProvider Context => _agent.Context;
         private TechnologaiAgent _agent;
 
-        private InformationHandler(TechnologaiAgent agent, string? input = null)
+        private InformationAdapter(TechnologaiAgent agent, string? input = null)
             : base(agent.Identity.Id, input)
         {
             _agent = agent;
         }
 
-        internal InformationHandler(Information information, TechnologaiAgent agent)
+        internal InformationAdapter(Information information, TechnologaiAgent agent)
             : base(
                   information.ContextId,
                   information.CreatorId,
@@ -30,72 +31,85 @@ namespace Technologai
             _agent = agent;
         }
 
-        internal static InformationHandler Create(TechnologaiAgent _agent, Ability ability, string? input = null)
+        internal static InformationAdapter Create(TechnologaiAgent _agent, Ability ability, string? input = null)
         {
-            var information = new InformationHandler(_agent, input); ;
-            information.AbilityName = ability.Name;
+            var information = new InformationAdapter(_agent, input); ;
+            information.AbilityName = ability.Name ?? throw new ArgumentNullException(nameof(ability.Name));
             information.SampleJsonIn = ability.SampleJsonIn;
             information.SampleJsonOut = ability.SampleJsonOut;
             information.OwnerId = ability.MemberId ?? _agent.Identity.Id;
-            _agent.SendStatusMessage($"Create> {information.ContextId} | {ability.Name} | {information.Input}");
+            _agent.SendStatusMessage($"{information.ContextId} Create> {ability.Name} | {information.Input}");
             return information;
         }
-        
-        internal InformationHandler Create(TechnologaiAgent _agent, string ability, string? input = null)
-        {
-            return InformationHandler.Create(_agent, _agent.Abilities[ability], input);
-        }
 
-        public InformationHandler Archive()
+        protected internal async Task<InformationAdapter> Execute()
         {
-            _agent.SendStatusMessage($"Archive> {ContextId} | {Input} | {Output}");            
+            _agent.SendStatusMessage($"{ContextId} Execute> {AbilityName} | {Input}");
+
+            if (!string.IsNullOrEmpty(AbilityName) && _agent.Abilities.ContainsKey(AbilityName))
+            {
+                await _agent.Execute(_agent.Abilities[AbilityName], this);
+            }
+            else
+            {
+                // Don't know how to handle it..
+                Assign(CreatorId);
+            }
             return this;
         }
 
-        public InformationHandler Defer()
+        protected internal async Task<InformationAdapter> Assess()
         {
-            _agent.SendStatusMessage($"Defer> {ContextId} | {Input} | {Output}");            
+            _agent.SendStatusMessage($"{ContextId} Assess> {AbilityName} | {Input} | {Output}");
+            await _agent.Assess(this);
             return this;
         }
 
-        public InformationHandler Spawn(string ability, string? input = null)
-        {   
-            var new_information = Create(_agent, ability, input);           
+        protected internal async Task<InformationAdapter> Review()
+        {
+            _agent.SendStatusMessage($"{ContextId} Review> {AbilityName} | {Input} | {Output}");
+            await _agent.Review(this);
+            return this;
+        }
+
+        public InformationAdapter Archive()
+        {
+            _agent.SendStatusMessage($"{ContextId} Archive> {AbilityName} | {Input} | {Output}");
+            // TODO: 
+            return this;
+        }
+
+        public InformationAdapter Defer()
+        {
+            _agent.SendStatusMessage($"{ContextId} Defer> {AbilityName} | {Input} | {Output}");
+            return this;
+        }
+
+        public InformationAdapter Spawn(string abilityName, string? input = null)
+        {
+            var new_information = Create(_agent, _agent.Abilities[abilityName], input);
             Context.Link(new_information, this);
-            _agent.SendStatusMessage($"Spawn> {ContextId} => {new_information.ContextId} | {ability} | {input}");
+            _agent.SendStatusMessage($"{ContextId} Spawn> {new_information.ContextId} | {abilityName} | {input}");
             return new_information;
         }
 
-        public InformationHandler Close(string? output = null)
+        public InformationAdapter Close(string? output = null)
         {
             Output = output;
             State = InformationState.CLOSED;
             OwnerId = CreatorId;
-            _agent.SendStatusMessage($"Close> {ContextId} | {Input} | {Output}");
+            _agent.SendStatusMessage($"{ContextId} Close> {AbilityName} | {Input} | {Output}");
             return this;
         }
 
-        public InformationHandler Assign(string ownerId)
+        public InformationAdapter Assign(string ownerId)
         {
             OwnerId = ownerId;
-            _agent.SendStatusMessage($"Assign> {ContextId} | {Input} | {Output}");
+            _agent.SendStatusMessage($"{ContextId} Assign> {AbilityName} | {Input} | {Output}");
             return this;
         }
 
-        public async Task<InformationHandler> Execute()
-        {
-
-            await _agent.Execute(AbilityName, this);
-            return this;
-        }
-
-        public async Task<InformationHandler> Compile()
-        {
-            await _agent.Compile(this);
-            return this;
-        }
-
-        public async Task<InformationHandler> Publish()
+        public async Task<InformationAdapter> Publish()
         {
             await _agent.Publish(this);
             return this;
