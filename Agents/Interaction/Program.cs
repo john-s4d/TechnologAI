@@ -25,30 +25,27 @@ namespace Technologai.Agents.Core.Interaction
             await _agent.Start();
 
             await _agent.Create("get_user_input", "Input>").Publish();
-
-        private static void Input(string input)
-        {
-            _ = _agent?.Publish(_agent.CreateInformation(input)) ?? throw new ArgumentNullException(nameof(_agent));
-        }
-
-        private async static Task Run()
-        {
-            Console.WriteLine($"{_agent?.Name} Started. Enter Input or \"quit\" to stop.");
             do
             {
                 Thread.Sleep(1000);
             } while (true);
+        }
 
-                if (value.Equals("quit", StringComparison.OrdinalIgnoreCase))
-                {
-                    break;
-                }
+        private static void Input(string input)
+        {
+            _ = _agent?.Publish(_agent.Create(input)) ?? throw new ArgumentNullException(nameof(_agent));
+        }
 
         private static void _agent_outputMessage(object? sender, string message)
         {
             Console.WriteLine($"{_agent?.Name} Output> {message}");
         }
 
+        private static void _agent_statusMessage(object? sender, string message)
+        {
+            Console.WriteLine($"{_agent?.Name} Status> {message}");
         }
+
+
     }
 }

@@ -66,11 +66,13 @@ namespace Technologai.Agents.Core.Interaction
             if (ability.Name == "get_user_input")
             {
                 Console.WriteLine(information.Input);
-                await Task.Run(async () =>
+
+                await Task.Run(() =>
                 {
-                    await Receive(information.Close(Console.ReadLine()));
+                   information.Close(Console.ReadLine());
                 });
             }
+
             /*
             if (ability.Name == "give_user_output")
             {
