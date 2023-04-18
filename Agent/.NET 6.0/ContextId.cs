@@ -5,10 +5,10 @@ using System.Text.Json.Serialization;
 
 namespace Technologai
 {
-    public struct ContextId : IComparable<ContextId>
+    public class ContextId : IComparable<ContextId>
     {
         // hash compute of an id allows to verify which party created this contextId. If that's ever needed.
-
+                
         private readonly string _id;
         private readonly byte[] _unixTimestampBytes = new byte[8];
         private readonly byte[] _hashComputeBytes = new byte[8];
@@ -19,7 +19,8 @@ namespace Technologai
             _hashComputeBytes = MD5.HashData(idHash.Concat(_unixTimestampBytes).ToArray()).Take(8).ToArray();
             _id = Base64UrlEncoder.Encode(_unixTimestampBytes.Concat(_hashComputeBytes).ToArray());
         }
-                
+
+        [JsonConstructor]
         public ContextId(string contextId)
         {
             _id = contextId;
@@ -44,8 +45,13 @@ namespace Technologai
             return Base64UrlEncoder.DecodeBytes(creatorIdBase64).Take(count).ToArray();
         }
 
-        public int CompareTo(ContextId other)
+        public int CompareTo(ContextId? other)
         {
+            if (object.ReferenceEquals(other, null))
+            {
+                return 1;
+            }
+
             var result = BitConverter.ToInt64(_unixTimestampBytes).CompareTo(
                 BitConverter.ToInt64(other._unixTimestampBytes)
             );
@@ -61,7 +67,7 @@ namespace Technologai
 
         public static implicit operator ContextId(string value) => new ContextId(value);
 
-        public static implicit operator string(ContextId value) => value.ToString();      
+        public static implicit operator string(ContextId value) => value.ToString();       
 
         public override string ToString()
         {

@@ -13,12 +13,12 @@ namespace Technologai.Agents.Abilities.ChatGPT
         {
             Abilities.Add(
                 new Ability()
-                {
+                {                    
                     Name = "chatgpt_prompt",
                     Description = "Send a prompt to ChatGPT and receive a response."
 
                 }
-            );
+            ); ;
 
             Abilities.Add(
                 new Ability()
@@ -39,19 +39,16 @@ namespace Technologai.Agents.Abilities.ChatGPT
             public string? input { get; set; }
             public List<KeyValuePair<string, string>>? abilities { get; set; } = new List<KeyValuePair<string, string>>();
         }
-
-        protected override async Task Execute(Ability ability, InformationAdapter information)
+        /*
+        protected override Task Execute(InformationAdapter information)
         {
-            //Console.WriteLine($"{Name} Execute> {information.ContextId} | {information.AbilityName} | {information.Input}");
-
-            //-----------------------------------//
-
-            if (ability.Name == "chatgpt_prompt")
+            /*
+            if (information.AbilityName == "chatgpt_prompt")
             {
                 information.Close(await _openAI.GetGpt3Response(information.Input ?? string.Empty));
             }
-            //-----------------------------------//
-            if (ability.Name == "choose_agency_ability")
+         
+            if (information.AbilityName == "choose_agency_ability")
             {
                 choose_agency_ability_input choose_ability = new choose_agency_ability_input();
                 choose_ability.input = information.Input;
@@ -59,30 +56,36 @@ namespace Technologai.Agents.Abilities.ChatGPT
                 {
                     choose_ability.abilities?.Add(new KeyValuePair<string, string>(abilityName, Abilities[abilityName].Description ?? string.Empty));
                 }
-                /*
+                
                 var prompt = $"Your response MUST be a compliant machine-readable JSON document.\r\n\r\n" +
                              $"{JsonConvert.SerializeObject(choose_ability)}" +
                              $"\r\n\r\nGiven the list of abilities provided, specify which one you would like to use to respond to the input. " +
                              $"Your response should consist of a single JSON object with the name of the selected ability. For example: {information.SampleJsonOut}";
-                */
-                information.Close(await _openAI.GetGpt3Response(ability.Prompt));
+                
+                information.Close(await _openAI.GetGpt3Response(prompt));
             }
-            //-----------------------------------//
-        }
-
-        protected override Task Assess(InformationAdapter information)
-        {
-            //Console.WriteLine($"{Name} Assess> {information.ContextId} | {information.Input} | {information.Output}");
 
             return Task.CompletedTask;
-        }
-
-        protected override Task Review(InformationAdapter information)
+        }*/
+        /*
+        protected override Task Assess(InformationAdapter information, List<Information>? context)
         {
-            //Console.WriteLine($"{Name} Review> {information.ContextId} | {information.Input} | {information.Output}");
-
             return Task.CompletedTask;
+        }*/
+
+        protected override Task<bool> Assess(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext)
+        {
+            throw new NotImplementedException();
         }
 
+        protected override Task<Information> Execute(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override Task<List<Information>> Spawn(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
