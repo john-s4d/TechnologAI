@@ -10,10 +10,9 @@ namespace Technologai
         public string? Name { get; private set; }
         public AbilityCatalog Abilities { get; private set; }
         internal ContextProvider Context { get; private set; }
+        private Dictionary<ContextId, Information> _active { get; } = new();
 
         private MqttClient _mqtt;
-
-        private Dictionary<string, Information> _localInformation = new Dictionary<string, Information>();
 
         public Identity Identity { get; }
 
@@ -21,11 +20,13 @@ namespace Technologai
         {
             Identity = new Identity(authorityName, clientId, clientSecret, memberId);
             Abilities = new AbilityCatalog(Identity);
-            Context = new ContextProvider(Identity);
+            Context = new ContextProvider();
 
             _mqtt = new MqttClient(Identity);
             _mqtt.MessageReceived += _mqtt_MessageReceived;
         }
+
+        // ** TRANSPORT **
 
         private void _mqtt_MessageReceived(object? sender, MqttApplicationMessageReceivedEventArgs args)
         {
@@ -39,67 +40,62 @@ namespace Technologai
 
         private async Task Receive(InformationAdapter information)
         {
-            if (await OnReceive(information))
+            Context.Add(information);
+
+            if (information.State == InformationState.OPEN && !_active.ContainsKey(information.Id))
             {
-                await Publish(information);
+                _active.Add(information.Id, information);
+            }
+
+            if (_active.ContainsKey(information.Id))
+            {
+
+                Information? contextInformation;
+
+                if (information.State == InformationState.CLOSED && information.CreatorId == Identity.Id)
+                {
+                    contextInformation = Context.GetCreator(information.Id);
+                }
+
+                if (string.IsNullOrEmpty(information.Id))
+                {
+                    contextInformation = information;
+                }
+
+                if (await information.Assess())
+                // TODO: Debounce
+                // TODO: Probably need an assessment object
+                {
+                    await information.Execute();
+                    await information.Publish();
+                }
+                else
+                {
+                    foreach (InformationAdapter item in await information.Spawn())
+                    {
+                        Context.Spawn(item.Id, information.Id);
+                        await item.Publish();
+                    }
+                }
             }
         }
 
-        // This is information received on the member channel, addressed to me.
-        private async Task<bool> OnReceive(InformationAdapter information)
+        protected internal abstract Task<bool> Assess(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext);
+        protected internal abstract Task<Information> Execute(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext);
+        protected internal abstract Task<List<Information>> Spawn(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext);
+
+        public InformationAdapter Create(string abilityName, string? input = null)
         {
-            // Kill Drafts
-            if (information.State == InformationState.DRAFT)
-            {
-                return false;
-            }
-
-            // Forward information that doesn't belong to me. Shouldn't receive these. 
-            if (information.OwnerId != Identity.Id)
-            {
-                await Publish(information);
-                return false;
-            }
-
-            // Creator
-
-            if (information.CreatorId == Identity.Id && information.State == InformationState.OPEN)
-            {
-                await information.Execute();
-                await information.Assess();
-                return false;
-            }
-
-            if (information.CreatorId == Identity.Id && information.State == InformationState.CLOSED)
-            {
-                await information.Assess();
-                return false;
-            }
-
-            // Owner Open (Not Creator)
-
-            if (information.State == InformationState.OPEN)
-            {
-                // Work on it
-                await information.Execute();
-                return true;
-            }
-
-            // Owner Closed (Not Creator)
-
-            if (information.State == InformationState.CLOSED)
-            {
-                // Someone sent me something inetresting.
-                await information.Review();
-                return true;
-            }
-
-            throw new Exception("Unhandled Information");
+            var information = InformationAdapter.Create(this, abilityName, input);
+            Context.Add(information);
+            _active.Add(information.Id, information);
+            return information;
         }
 
-        protected internal abstract Task Execute(Ability ability, InformationAdapter information);
-        protected internal abstract Task Assess(InformationAdapter information);
-        protected internal abstract Task Review(InformationAdapter information);
+        protected internal void Close(InformationAdapter information)
+        {
+            _active.Remove(information.Id);
+        }
 
         public async Task Publish(InformationAdapter information)
         {
@@ -109,11 +105,15 @@ namespace Technologai
                 information.State = InformationState.OPEN;
             }
 
+            SendStatusMessage($"{information.Id} Publish> {information.AbilityName} | {information.Input} | {information.Output}");
+
+            // TODO: short circuit.
+            /*
             if (Identity.Id == information.OwnerId)
             {
-                await Receive(information);
-                return;
-            }
+                Receive(information);
+                return Task.CompletedTask;
+            }*/
 
             var message = new BrokerMessage(Identity)
             {
@@ -125,13 +125,6 @@ namespace Technologai
 
             await _mqtt.PublishAsync(topic ?? string.Empty, message.Information.ToJson());
 
-            SendStatusMessage($"{message.Information.ContextId} Publish>  {message.Information.AbilityName} | {message.Information.Input} | {message.Information.Output}");
-        }
-
-        public InformationAdapter Create(string ability, string? input = null)
-        {
-            // TODO: We might need to find the ability first.
-            return InformationAdapter.Create(this, Abilities[ability], input);
         }
 
         internal void SendStatusMessage(string message)

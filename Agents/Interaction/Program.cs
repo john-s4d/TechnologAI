@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text.Json;
-
+﻿
 namespace Technologai.Agents.Core.Interaction
 {
     internal class Program
@@ -24,16 +22,27 @@ namespace Technologai.Agents.Core.Interaction
 
             await _agent.Start();
 
-            await _agent.Create("get_user_input", "Input>").Publish();
+            var information = await _agent.Create("interact_with_user", $"<Interaction Started>").Publish();
+
             do
             {
                 Thread.Sleep(1000);
             } while (true);
+            
+
+            /*
+            do
+            {
+                information = await information.Spawn("interact_with_user").Publish();
+
+            } while (!information.Output?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? true);
+            */
+
         }
 
         private static void Input(string input)
         {
-            _ = _agent?.Publish(_agent.Create(input)) ?? throw new ArgumentNullException(nameof(_agent));
+            //_ = _agent?.Publish(_agent.Create(input)) ?? throw new ArgumentNullException(nameof(_agent));
         }
 
         private static void _agent_outputMessage(object? sender, string message)
@@ -43,7 +52,7 @@ namespace Technologai.Agents.Core.Interaction
 
         private static void _agent_statusMessage(object? sender, string message)
         {
-            Console.WriteLine($"{_agent?.Name} Status> {message}");
+            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} Status> {message}");
         }
 
 
