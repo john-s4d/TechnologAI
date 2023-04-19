@@ -9,9 +9,8 @@ public class InteractWithUser : IAbility
     public string? MemberId { get; set; }
     public string? Prompt { get; set; }
 
-    public Task<Assessment> Assess(InformationAdapter information, Assessment assessment)
-    {
-        
+    public Task<AssessmentResult> Assess(InformationAdapter information, Assessment assessment)
+    {        
         
         // TODO: Easily complete the assessment.
 
@@ -19,14 +18,12 @@ public class InteractWithUser : IAbility
 
         if (string.IsNullOrEmpty(information.Output))
         {
-            assessment.Result = AssessmentResult.SPAWN;
+            return Task.FromResult(AssessmentResult.SPAWN);
         }
         else
         {
-            assessment.Result = AssessmentResult.EXECUTE;
+            return Task.FromResult(AssessmentResult.EXECUTE);
         }
-
-        return Task.FromResult(assessment);
     }
 
     public Task<string> Execute(InformationAdapter information, Assessment assessment)
@@ -37,9 +34,9 @@ public class InteractWithUser : IAbility
     public Task<List<Information>> Spawn(InformationAdapter information, Assessment assessment)
     {
         List<Information> result = new List<Information>
-        {
-            information.Spawn("get_user_input", information.Input),
-            information.Spawn("show_user_output", information.Output)
+        {   
+            information.GetSpawn("get_user_input", information.Input),
+            information.GetSpawn("show_user_output", information.Output)
         };
 
         return Task.FromResult(result);

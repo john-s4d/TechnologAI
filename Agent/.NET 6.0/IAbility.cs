@@ -9,7 +9,7 @@ public interface IAbility
     public string? SampleJsonOut { get; set; }
     public string? MemberId { get; set; }
 
-    public Task<Assessment> Assess(InformationAdapter information, Assessment assessment);
+    public Task<AssessmentResult> Assess(InformationAdapter information, Assessment assessment);
 
     public Task<string> Execute(InformationAdapter information, Assessment assessment);
 

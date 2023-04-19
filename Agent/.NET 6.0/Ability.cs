@@ -14,9 +14,9 @@ public class Ability : IAbility
         Id = id;
     }
 
-    public virtual Task<Assessment> Assess(InformationAdapter information, Assessment assessment)
+    public virtual Task<AssessmentResult> Assess(InformationAdapter information, Assessment assessment)
     {
-        return Task.FromResult(assessment);
+        return Task.FromResult(assessment.Result);
     }
 
     public virtual Task<string> Execute(InformationAdapter information, Assessment assessment)

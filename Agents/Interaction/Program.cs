@@ -31,7 +31,7 @@ namespace Technologai.Agents.Core.Interaction
 
             //var information = await _agent.Create("show_user_output", $"hello").Publish();
 
-            var information = await _agent.Create("interact_with_user", $"<Interaction Started>").Publish();
+            await _agent.Create("interact_with_user", $"<Interaction Started>").Publish();
 
             do
             {
