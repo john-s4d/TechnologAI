@@ -18,11 +18,11 @@ namespace Technologai
             Add(new Ability("add_ability_to_catalog")
             {   
                 SampleJsonIn = "{name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id}",
-                SampleJsonOut = "{success:bool}",
+                SampleJsonOut = "{\"success\":true}",
                 Description = "Add an ability to the local action catalog.",                
             });
 
-            Add(new Ability("add_ability_to_catalog")
+            Add(new Ability("find_an_ability_in_catalog")
             {                
                 SampleJsonIn = "search:string,hints:string",
                 SampleJsonOut = "[name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id]",

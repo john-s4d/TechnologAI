@@ -1,7 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Schema;
-using Technologai;
+﻿using Technologai;
 
 public class GetUserInput : IAbility
 {
@@ -14,6 +11,7 @@ public class GetUserInput : IAbility
 
     public Task<Assessment> Assess(InformationAdapter information, Assessment assessment)
     {
+        assessment.Result = AssessmentResult.EXECUTE;
         return Task.FromResult(assessment);
     }
 
@@ -35,7 +33,7 @@ public class GetUserInput : IAbility
     }
 
     public Task<List<Information>> Spawn(InformationAdapter information, Assessment assessment)
-    {
+    {   
         return Task.FromResult(new List<Information>());
     }
 }

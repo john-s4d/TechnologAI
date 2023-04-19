@@ -2,7 +2,6 @@
 
 public class InteractWithUser : IAbility
 {
-
     public string Id { get; set; } = "interact_with_user";
     public string? Description { get; set; } = "Provide the user with information and receive a response from the user.";
     public string? SampleJsonIn { get; set; }
@@ -12,11 +11,19 @@ public class InteractWithUser : IAbility
 
     public Task<Assessment> Assess(InformationAdapter information, Assessment assessment)
     {
+        
+        
+        // TODO: Easily complete the assessment.
+
         //assessment.ForwardSummary = assessment.ForwardContext?[0].Output;
 
-        if (!string.IsNullOrEmpty(information.Output))
+        if (string.IsNullOrEmpty(information.Output))
         {
-            //forwardContext?[0].Output ?? string.Empty;            
+            assessment.Result = AssessmentResult.SPAWN;
+        }
+        else
+        {
+            assessment.Result = AssessmentResult.EXECUTE;
         }
 
         return Task.FromResult(assessment);

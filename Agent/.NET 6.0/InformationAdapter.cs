@@ -107,7 +107,6 @@ namespace Technologai
             }
         }
 
-        /*
         public InformationAdapter Close(string? output = null)
         {
             _information.Output = output ?? Output;
@@ -116,10 +115,11 @@ namespace Technologai
             _agent.SendStatusMessage($"{ContextId} Close> {AbilityId} | {Input} | {Output}");
             return this;
         }
-        */
 
-        public async Task<InformationAdapter> Publish()
+        
+        public async Task<Information> Publish()
         {
+            // TODO: Publish needs an awaiter to wait and handle the result.
             await _agent.Publish(this);
             return this;
         }
