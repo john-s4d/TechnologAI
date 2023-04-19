@@ -13,12 +13,17 @@ namespace Technologai.Agents.Core.Interaction
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
 
+            Console.WriteLine("Loading...");
+
             _agent = new Interaction(authorityName, clientId, clientSecret, memberId);
 
             _agent.StatusMessage += _agent_statusMessage;
-            _agent.OutputMessage += _agent_outputMessage;
 
-            Console.WriteLine("Loading...");
+            _agent.Abilities.Add(new GetUserInput());
+            _agent.Abilities.Add(new InteractWithUser());
+            var showUserOutput = new ShowUserOutput();
+            showUserOutput.OutputMessage += showUserOutput_OutputMessage;
+            _agent.Abilities.Add(showUserOutput);
 
             await _agent.Start();
 
@@ -29,7 +34,6 @@ namespace Technologai.Agents.Core.Interaction
                 Thread.Sleep(1000);
             } while (true);
             
-
             /*
             do
             {
@@ -40,12 +44,7 @@ namespace Technologai.Agents.Core.Interaction
 
         }
 
-        private static void Input(string input)
-        {
-            //_ = _agent?.Publish(_agent.Create(input)) ?? throw new ArgumentNullException(nameof(_agent));
-        }
-
-        private static void _agent_outputMessage(object? sender, string message)
+        private static void showUserOutput_OutputMessage(string message)
         {
             Console.WriteLine($"{_agent?.Name} Output> {message}");
         }

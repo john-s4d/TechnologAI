@@ -15,30 +15,20 @@ namespace Technologai.Agents.Core.Coordinator
         {
            
         }
-        /*
-        protected override Task Assess(InformationAdapter information, List<Information>? context)
-        {
-            return Task.CompletedTask;
-        }*/
 
-        protected override Task<bool> Assess(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext)
+        protected Task<Assessment> Assess(InformationAdapter information, Assessment assessment)
         {
             throw new NotImplementedException();
         }
 
-        protected override Task<Information> Execute(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext)
+        protected Task<Information> Execute(InformationAdapter information, Assessment assessment)
         {
             throw new NotImplementedException();
         }
 
-        protected override Task<List<Information>> Spawn(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext)
+        protected Task<List<Information>> Spawn(InformationAdapter information, Assessment assessment)
         {
             throw new NotImplementedException();
         }
-        /*
-protected override Task Execute(InformationAdapter information)
-{
-   return Task.CompletedTask;
-} */
     }
 }

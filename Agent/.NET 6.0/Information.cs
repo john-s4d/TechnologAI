@@ -1,6 +1,4 @@
-﻿using System.Management;
-using System.Reflection.Metadata.Ecma335;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Technologai
@@ -14,45 +12,48 @@ namespace Technologai
 
     public class Information : IComparable<Information>
     {
+        public string WorkerId { get; internal set; } // TODO: Can this in the adapter instead?
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
-        public string OwnerId { get; internal set; }
-        public InformationState State { get; internal set; }        
+        public string? CompletorId { get; private set; }
+        public InformationState State { get; internal set; }
         public string? Input { get; internal set; }
-        public string? SampleJsonIn { get; internal set; }
         public string? Output { get; internal set; }
-        public string? SampleJsonOut { get; internal set; }
-        public string? Signature { get; internal set; } // parentContextId + contextId + memberId + parentHash + output
-        public string AbilityName { get; internal set; }
-        
+        public string AbilityId { get; internal set; }
 
         // TODO History, Signatures, ReadOnly fields ?        
-        
-        [JsonConstructor]        
-        public Information(string id, string creatorId, string abilityName, InformationState state, 
-            string ownerId, string? input = null, string? sampleJsonIn = null, 
-            string? output = null, string? sampleJsonOut = null, string? signature = null)
+
+        [JsonConstructor]
+        public Information(
+            string id,
+            string creatorId,
+            string abilityId,
+            InformationState state,
+            string workerId,
+            string? input = null,
+            string? output = null
+            )
         {
             Id = id;
             CreatorId = creatorId;
+            AbilityId = abilityId;
             State = state;
-            OwnerId = ownerId;
+            WorkerId = workerId;
             Input = input;
-            SampleJsonIn = sampleJsonIn;
             Output = output;
-            SampleJsonOut = sampleJsonOut;
-            AbilityName = abilityName;
-            Signature = signature;
         }
 
-        public Information(string creatorId, string abilityName, string? input = null)
+        public static Information Create(string creatorId, string abilityId, string? input = null)
         {
-            AbilityName = abilityName;
-            OwnerId = creatorId;
-            CreatorId = creatorId;
-            Input = input;
-            State = InformationState.DRAFT;
-            Id = Technologai.ContextId.Create(creatorId);
+            return new Information(
+                Technologai.ContextId.Create(creatorId),
+                creatorId,
+                abilityId,
+                InformationState.DRAFT,
+                creatorId,
+                input,
+                null
+                );
         }
 
         public static Information? FromJson(string json)
@@ -61,12 +62,12 @@ namespace Technologai
         }
 
         public string ToJson()
-        {   
+        {
             return JsonSerializer.Serialize(this);
         }
 
         public int CompareTo(Information? other)
-        {   
+        {
             return object.ReferenceEquals(other, null) ? 1 : ((ContextId)Id).CompareTo((ContextId)other.Id);
         }
     }

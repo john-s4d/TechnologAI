@@ -6,10 +6,10 @@ namespace Technologai
 {
     public class ContextProvider
     {
-        private readonly Dictionary<ContextId, List<ContextId>> _forward = new(); // reverseId, [forward]
-        private readonly Dictionary<ContextId, List<ContextId>> _reverse = new(); // forwardId, [reverse]
-        private readonly Dictionary<ContextId, Information> _library = new();
-        private readonly Dictionary<ContextId, ContextId> _lineage = new();
+        private readonly Dictionary<string, List<string>> _forward = new(); // reverseId, [forward]
+        private readonly Dictionary<string, List<string>> _reverse = new(); // forwardId, [reverse]
+        private readonly Dictionary<string, Information> _library = new();
+        private readonly Dictionary<string, string> _lineage = new();
 
         public ContextProvider()
         {
@@ -21,17 +21,17 @@ namespace Technologai
             _library[information.Id] = information;
         }
 
-        internal void Add(ContextId forwardId, ContextId reverseId)
+        internal void Add(string forwardId, string reverseId)
         {
             AddForward(forwardId, reverseId);
             AddReverse(forwardId, reverseId);
         }
 
-        private void AddReverse(ContextId forwardId, ContextId reverseId)
+        private void AddReverse(string forwardId, string reverseId)
         {
             if (!_reverse.ContainsKey(forwardId))
             {
-                _reverse.Add(forwardId, new List<ContextId>());
+                _reverse.Add(forwardId, new List<string>());
             }
             if (!_reverse[forwardId].Contains(reverseId))
             {
@@ -39,12 +39,12 @@ namespace Technologai
             }
         }
 
-        private void AddForward(ContextId forwardId, ContextId reverseId)
+        private void AddForward(string forwardId, string reverseId)
         {
 
             if (!_forward.ContainsKey(reverseId))
             {
-                _forward.Add(reverseId, new List<ContextId>());
+                _forward.Add(reverseId, new List<string>());
             }
             if (!_forward[reverseId].Contains(forwardId))
             {
@@ -52,33 +52,34 @@ namespace Technologai
             }
         }
 
-        internal List<Information> ToList(List<ContextId> contextIds)
+        internal List<Information> ToList(List<string> contextIds)
         {
             List<Information> result = new List<Information>();
-            foreach (ContextId contextId in contextIds)
+            foreach (string contextId in contextIds)
             {
                 result.Add(_library[contextId]);
             }
             return result;
         }
 
-        internal List<Information>? GetForward(ContextId reverseId)
+        internal List<Information>? GetForward(string reverseId)
         {
             return _forward.ContainsKey(reverseId) ? ToList(_forward[reverseId]) : null;
 
         }
-        internal List<Information>? GetReverse(ContextId forwardId)
+        internal List<Information>? GetReverse(string forwardId)
         {
             return _reverse.ContainsKey(forwardId) ? ToList(_reverse[forwardId]) : null;
         }
 
-        internal Information? GetCreator(ContextId forwardId)
+        internal Information? GetCreator(string forwardId)
         {
             return _lineage.ContainsKey(forwardId) ? _library[_lineage[forwardId]] : null;
         }
 
-        internal void Spawn(ContextId forwardId, ContextId reverseId)
+        internal void Spawn(string forwardId, string reverseId)
         {
+            Add(forwardId, reverseId);
             _lineage[forwardId] = reverseId;
         }
     }
