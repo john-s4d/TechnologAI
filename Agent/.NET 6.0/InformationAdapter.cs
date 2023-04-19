@@ -59,69 +59,52 @@ namespace Technologai
             return adapter;
         }
 
-        protected internal async Task<Assessment> Assess()
+        protected internal async Task Assess(Assessment assessment)
         {
             _agent.SendStatusMessage($"{ContextId} Assess> {AbilityId} | {Input} | {Output}");
-            return await _ability.Assess(this, new Assessment(_agent.Context.GetForward(ContextId), _agent.Context.GetReverse(ContextId)));
+            assessment.Result = await _ability.Assess(this, assessment);            
         }
 
-        protected internal async Task<List<InformationAdapter>> Spawn(Assessment assessment)
-        {
-            _agent.SendStatusMessage($"{ContextId} Spawn> {AbilityId} | {Input} | {Output}");
-            return ToList(await _ability.Spawn(this, assessment));
-        }
-
-        public Information Spawn(string abilityId, string? input)
-        {
-            var ability = _agent.Abilities[abilityId];
-            var information = Information.Create(AgentId, ability.Id, input);
-            _agent.Context.Spawn(information.Id, _information.Id);
-            _agent.SendStatusMessage($"{information.Id} Spawn> {abilityId} | {information.Input}");
-            return new InformationAdapter(_agent, ability, information);
-        }
-
-
-        protected internal async Task<string> Execute(Assessment assessment)
+        protected internal async Task Execute(Assessment assessment)
         {
             _agent.SendStatusMessage($"{ContextId} Execute> {AbilityId} | {Input} | {Output}");
-            return await _ability.Execute(this, assessment);
+            _information.Output = await _ability.Execute(this, assessment);
+            _information.State = InformationState.CLOSED;
+            _information.WorkerId = CreatorId;
+            await Publish();
         }
 
-        private List<InformationAdapter> ToList(List<Information> information)
+        protected internal async Task Spawn(Assessment assessment)
         {
-            List<InformationAdapter> result = new List<InformationAdapter>();
+            _agent.SendStatusMessage($"{ContextId} Spawn> {AbilityId} | {Input} | {Output}");
 
-            foreach (Information item in information)
+            foreach (Information item in await _ability.Spawn(this, assessment))
             {
-                result.Add(new InformationAdapter(_agent, item));
-            }
-
-            return result;
+                //_agent.Context.Spawn(item.Id, _information.Id);
+                await (new InformationAdapter(_agent, item).Publish());
+            }            
         }
-
-        internal void OpenDrafts()
+        
+        public Information GetSpawn(string abilityId, string? input = null)
+        {   
+            var information = Create(_agent, abilityId, input);
+            _agent.Context.Spawn(information.ContextId, _information.Id);
+            information._information.WorkerId = information.AbilityOwnerId ?? AgentId;
+            //_agent.SendStatusMessage($"{information.Id} Spawn> {abilityId} | {information.Input}");
+            return information;
+        }
+        
+        public async Task Publish()
         {
-            if (_information.State == InformationState.DRAFT)
+            if (_information.State == InformationState.DRAFT)  
             {
                 _information.State = InformationState.OPEN;
             }
-        }
 
-        public InformationAdapter Close(string? output = null)
-        {
-            _information.Output = output ?? Output;
-            _information.State = InformationState.CLOSED;
-            _information.WorkerId = CreatorId;
-            _agent.SendStatusMessage($"{ContextId} Close> {AbilityId} | {Input} | {Output}");
-            return this;
-        }
+            // TODO: Publish needs callback to handle the result.
 
-        
-        public async Task<Information> Publish()
-        {
-            // TODO: Publish needs an awaiter to wait and handle the result.
             await _agent.Publish(this);
-            return this;
+            
         }
 
         public T? DeserializeInput<T>()

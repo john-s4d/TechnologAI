@@ -9,10 +9,9 @@ public class GetUserInput : IAbility
     public string? MemberId { get; set; }
     public string? Prompt { get; set; }
 
-    public Task<Assessment> Assess(InformationAdapter information, Assessment assessment)
-    {
-        assessment.Result = AssessmentResult.EXECUTE;
-        return Task.FromResult(assessment);
+    public Task<AssessmentResult> Assess(InformationAdapter information, Assessment assessment)
+    {        
+        return Task.FromResult(AssessmentResult.EXECUTE);
     }
 
     public async Task<string> Execute(InformationAdapter information, Assessment assessment)

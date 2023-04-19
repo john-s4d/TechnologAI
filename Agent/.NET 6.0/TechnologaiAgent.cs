@@ -63,23 +63,19 @@ namespace Technologai
                     }
                 }
 
-                var assessment = (await information.Assess());
+                var assessment = new Assessment(Context.GetForward(information.ContextId), Context.GetReverse(information.ContextId));
+
+                await information.Assess(assessment);
 
                 if (assessment.Result == AssessmentResult.EXECUTE)
                 {
                     // TODO: Debounce?
-
-                    information.Close(await information.Execute(assessment));
-                    await information.Publish();
+                    await information.Execute(assessment);
                 }
-
                 else if (assessment.Result == AssessmentResult.SPAWN)
                 {
-                    foreach (InformationAdapter item in await information.Spawn(assessment))
-                    {
-                        Context.Spawn(item.ContextId, information.ContextId);
-                        await item.Publish();
-                    }
+
+                    await information.Spawn(assessment);
                 }
             }
         }
@@ -92,11 +88,11 @@ namespace Technologai
             return information;
         }
 
+        public delegate void PublishCallback(InformationAdapter information);
+
         public async Task Publish(InformationAdapter information)
         {
-            // Open drafts
-            information.OpenDrafts();
-
+            
             SendStatusMessage($"{information.ContextId} Publish> {information.AbilityId} | {information.Input} | {information.Output}");
 
             // TODO: short circuit.
