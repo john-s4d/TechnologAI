@@ -53,9 +53,13 @@ namespace Technologai
                     _active.Remove(information.ContextId);
 
                     var creator = Context.GetCreator(information.ContextId);
-                    if (creator != null)
+                    if (creator == null)
                     {
-                        information = new InformationAdapter(this, information);
+                        return;
+                    }
+                    else
+                    {
+                        information = new InformationAdapter(this, creator);
                     }
                 }
 
@@ -63,12 +67,13 @@ namespace Technologai
 
                 if (assessment.Result == AssessmentResult.EXECUTE)
                 {
-                    // TODO: Debounce
-                    await information.Execute(assessment);
+                    // TODO: Debounce?
+
+                    information.Close(await information.Execute(assessment));
                     await information.Publish();
                 }
 
-                else
+                else if (assessment.Result == AssessmentResult.SPAWN)
                 {
                     foreach (InformationAdapter item in await information.Spawn(assessment))
                     {

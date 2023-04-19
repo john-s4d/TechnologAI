@@ -1,13 +1,10 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Schema;
-using Technologai;
+﻿using Technologai;
 
 public class ShowUserOutput : IAbility
 {   
     internal event Action<string>? OutputMessage;
 
-    public string Id { get; set; }
+    public string Id { get; set; } = "show_user_output";
     public string? Description { get; set; } = "Provide the user with information.";
     public string? SampleJsonIn { get; set; }
     public string? SampleJsonOut { get; set; }
@@ -16,6 +13,7 @@ public class ShowUserOutput : IAbility
 
     public Task<Assessment> Assess(InformationAdapter information, Assessment assessment)
     {
+        assessment.Result = AssessmentResult.EXECUTE;
         return Task.FromResult(assessment);
     }
 
@@ -27,6 +25,6 @@ public class ShowUserOutput : IAbility
 
     public Task<List<Information>> Spawn(InformationAdapter information, Assessment assessment)
     {
-        throw new NotImplementedException();
+        return Task.FromResult(new List<Information>());
     }
 }

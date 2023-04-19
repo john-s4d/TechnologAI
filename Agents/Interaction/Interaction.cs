@@ -5,8 +5,7 @@ using Newtonsoft.Json.Linq;
 namespace Technologai.Agents.Core.Interaction
 {
     internal class Interaction : TechnologaiAgent
-    {
-        
+    {   
 
         public Interaction(string authorityName, string clientId, string clientSecret, string memberId)
             : base(authorityName, clientId, clientSecret, memberId)
@@ -28,9 +27,6 @@ namespace Technologai.Agents.Core.Interaction
                    MemberId = "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q"
                }
            );
-
-            Abilities.Add(new InteractWithUser());
-
         }
 
         public class choose_agency_ability_response
