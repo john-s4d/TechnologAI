@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Technologai
 {
-    public class AbilityCatalog : Dictionary<string, Ability>
+    public class AbilityCatalog : Dictionary<string, IAbility>
     {
         private Identity _identity;
 
@@ -15,32 +15,30 @@ namespace Technologai
         {
             _identity = identity;
             
-            Add(new Ability()
-            {
-                Name = "add_ability_to_catalog",
+            Add(new Ability("add_ability_to_catalog")
+            {   
                 SampleJsonIn = "{name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id}",
                 SampleJsonOut = "{success:bool}",
                 Description = "Add an ability to the local action catalog.",                
             });
 
-            Add(new Ability()
-            {
-                Name = "find_abilities_in_catalog",
+            Add(new Ability("add_ability_to_catalog")
+            {                
                 SampleJsonIn = "search:string,hints:string",
                 SampleJsonOut = "[name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id]",
                 Description = "Find and return Actions in the local Action Catalog based on the search string",                
             });
         }
 
-        public void Add(Ability ability)
+        public void Add(IAbility ability)
         {   
-            if (!string.IsNullOrEmpty(ability.Name))
+            if (!string.IsNullOrEmpty(ability.Id))
             {
-                Add(ability.Name, ability);
+                Add(ability.Id, ability);
             }
         }
 
-        public void AddRange(IEnumerable<Ability> abilities)
+        public void AddRange(IEnumerable<IAbility> abilities)
         {
             foreach(Ability ability in abilities)
             {

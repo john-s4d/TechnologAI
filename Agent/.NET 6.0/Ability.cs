@@ -1,66 +1,32 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Schema;
-using Technologai;
+﻿using Technologai;
 
-public class Ability
+public class Ability : IAbility
 {
-    public string Name { get; set; }
+    public string Id { get; set; }
     public string? Description { get; set; }
+    public string? Prompt { get; set; }
     public string? SampleJsonIn { get; set; }
     public string? SampleJsonOut { get; set; }
-    public string? MemberId { get; set; }
-    public string? Prompt { get; set; }
+    public string? MemberId { get; set; }    
 
-    /*
-    public virtual async Task Process(Information information, List<Information> context)
+    public Ability(string id)
     {
-        var collated = await Collate(context);
-
-
-        var collected = await Collect(context);
-
-        if (await Assess(collated))
-        {
-
-        }
-
-        if (await Assess(collated))
-        {
-            await Execute(collated);
-        }
-        else
-        {
-            
-        }
-        
-        
-        await Spawn(information);
+        Id = id;
     }
 
-    public virtual async Task Process(List<Information> forwardInformation, List<Information> context)
+    public virtual Task<Assessment> Assess(InformationAdapter information, Assessment assessment)
     {
-        var collated = await Collate(context);
-
-        if (await Assess(collated))
-        {
-
-        }
-
-        if (await Assess(collated))
-        {
-            await Execute(collated);
-        }
-        else
-        {
-
-        }
-        await Spawn(information);
+        return Task.FromResult(assessment);
     }
 
-    public abstract Task<bool> Assess(Information information);
-    public abstract Task<Information> Execute(Information information);
-    public abstract Task<Information> Collate(List<Information> information);
-    public abstract Task<Information> Spawn(List<Information> information);
-    */
+    public virtual Task<string> Execute(InformationAdapter information, Assessment assessment)
+    {
+        return Task.FromResult(string.Empty);
+    }
+
+    public virtual Task<List<Information>> Spawn(InformationAdapter information, Assessment assessment)
+    {
+        return Task.FromResult(new List<Information>());
+    }
+    
 }

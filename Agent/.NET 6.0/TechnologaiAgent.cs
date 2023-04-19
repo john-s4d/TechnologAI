@@ -1,5 +1,4 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using MQTTnet.Client;
+﻿using MQTTnet.Client;
 
 namespace Technologai
 {
@@ -10,7 +9,7 @@ namespace Technologai
         public string? Name { get; private set; }
         public AbilityCatalog Abilities { get; private set; }
         internal ContextProvider Context { get; private set; }
-        private Dictionary<ContextId, Information> _active { get; } = new();
+        private Dictionary<string, Information> _active { get; } = new();
 
         private MqttClient _mqtt;
 
@@ -34,7 +33,7 @@ namespace Technologai
 
             if (information != null)
             {
-                Receive(new InformationAdapter(information, this)).Wait();
+                Receive(new InformationAdapter(this, information)).Wait();
             }
         }
 
@@ -42,70 +41,58 @@ namespace Technologai
         {
             Context.Add(information);
 
-            if (information.State == InformationState.OPEN && !_active.ContainsKey(information.Id))
+            if (information.State == InformationState.OPEN && !_active.ContainsKey(information.ContextId))
             {
-                _active.Add(information.Id, information);
+                _active[information.ContextId] = information;
             }
 
-            if (_active.ContainsKey(information.Id))
+            if (_active.ContainsKey(information.ContextId))
             {
-
-                Information? contextInformation;
-
                 if (information.State == InformationState.CLOSED && information.CreatorId == Identity.Id)
                 {
-                    contextInformation = Context.GetCreator(information.Id);
+                    _active.Remove(information.ContextId);
+
+                    var creator = Context.GetCreator(information.ContextId);
+                    if (creator != null)
+                    {
+                        information = new InformationAdapter(this, information);
+                    }
                 }
 
-                if (string.IsNullOrEmpty(information.Id))
-                {
-                    contextInformation = information;
-                }
+                var assessment = (await information.Assess());
 
-                if (await information.Assess())
-                // TODO: Debounce
-                // TODO: Probably need an assessment object
+                if (assessment.Result == AssessmentResult.EXECUTE)
                 {
-                    await information.Execute();
+                    // TODO: Debounce
+                    await information.Execute(assessment);
                     await information.Publish();
                 }
+
                 else
                 {
-                    foreach (InformationAdapter item in await information.Spawn())
+                    foreach (InformationAdapter item in await information.Spawn(assessment))
                     {
-                        Context.Spawn(item.Id, information.Id);
+                        Context.Spawn(item.ContextId, information.ContextId);
                         await item.Publish();
                     }
                 }
             }
         }
 
-        protected internal abstract Task<bool> Assess(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext);
-        protected internal abstract Task<Information> Execute(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext);
-        protected internal abstract Task<List<Information>> Spawn(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext);
-
         public InformationAdapter Create(string abilityName, string? input = null)
         {
             var information = InformationAdapter.Create(this, abilityName, input);
             Context.Add(information);
-            _active.Add(information.Id, information);
+            _active[information.ContextId] = information;
             return information;
-        }
-
-        protected internal void Close(InformationAdapter information)
-        {
-            _active.Remove(information.Id);
         }
 
         public async Task Publish(InformationAdapter information)
         {
             // Open drafts
-            if (information.State == InformationState.DRAFT)
-            {
-                information.State = InformationState.OPEN;
-            }
+            information.OpenDrafts();
 
-            SendStatusMessage($"{information.Id} Publish> {information.AbilityName} | {information.Input} | {information.Output}");
+            SendStatusMessage($"{information.ContextId} Publish> {information.AbilityId} | {information.Input} | {information.Output}");
 
             // TODO: short circuit.
             /*
@@ -118,7 +105,7 @@ namespace Technologai
             var message = new BrokerMessage(Identity)
             {
                 Information = information,
-                MemberId = information.OwnerId
+                MemberId = information.WorkerId
             };
 
             string? topic = Identity.GetMaskedTopic(message.TopicMember);

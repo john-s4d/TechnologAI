@@ -12,18 +12,15 @@ namespace Technologai.Agents.Abilities.ChatGPT
             : base(authorityName, clientId, clientSecret, memberId)
         {
             Abilities.Add(
-                new Ability()
-                {                    
-                    Name = "chatgpt_prompt",
+                new Ability("chatgpt_prompt")
+                {   
                     Description = "Send a prompt to ChatGPT and receive a response."
-
                 }
             ); ;
 
             Abilities.Add(
-                new Ability()
-                {
-                    Name = "choose_agency_ability",
+                new Ability("choose_agency_ability")
+                {   
                     SampleJsonOut = "{\"name\":\"string\"}",
                     Description = "Choose an agency-wide ability to use for the response.",
                     Prompt = "Your response MUST be a compliant machine-readable JSON document.\r\n\r\n" +
@@ -73,17 +70,17 @@ namespace Technologai.Agents.Abilities.ChatGPT
             return Task.CompletedTask;
         }*/
 
-        protected override Task<bool> Assess(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext)
+        protected Task<Assessment> Assess(InformationAdapter information, Assessment assment)
         {
             throw new NotImplementedException();
         }
 
-        protected override Task<Information> Execute(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext)
+        protected Task<Information> Execute(InformationAdapter information, Assessment assment)
         {
             throw new NotImplementedException();
         }
 
-        protected override Task<List<Information>> Spawn(InformationAdapter information, List<Information>? forwardContext, List<Information>? reverseContext)
+        protected Task<List<Information>> Spawn(InformationAdapter information, Assessment assment)
         {
             throw new NotImplementedException();
         }
