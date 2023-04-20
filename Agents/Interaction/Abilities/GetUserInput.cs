@@ -10,13 +10,13 @@ public class GetUserInput : IAbility
     public string? Prompt { get; set; }
 
     public Task<AssessmentResult> Assess(InformationAdapter information, Assessment assessment)
-    {        
+    {
         return Task.FromResult(AssessmentResult.EXECUTE);
     }
 
     public async Task<string> Execute(InformationAdapter information, Assessment assessment)
     {
-        Console.WriteLine(information.Input);
+        //Console.WriteLine(information.Input);
 
         string value = await Task.Run(() =>
         {

@@ -16,7 +16,7 @@ public class Ability : IAbility
 
     public virtual Task<AssessmentResult> Assess(InformationAdapter information, Assessment assessment)
     {
-        return Task.FromResult(assessment.Result);
+        return Task.FromResult(AssessmentResult.EXECUTE);
     }
 
     public virtual Task<string> Execute(InformationAdapter information, Assessment assessment)

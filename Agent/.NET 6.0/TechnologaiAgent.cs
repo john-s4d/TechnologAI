@@ -6,10 +6,14 @@ namespace Technologai
     {
         public event EventHandler<string>? StatusMessage;
 
+        public delegate void OnPublished(InformationAdapter information);
+
         public string? Name { get; private set; }
         public AbilityCatalog Abilities { get; private set; }
         internal ContextProvider Context { get; private set; }
         private Dictionary<string, Information> _active { get; } = new();
+
+        Dictionary<string, OnPublished> _publishCallbacks = new Dictionary<string, OnPublished>();
 
         private MqttClient _mqtt;
 
@@ -53,46 +57,53 @@ namespace Technologai
                     _active.Remove(information.ContextId);
 
                     var creator = Context.GetCreator(information.ContextId);
+
                     if (creator == null)
                     {
-                        return;
+                        // This is a root request. End here and send a callback.
+                        _publishCallbacks[information.ContextId]?.Invoke(information);
+                        return; 
                     }
                     else
                     {
-                        information = new InformationAdapter(this, creator);
+                        information = new InformationAdapter(this, creator);                        
                     }
                 }
 
-                var assessment = new Assessment(Context.GetForward(information.ContextId), Context.GetReverse(information.ContextId));
+                Assessment assessment = new Assessment(); // = new Assessment(Context.GetForward(information.ContextId), Context.GetReverse(information.ContextId));
 
-                await information.Assess(assessment);
+                var assessmentResult = await information.Assess(assessment);
 
-                if (assessment.Result == AssessmentResult.EXECUTE)
+                if (assessmentResult == AssessmentResult.EXECUTE)
                 {
                     // TODO: Debounce?
                     await information.Execute(assessment);
                 }
-                else if (assessment.Result == AssessmentResult.SPAWN)
+                else if (assessmentResult == AssessmentResult.SPAWN)
                 {
-
                     await information.Spawn(assessment);
                 }
             }
         }
 
+        
         public InformationAdapter Create(string abilityName, string? input = null)
         {
-            var information = InformationAdapter.Create(this, abilityName, input);
-            Context.Add(information);
+            var information = InformationAdapter.Create(this, abilityName, input);            
             _active[information.ContextId] = information;
             return information;
         }
 
-        public delegate void PublishCallback(InformationAdapter information);
+        public async void PublishWithCallback(InformationAdapter information, OnPublished onPublished)
+        {
+            _publishCallbacks.Add(information.ContextId, onPublished);
+            await Publish(information);
+        }
 
         public async Task Publish(InformationAdapter information)
         {
-            
+            //Context.Add(information); // Done in Create(). Otherwise it was added when received.
+
             SendStatusMessage($"{information.ContextId} Publish> {information.AbilityId} | {information.Input} | {information.Output}");
 
             // TODO: short circuit.
