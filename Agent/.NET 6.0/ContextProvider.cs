@@ -82,5 +82,12 @@ namespace Technologai
             Add(forwardId, reverseId);
             _lineage[forwardId] = reverseId;
         }
+
+        internal Context RelatedTo(string contextId)
+        {
+            return new Context(_library[contextId], GetForward(contextId), GetReverse(contextId));
+        }
+
+
     }
 }

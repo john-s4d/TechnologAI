@@ -12,14 +12,16 @@ public class ShowUserOutput : IAbility
     public string? Prompt { get; set; }
 
     public Task<AssessmentResult> Assess(InformationAdapter information, Assessment assessment)
-    {        
+    {
+        assessment.Content = information.Input;
+
         return Task.FromResult(AssessmentResult.EXECUTE);
     }
 
     public Task<string> Execute(InformationAdapter information, Assessment assessment)
     {
-        OutputMessage?.Invoke(information.Input ?? string.Empty);
-        return Task.FromResult(information.Input ?? string.Empty);
+        OutputMessage?.Invoke(assessment.Content ?? string.Empty);
+        return Task.FromResult(string.Empty);
     }
 
     public Task<List<Information>> Spawn(InformationAdapter information, Assessment assessment)

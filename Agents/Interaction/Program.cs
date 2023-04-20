@@ -31,7 +31,7 @@ namespace Technologai.Agents.Core.Interaction
 
             //var information = await _agent.Create("show_user_output", $"hello").Publish();
 
-            await _agent.Create("interact_with_user", $"<Interaction Started>").Publish();
+            _agent.PublishWithCallback(_agent.Create("interact_with_user", "<Interaction Started>"), information_OnPublishedCallback);
 
             do
             {
@@ -46,6 +46,13 @@ namespace Technologai.Agents.Core.Interaction
             } while (!information.Output?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? true);
             */
 
+        }
+
+        private static void information_OnPublishedCallback(InformationAdapter information)
+        {
+            //_agent?.PublishWithCallback(_agent.Create("interact_with_user", $"<Interaction Started>"), information_OnPublished);
+
+            Console.WriteLine($"{_agent?.Name} OnPublished> {information.Output}");
         }
 
         private static void showUserOutput_OutputMessage(string message)
