@@ -12,32 +12,47 @@ namespace Technologai.Agents.Core.Interaction
             var clientId = _config.ClientId ?? throw new ArgumentNullException(nameof(_config.ClientId));
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
-
-            Console.WriteLine("Loading...");
-
-            _agent = new Interaction(authorityName, clientId, clientSecret, memberId);
-
-            _agent.StatusMessage += _agent_statusMessage;
-
-            _agent.Abilities.Add(new GetUserInput());
-            _agent.Abilities.Add(new InteractWithUser());
-            var showUserOutput = new ShowUserOutput();
-            showUserOutput.OutputMessage += showUserOutput_OutputMessage;
-            _agent.Abilities.Add(showUserOutput);
-
-            await _agent.Start();
-
-            //var information = await _agent.Create("get_user_input", $"hello").Publish();
-
-            //var information = await _agent.Create("show_user_output", $"hello").Publish();
-
-            _agent.PublishWithCallback(_agent.Create("interact_with_user", "<Interaction Started>"), information_OnPublishedCallback);
-
-            do
+            try
             {
-                Thread.Sleep(1000);
-            } while (true);
-            
+
+                Console.WriteLine("Loading...");
+
+                _agent = new Interaction(authorityName, clientId, clientSecret, memberId);
+
+                _agent.StatusMessage += _agent_statusMessage;
+
+                _agent.Abilities.Add(new GetUserInput());
+                _agent.Abilities.Add(new InteractWithUser());
+                var showUserOutput = new ShowUserOutput();
+                showUserOutput.OutputMessage += showUserOutput_OutputMessage;
+                _agent.Abilities.Add(showUserOutput);
+
+                await _agent.Start();
+
+                //var information = await _agent.Create("get_user_input", $"hello").Publish();
+
+                //var information = await _agent.Create("show_user_output", $"hello").Publish();
+
+
+                _agent.PublishWithCallback(_agent.Create("interact_with_user", "<Interaction Started>"), information_OnPublishedCallback);
+
+            }
+            catch (Exception ex)
+            {
+
+                Console.WriteLine(ex.ToString());
+
+            }
+            finally
+            {
+                do
+                {
+                    Thread.Sleep(1000);
+                } while (true);
+            }
+
+
+
             /*
             do
             {

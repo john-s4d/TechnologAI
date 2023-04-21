@@ -9,16 +9,16 @@ public class GetUserInput : IAbility
     public string? MemberId { get; set; }
     public string? Prompt { get; set; }
 
-    public Task<AssessmentResult> Assess(InformationAdapter information, Assessment assessment)
-    {
+    public Task<AssessmentResult> Assess(InformationAdapter information)
+    {        
         return Task.FromResult(AssessmentResult.EXECUTE);
     }
 
-    public async Task<string> Execute(InformationAdapter information, Assessment assessment)
+    public async Task<string> Execute(InformationAdapter information)
     {
-        //Console.WriteLine(information.Input);
+        //Console.WriteLine(assessment);
 
-        string value = await Task.Run(() =>
+        var value = await Task.Run(() =>
         {
             return Console.ReadLine() ?? string.Empty;
         });
@@ -31,7 +31,7 @@ public class GetUserInput : IAbility
         return value;
     }
 
-    public Task<List<Information>> Spawn(InformationAdapter information, Assessment assessment)
+    public Task<List<Information>> Spawn(InformationAdapter information)
     {   
         return Task.FromResult(new List<Information>());
     }

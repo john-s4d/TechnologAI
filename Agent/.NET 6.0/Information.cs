@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using QuikGraph;
 
 namespace Technologai
 {
@@ -10,9 +11,9 @@ namespace Technologai
         CLOSED
     }
 
-    public class Information : IComparable<Information>
-    {
-        public string WorkerId { get; internal set; } // TODO: Can this in the adapter instead?
+    public class Information : IComparable<Information>, IEdge<string?>
+    {   
+        
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
         public string? CompletorId { get; private set; }
@@ -20,6 +21,9 @@ namespace Technologai
         public string? Input { get; internal set; }
         public string? Output { get; internal set; }
         public string AbilityId { get; internal set; }
+
+        public string? Source => Input;
+        public string? Target => Output;
 
         // TODO History, Signatures, ReadOnly fields ?        
 
@@ -29,7 +33,6 @@ namespace Technologai
             string creatorId,
             string abilityId,
             InformationState state,
-            string workerId,
             string? input = null,
             string? output = null
             )
@@ -38,7 +41,6 @@ namespace Technologai
             CreatorId = creatorId;
             AbilityId = abilityId;
             State = state;
-            WorkerId = workerId;
             Input = input;
             Output = output;
         }
@@ -50,7 +52,6 @@ namespace Technologai
                 creatorId,
                 abilityId,
                 InformationState.DRAFT,
-                creatorId,
                 input,
                 null
                 );

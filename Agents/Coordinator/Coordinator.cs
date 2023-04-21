@@ -7,20 +7,5 @@
         {
            
         }
-
-        protected Task<Assessment> Assess(InformationAdapter information, Assessment assessment)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected Task<Information> Execute(InformationAdapter information, Assessment assessment)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected Task<List<Information>> Spawn(InformationAdapter information, Assessment assessment)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

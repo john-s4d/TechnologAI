@@ -3,21 +3,101 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using QuikGraph;
 
 namespace Technologai
 {
-    public class Context
+    public class Context<T> : BidirectionalGraph<string, T> where T : IEdge<string>
     {
-        public  Information Current { get; set; }
-        public string? ForwardSummary { get; set; }
-        public string? ReverseSummary { get; set; }
-        public List<Information>? ForwardContext { get; set; }
-        public List<Information>? ReverseContext { get; set; }
-        public Context(Information current, List<Information>? forwardContext, List<Information>? reverseContext)
+        private readonly Dictionary<string, Information> _catalog = new();
+        private readonly Dictionary<string, Ability> _abilities = new();
+
+        public Context() { }
+
+        public void Add(Information information)
         {
-            Current = current;
-            ForwardContext = forwardContext;
-            ReverseContext = reverseContext;
+            //_graph.AddVerticesAndEdge(information);
+            //_library[information.Id] = information;
+        }
+
+        private void AddReverse(string forwardId, string reverseId)
+        {
+            /*
+            if (!_reverse.ContainsKey(forwardId))
+            {
+                _reverse.Add(forwardId, new List<string>());
+            }
+            if (!_reverse[forwardId].Contains(reverseId))
+            {
+                _reverse[forwardId].Add(reverseId);
+            }
+            */
+        }
+
+        private void AddForward(string forwardId, string reverseId)
+        {
+            /*
+            if (!_forward.ContainsKey(reverseId))
+            {
+                _forward.Add(reverseId, new List<string>());
+            }
+            if (!_forward[reverseId].Contains(forwardId))
+            {
+                _forward[reverseId].Add(forwardId);
+            }*/
+        }
+
+        internal List<Information> ToList(List<string> contextIds)
+        {
+            List<Information> result = new List<Information>();
+            foreach (string contextId in contextIds)
+            {
+                result.Add(_library[contextId]);
+            }
+            return result;
+        }
+
+        internal List<Information>? GetForward(string reverseId)
+        {
+            //return _forward.ContainsKey(reverseId) ? ToList(_forward[reverseId]) : null;
+
+        }
+        internal List<Information>? GetReverse(string forwardId)
+        {
+            //return _reverse.ContainsKey(forwardId) ? ToList(_reverse[forwardId]) : null;
+        }
+
+        internal Information? GetCreator(string forwardId)
+        {
+            //return _lineage.ContainsKey(forwardId) ? _library[_lineage[forwardId]] : null;
+        }
+
+        internal void Spawn(string forwardId, string reverseId)
+        {
+            //_graph.Add
+            //Add(forwardId, reverseId);
+            //_lineage[forwardId] = reverseId;
+        }
+
+        internal Context RelatedTo(string contextId)
+        {
+            var context = new Context();
+            context.AddVerticesAndEdge(_library[contextId]);
+
+            var forwardEdges = GetForward(contextId);
+            if (forwardEdges != null)
+            {
+                context.AddVerticesAndEdgeRange(forwardEdges);
+            }
+
+            var reverseEdges = GetReverse(contextId);
+            if (reverseEdges != null)
+            {
+                context.AddVerticesAndEdgeRange(reverseEdges);
+
+            }
+            return context;
         }
     }
+}
 }

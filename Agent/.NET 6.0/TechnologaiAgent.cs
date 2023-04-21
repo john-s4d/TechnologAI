@@ -9,8 +9,8 @@ namespace Technologai
         public delegate void OnPublished(InformationAdapter information);
 
         public string? Name { get; private set; }
-        public AbilityCatalog Abilities { get; private set; }
-        internal ContextProvider Context { get; private set; }
+        public Context<Ability> Abilities { get; private set; }
+        internal Context<Information> Catalog { get; private set; }
         private Dictionary<string, Information> _active { get; } = new();
 
         Dictionary<string, OnPublished> _publishCallbacks = new Dictionary<string, OnPublished>();
@@ -22,8 +22,8 @@ namespace Technologai
         public TechnologaiAgent(string authorityName, string clientId, string clientSecret, string memberId)
         {
             Identity = new Identity(authorityName, clientId, clientSecret, memberId);
-            Abilities = new AbilityCatalog(Identity);
-            Context = new ContextProvider();
+            Abilities = new Context<Ability>(Identity);
+            Catalog = new Context<Information>(Identity);
 
             _mqtt = new MqttClient(Identity);
             _mqtt.MessageReceived += _mqtt_MessageReceived;
@@ -43,53 +43,45 @@ namespace Technologai
 
         private async Task Receive(InformationAdapter information)
         {
-            Context.Add(information);
+            Information.Add(information);            
 
-            if (information.State == InformationState.OPEN && !_active.ContainsKey(information.ContextId))
+            if (information.State == InformationState.CLOSED && information.CreatorId == Identity.Id)
             {
-                _active[information.ContextId] = information;
+                _active.Remove(information.ContextId);
+
+                // Activate the calling information
+                var creator = Context.GetCreator(information.ContextId);
+
+                if (creator == null)
+                {
+                    // This is a root request. End here and send a callback.                        
+                    _publishCallbacks[information.ContextId]?.Invoke(information);
+                    return;
+                }
+                information = new InformationAdapter(this, creator);
             }
 
-            if (_active.ContainsKey(information.ContextId))
+            if (information.State == InformationState.OPEN && information.WorkerId == Identity.Id)
             {
-                if (information.State == InformationState.CLOSED && information.CreatorId == Identity.Id)
-                {
-                    _active.Remove(information.ContextId);
+                _active[information.ContextId] = information;
 
-                    var creator = Context.GetCreator(information.ContextId);
-
-                    if (creator == null)
-                    {
-                        // This is a root request. End here and send a callback.
-                        _publishCallbacks[information.ContextId]?.Invoke(information);
-                        return; 
-                    }
-                    else
-                    {
-                        information = new InformationAdapter(this, creator);                        
-                    }
-                }
-
-                Assessment assessment = new Assessment(); // = new Assessment(Context.GetForward(information.ContextId), Context.GetReverse(information.ContextId));
-
-                var assessmentResult = await information.Assess(assessment);
+                var assessmentResult = await information.Assess();
 
                 if (assessmentResult == AssessmentResult.EXECUTE)
                 {
                     // TODO: Debounce?
-                    await information.Execute(assessment);
+                    await information.Execute();
                 }
                 else if (assessmentResult == AssessmentResult.SPAWN)
                 {
-                    await information.Spawn(assessment);
+                    await information.Spawn();
                 }
             }
         }
 
-        
         public InformationAdapter Create(string abilityName, string? input = null)
         {
-            var information = InformationAdapter.Create(this, abilityName, input);            
+            var information = InformationAdapter.Create(this, abilityName, input);
             _active[information.ContextId] = information;
             return information;
         }
@@ -102,8 +94,6 @@ namespace Technologai
 
         public async Task Publish(InformationAdapter information)
         {
-            //Context.Add(information); // Done in Create(). Otherwise it was added when received.
-
             SendStatusMessage($"{information.ContextId} Publish> {information.AbilityId} | {information.Input} | {information.Output}");
 
             // TODO: short circuit.
@@ -113,6 +103,11 @@ namespace Technologai
                 Receive(information);
                 return Task.CompletedTask;
             }*/
+
+            if (information.State == InformationState.DRAFT)
+            {
+                information.Information.State = InformationState.OPEN;
+            }
 
             var message = new BrokerMessage(Identity)
             {
