@@ -1,8 +1,4 @@
-﻿
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.VisualBasic;
-using Newtonsoft.Json;
-using static Technologai.TechnologaiAgent;
+﻿using Newtonsoft.Json;
 
 namespace Technologai
 {
@@ -11,14 +7,17 @@ namespace Technologai
         private TechnologaiAgent _agent;
         private IAbility _ability;
         private Information _information;
-        private Context _context;
+        private Context<Information> _catalog;
 
         // Agent
         public string AgentId => _agent.Identity.Id;
-        public string WorkerId => _information.WorkerId;
+        public string WorkerId { get; set; }
 
         // Context
-        public Context Context => _context;
+        public Context<Information> Catalog => _catalog;
+        public TechnologaiAgent Agent => _agent;
+        public Information Information => _information; 
+        public IAbility Ability => _ability;    
 
         // Information
         public string ContextId => _information.Id;
@@ -26,6 +25,7 @@ namespace Technologai
         public InformationState State => _information.State;
         public string? Input => _information.Input;
         public string? Output => _information.Output;
+        public string? Assessment { get; set; }
 
         // Ability
         public string AbilityId => _ability.Id;
@@ -33,8 +33,6 @@ namespace Technologai
         public string? SampleJsonIn => _ability.SampleJsonIn;
         public string? SampleJsonOut => _ability.SampleJsonOut;
         public string? Prompt => _ability.Prompt;
-        public string? AbilityOwnerId => _ability.MemberId;
-
 
         public InformationAdapter(TechnologaiAgent agent, IAbility ability, Information information)
         {
@@ -42,6 +40,7 @@ namespace Technologai
             _ability = ability;
             _information = information;
             _context = _agent.Context.RelatedTo(information.Id);
+            WorkerId = _ability.MemberId ?? _agent.Identity.Id;
         }
 
         public InformationAdapter(TechnologaiAgent agent, Information information)
@@ -50,6 +49,7 @@ namespace Technologai
             _ability = _agent.Abilities[information.AbilityId];
             _information = information;
             _context = _agent.Context.RelatedTo(information.Id);
+            WorkerId = _ability.MemberId ?? _agent.Identity.Id;
         }
 
         public static InformationAdapter Create(TechnologaiAgent agent, string abilityId, string? input = null)
@@ -63,34 +63,33 @@ namespace Technologai
             agent.Context.Add(information);
 
             var adapter = new InformationAdapter(agent, ability, information);
-            information.WorkerId = ability.MemberId ?? agent.Identity.Id;
+            adapter.WorkerId = ability.MemberId ?? agent.Identity.Id;
 
             agent.SendStatusMessage($"{information.Id} Create> {ability.Id} | {information.Input}");
             return adapter;
         }
 
-        protected internal async Task<AssessmentResult> Assess(Assessment assessment)
+        protected internal async Task<AssessmentResult> Assess()
         {
             _agent.SendStatusMessage($"{ContextId} Assess> {AbilityId} | {Input} | {Output}");
-            return await _ability.Assess(this, assessment);
+            return await _ability.Assess(this);
         }
 
-        protected internal async Task Execute(Assessment assessment)
+        protected internal async Task Execute()
         {
             _agent.SendStatusMessage($"{ContextId} Execute> {AbilityId} | {Input} | {Output}");
-            _information.Output = await _ability.Execute(this, assessment);
+            _information.Output = await _ability.Execute(this);
             _information.State = InformationState.CLOSED;
-            _information.WorkerId = CreatorId;
+            WorkerId = CreatorId;
             await Publish();
         }
 
-        protected internal async Task Spawn(Assessment assessment)
+        protected internal async Task Spawn()
         {
             _agent.SendStatusMessage($"{ContextId} Spawn> {AbilityId} | {Input} | {Output}");
 
-            foreach (Information item in await _ability.Spawn(this, assessment))
+            foreach (Information item in await _ability.Spawn(this))
             {
-                //_agent.Context.Spawn(item.Id, _information.Id);
                 await (new InformationAdapter(_agent, item).Publish());
             }
         }
@@ -99,21 +98,17 @@ namespace Technologai
         {
             var information = Create(_agent, abilityId, input ?? Input);
             _agent.Context.Spawn(information.ContextId, _information.Id);
-            information._information.WorkerId = information.AbilityOwnerId ?? AgentId;
+            information.WorkerId = _ability.MemberId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {abilityId} | {information.Input}");
             return information;
         }
 
         public async Task Publish()
         {
-            if (_information.State == InformationState.DRAFT)
-            {
-                _information.State = InformationState.OPEN;
-            }
             await _agent.Publish(this);
         }
 
-        public void PublishWithCallback(OnPublished onPublished)
+        public void PublishWithCallback(TechnologaiAgent.OnPublished onPublished)
         {
             _agent.PublishWithCallback(this, onPublished);
         }

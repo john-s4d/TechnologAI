@@ -38,6 +38,12 @@ namespace Technologai
             }
         }
 
+        private Task _client_ApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs arg)
+        {
+            MessageReceived?.Invoke(this, arg);
+            return Task.CompletedTask;
+        }
+
         internal async Task SubscribeAsync(string subscribeMask)
         {
             if (!_client.IsConnected) { throw new InvalidOperationException("Not Connected"); }
@@ -45,11 +51,7 @@ namespace Technologai
             await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic(subscribeMask).Build(), _cancellationTokenSource.Token);
 
         }
-
-        private async Task _client_ApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
-        {            
-            await Task.Run(() => MessageReceived?.Invoke(this, args));
-        }
+        
 
         internal async Task DisconnectAsync()
         {

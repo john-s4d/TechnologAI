@@ -1,15 +1,21 @@
 ﻿using Microsoft.VisualBasic;
+using QuikGraph;
 using System.ComponentModel;
 using System.IO;
 
 namespace Technologai
 {
-    public class ContextProvider
+   /* public class ContextProvider
     {
-        private readonly Dictionary<string, List<string>> _forward = new(); // reverseId, [forward]
-        private readonly Dictionary<string, List<string>> _reverse = new(); // forwardId, [reverse]
+        BidirectionalGraph<string?, Information> _graph = new();
+
+
+        //private readonly Dictionary<string, List<string>> _forward = new(); // reverseId, [forward]
+        //private readonly Dictionary<string, List<string>> _reverse = new(); // forwardId, [reverse]
+        //private readonly Dictionary<string, string> _lineage = new();
         private readonly Dictionary<string, Information> _library = new();
-        private readonly Dictionary<string, string> _lineage = new();
+        private readonly Dictionary<string, Ability> _abilities = new();
+
 
         public ContextProvider()
         {
@@ -18,14 +24,11 @@ namespace Technologai
 
         internal void Add(Information information)
         {
-            _library[information.Id] = information;
+            _graph.AddVerticesAndEdge(information);
+
+            //_library[information.Id] = information;
         }
 
-        internal void Add(string forwardId, string reverseId)
-        {
-            AddForward(forwardId, reverseId);
-            AddReverse(forwardId, reverseId);
-        }
 
         private void AddReverse(string forwardId, string reverseId)
         {
@@ -79,15 +82,29 @@ namespace Technologai
 
         internal void Spawn(string forwardId, string reverseId)
         {
-            Add(forwardId, reverseId);
-            _lineage[forwardId] = reverseId;
+            _graph.Add
+            //Add(forwardId, reverseId);
+            //_lineage[forwardId] = reverseId;
         }
 
         internal Context RelatedTo(string contextId)
         {
-            return new Context(_library[contextId], GetForward(contextId), GetReverse(contextId));
+            var context = new Context();
+            context.AddVerticesAndEdge(_library[contextId]);
+            
+            var forwardEdges = GetForward(contextId);            
+            if (forwardEdges != null)
+            {
+                context.AddVerticesAndEdgeRange(forwardEdges);
+            }
+
+            var reverseEdges = GetReverse(contextId);
+            if (reverseEdges != null)
+            {
+                context.AddVerticesAndEdgeRange(reverseEdges);
+
+            }
+            return context;
         }
-
-
-    }
+    }*/
 }
