@@ -49,7 +49,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Coordinator", "Agents\Coord
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Optimizer", "Agents\Optimizer\Optimizer.csproj", "{799D4A77-D776-40B8-94E5-C483AFD5CA98}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatGPT", "Agents\ChatGPT\ChatGPT.csproj", "{934F99D0-10E5-4B33-91BB-E55C4236FA75}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatGPT", "Agents\ChatGPT\ChatGPT.csproj", "{934F99D0-10E5-4B33-91BB-E55C4236FA75}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

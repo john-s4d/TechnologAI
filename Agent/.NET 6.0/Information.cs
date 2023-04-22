@@ -21,7 +21,6 @@ namespace Technologai
         public string? Input { get; internal set; }
         public string? Output { get; internal set; }
         public string AbilityId { get; internal set; }
-
         public string? Source => Input;
         public string? Target => Output;
 

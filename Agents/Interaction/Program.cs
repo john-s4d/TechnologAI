@@ -14,7 +14,6 @@ namespace Technologai.Agents.Core.Interaction
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
             try
             {
-
                 Console.WriteLine("Loading...");
 
                 _agent = new Interaction(authorityName, clientId, clientSecret, memberId);

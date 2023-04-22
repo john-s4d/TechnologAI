@@ -70,17 +70,17 @@ namespace Technologai.Agents.Abilities.ChatGPT
             return Task.CompletedTask;
         }*/
 
-        protected Task<Assessment> Assess(InformationAdapter information, Assessment assment)
+        protected Task<Assessment> Assess(InformationAdapter information)
         {
             throw new NotImplementedException();
         }
 
-        protected Task<Information> Execute(InformationAdapter information, Assessment assment)
+        protected Task<string> Execute(InformationAdapter information)
         {
             throw new NotImplementedException();
         }
 
-        protected Task<List<Information>> Spawn(InformationAdapter information, Assessment assment)
+        protected Task<List<Information>> Spawn(InformationAdapter information)
         {
             throw new NotImplementedException();
         }

@@ -9,9 +9,10 @@ namespace Technologai
         public delegate void OnPublished(InformationAdapter information);
 
         public string? Name { get; private set; }
-        public Context<Ability> Abilities { get; private set; }
-        internal Context<Information> Catalog { get; private set; }
-        private Dictionary<string, Information> _active { get; } = new();
+
+        public AbilityCatalog Abilities { get; private set; }        
+        internal Context Library { get; private set; }
+        //private Dictionary<string, Information> _active { get; } = new();
 
         Dictionary<string, OnPublished> _publishCallbacks = new Dictionary<string, OnPublished>();
 
@@ -22,12 +23,11 @@ namespace Technologai
         public TechnologaiAgent(string authorityName, string clientId, string clientSecret, string memberId)
         {
             Identity = new Identity(authorityName, clientId, clientSecret, memberId);
-            Abilities = new Context<Ability>(Identity);
-            Catalog = new Context<Information>(Identity);
+            Abilities = new AbilityCatalog(Identity);
+            Library = new Context(Identity);
 
             _mqtt = new MqttClient(Identity);
-            _mqtt.MessageReceived += _mqtt_MessageReceived;
-        }
+            _mqtt.MessageReceived += _mqtt_MessageReceived;       }
 
         // ** TRANSPORT **
 
@@ -43,14 +43,15 @@ namespace Technologai
 
         private async Task Receive(InformationAdapter information)
         {
-            Information.Add(information);            
+            Library.Add(information);            
 
             if (information.State == InformationState.CLOSED && information.CreatorId == Identity.Id)
             {
-                _active.Remove(information.ContextId);
+                //_active.Remove(information.ContextId);
 
                 // Activate the calling information
-                var creator = Context.GetCreator(information.ContextId);
+                var creator = Library.GetCreator(information.ContextId);
+                
 
                 if (creator == null)
                 {
@@ -63,18 +64,18 @@ namespace Technologai
 
             if (information.State == InformationState.OPEN && information.WorkerId == Identity.Id)
             {
-                _active[information.ContextId] = information;
+                //_active[information.ContextId] = information;
 
-                var assessmentResult = await information.Assess();
+                var assessment = await information.Assess();
 
-                if (assessmentResult == AssessmentResult.EXECUTE)
+                if (assessment.Result == AssessmentResult.EXECUTE)
                 {
                     // TODO: Debounce?
-                    await information.Execute();
+                    await information.Execute(assessment);
                 }
-                else if (assessmentResult == AssessmentResult.SPAWN)
+                else if (assessment.Result == AssessmentResult.SPAWN)
                 {
-                    await information.Spawn();
+                    await information.Spawn(assessment);
                 }
             }
         }
@@ -82,7 +83,7 @@ namespace Technologai
         public InformationAdapter Create(string abilityName, string? input = null)
         {
             var information = InformationAdapter.Create(this, abilityName, input);
-            _active[information.ContextId] = information;
+            //_active[information.ContextId] = information;
             return information;
         }
 
