@@ -1,7 +1,7 @@
 ﻿using QuikGraph;
 using Technologai;
 
-public class Ability<> : IAbility, IEdge<Ability>
+public class Ability : IAbility
 {
     public string Id { get; set; }
     public string? Description { get; set; }
@@ -10,23 +10,19 @@ public class Ability<> : IAbility, IEdge<Ability>
     public string? SampleJsonOut { get; set; }
     public string? MemberId { get; set; }
 
-    public string Source => throw new NotImplementedException();
-
-    public string Target => throw new NotImplementedException();
-
     public Ability(string id)
     {
         Id = id;
     }
 
-    public virtual Task<AssessmentResult> Assess(InformationAdapter information)
+    public virtual Task<Assessment> Assess(InformationAdapter information)
     {
-        return Task.FromResult(AssessmentResult.EXECUTE);
+        return Task.FromResult(information.Assessment);
     }
 
-    public virtual Task<string> Execute(InformationAdapter information)
+    public virtual Task<string> Execute(Assessment assessment)
     {
-        return Task.FromResult(string.Empty);
+        return Task.FromResult(assessment.Summary);
     }
 
     public virtual Task<List<Information>> Spawn(InformationAdapter information)

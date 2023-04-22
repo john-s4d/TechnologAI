@@ -11,16 +11,17 @@ public class ShowUserOutput : IAbility
     public string? MemberId { get; set; }
     public string? Prompt { get; set; }
 
-    public Task<AssessmentResult> Assess(InformationAdapter information)
+    public Task<Assessment> Assess(InformationAdapter information)
     {
-        information.Assessment = information.Input ?? string.Empty;        
+        information.Assessment.Summary = information.Input ?? string.Empty;
+        information.Assessment.Result = AssessmentResult.EXECUTE;
 
-        return Task.FromResult(AssessmentResult.EXECUTE);
+        return Task.FromResult(information.Assessment);
     }
 
-    public Task<string> Execute(InformationAdapter information)
+    public Task<string> Execute(Assessment assessment)
     {
-        OutputMessage?.Invoke(information.Assessment ?? string.Empty);
+        OutputMessage?.Invoke(assessment.Summary);
 
         return Task.FromResult(string.Empty);
     }

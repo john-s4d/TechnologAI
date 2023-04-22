@@ -25,7 +25,7 @@ namespace Technologai
             Add(new Ability("find_an_ability_in_catalog")
             {                
                 SampleJsonIn = "search:string,hints:string",
-                SampleJsonOut = "[name:string,schemaIn:schema,schemaOut:schema,description:string,doneWhen:string,memberId:id]",
+                SampleJsonOut = "{[\"name\":\"string\",\"schemaIn\":\"schemaOut\":\"schema\",\"description\":string\",\"doneWhen\":\"string\",\"memberId\":\"id\"]}",
                 Description = "Find and return Actions in the local Action Catalog based on the search string",                
             });
         }

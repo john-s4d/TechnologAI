@@ -9,22 +9,19 @@ public class InteractWithUser : IAbility
     public string? MemberId { get; set; }
     public string? Prompt { get; set; }
 
-    public Task<AssessmentResult> Assess(InformationAdapter information)
+    public Task<Assessment> Assess(InformationAdapter information)
     {
         // TODO: Simplify the assessment.
         // Assess looks at the input && context, makes or updates assessment, and then decides if we can execute or spawn.
 
-        
-        //information.Assessment = information.Context.ContainsEdge()
-        
-        var result = string.IsNullOrEmpty(information.Assessment) ? AssessmentResult.SPAWN : AssessmentResult.EXECUTE;
+        information.Assessment.Result = string.IsNullOrEmpty(information.Assessment.Summary) ? AssessmentResult.SPAWN : AssessmentResult.EXECUTE;
 
-        return Task.FromResult(result);
+        return Task.FromResult(information.Assessment);
     }
 
-    public Task<string> Execute(InformationAdapter information)
+    public Task<string> Execute(Assessment assessment)
     {
-        return Task.FromResult(string.Empty);
+        return Task.FromResult(assessment.Summary);
     }
 
     public Task<List<Information>> Spawn(InformationAdapter information)
