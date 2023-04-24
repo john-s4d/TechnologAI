@@ -66,7 +66,5 @@ namespace Technologai.Agents.Core.Interaction
         {
             Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} Status> {message}");
         }
-
-
     }
 }
