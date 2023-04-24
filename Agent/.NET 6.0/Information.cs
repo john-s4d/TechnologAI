@@ -12,8 +12,7 @@ namespace Technologai
     }
 
     public class Information : IComparable<Information>, IEdge<string?>
-    {   
-        
+    {           
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
         public string? CompletorId { get; private set; }

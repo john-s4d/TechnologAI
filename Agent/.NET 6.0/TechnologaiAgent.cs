@@ -11,7 +11,7 @@ namespace Technologai
         public string? Name { get; private set; }
 
         public AbilityCatalog Abilities { get; private set; }        
-        internal Context Library { get; private set; }
+        internal ContextAdapter Context { get; private set; }
         //private Dictionary<string, Information> _active { get; } = new();
 
         Dictionary<string, OnPublished> _publishCallbacks = new Dictionary<string, OnPublished>();
@@ -24,7 +24,7 @@ namespace Technologai
         {
             Identity = new Identity(authorityName, clientId, clientSecret, memberId);
             Abilities = new AbilityCatalog(Identity);
-            Library = new Context(Identity);
+            Context = new ContextAdapter(Identity);
 
             _mqtt = new MqttClient(Identity);
             _mqtt.MessageReceived += _mqtt_MessageReceived;       }
@@ -43,15 +43,14 @@ namespace Technologai
 
         private async Task Receive(InformationAdapter information)
         {
-            Library.Add(information);            
+            Context.Add(information);            
 
             if (information.State == InformationState.CLOSED && information.CreatorId == Identity.Id)
             {
                 //_active.Remove(information.ContextId);
 
                 // Activate the calling information
-                var creator = Library.GetCreator(information.ContextId);
-                
+                var creator = Context.GetCreator(information.ContextId);
 
                 if (creator == null)
                 {

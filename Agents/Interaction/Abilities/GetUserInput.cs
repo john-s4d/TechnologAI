@@ -3,11 +3,10 @@
 public class GetUserInput : IAbility
 {
     public string Id { get; set; } = "get_user_input";
-    public string? Description { get; set; } = "Receive a response from the user.";
-    public string? SampleJsonIn { get; set; }
-    public string? SampleJsonOut { get; set; }
+    public string Description { get; set; } = "Receive a response from the user.";
+    public string SampleJsonIn { get; set; } = string.Empty;
+    public string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";
     public string? MemberId { get; set; }
-    public string? Prompt { get; set; }
 
     public Task<Assessment> Assess(InformationAdapter information)
     {
@@ -18,8 +17,6 @@ public class GetUserInput : IAbility
 
     public async Task<string> Execute(Assessment assessment)
     {
-        //Console.WriteLine(assessment.Summary);
-
         var value = await Task.Run(() =>
         {
             return Console.ReadLine() ?? string.Empty;
@@ -30,16 +27,13 @@ public class GetUserInput : IAbility
             Console.WriteLine(Utils.GenerateNewIdString(32));
         }
 
-        return value;
-    }
+        assessment.Data.Add("output", value);
 
-    public Task<List<Information>> Spawn(Assessment assessment)
-    {   
-        return Task.FromResult(new List<Information>());
+        return value;
     }
 
     public Task<List<Information>> Spawn(InformationAdapter information)
     {
-        throw new NotImplementedException();
+        return Task.FromResult(new List<Information>());
     }
 }
