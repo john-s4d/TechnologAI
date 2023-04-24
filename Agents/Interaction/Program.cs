@@ -1,10 +1,13 @@
 ﻿
+using Microsoft.VisualBasic;
+
 namespace Technologai.Agents.Core.Interaction
 {
     internal class Program
     {
         private static Interaction? _agent;
         private static AppConfig _config = new AppConfig();
+        private static bool _isStarted = true;
 
         internal static async Task Main(string[] args)
         {
@@ -12,6 +15,7 @@ namespace Technologai.Agents.Core.Interaction
             var clientId = _config.ClientId ?? throw new ArgumentNullException(nameof(_config.ClientId));
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
+
             try
             {
                 Console.WriteLine("Loading...");
@@ -28,50 +32,34 @@ namespace Technologai.Agents.Core.Interaction
 
                 await _agent.Start();
 
-                //var information = await _agent.Create("get_user_input", $"hello").Publish();
+                _agent.PublishWithCallback(_agent.Create("interact_with_user", "Hello"), information_OnPublishedCallback);
 
-                //var information = await _agent.Create("show_user_output", $"hello").Publish();
-
-
-                _agent.PublishWithCallback(_agent.Create("interact_with_user", "<Interaction Started>"), information_OnPublishedCallback);
+                do { } while (_isStarted);
 
             }
             catch (Exception ex)
             {
-
                 Console.WriteLine(ex.ToString());
-
             }
-            finally
-            {
-                do
-                {
-                    Thread.Sleep(1000);
-                } while (true);
-            }
-
-
-
-            /*
-            do
-            {
-                information = await information.Spawn("interact_with_user").Publish();
-
-            } while (!information.Output?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? true);
-            */
-
         }
 
         private static void information_OnPublishedCallback(InformationAdapter information)
         {
-            //_agent?.PublishWithCallback(_agent.Create("interact_with_user", $"<Interaction Started>"), information_OnPublished);
+            Console.WriteLine($"{_agent?.Name} Received> {information.Output}");
 
-            Console.WriteLine($"{_agent?.Name} OnPublished> {information.Output}");
+            if (information.Output?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
+            {
+                _isStarted = false;
+            }
+            else
+            {
+                _agent?.PublishWithCallback(_agent.Create("interact_with_user", "Hello Again"), information_OnPublishedCallback);
+            }
         }
 
         private static void showUserOutput_OutputMessage(string message)
         {
-            Console.WriteLine($"{_agent?.Name} Output> {message}");
+            Console.WriteLine($"{_agent?.Name}> {message}");
         }
 
         private static void _agent_statusMessage(object? sender, string message)

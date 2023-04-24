@@ -7,17 +7,20 @@ namespace Technologai
         private TechnologaiAgent _agent;
         private IAbility _ability;
         private Information _information;
-        //private Context<Information> _context;
 
         // Agent
         public string AgentId => _agent.Identity.Id;
         public string WorkerId { get; set; }
 
         // Context
-        //public Context<Information> Catalog => _catalog;
         public TechnologaiAgent Agent => _agent;
-        public Information Information => _information; 
-        public IAbility Ability => _ability;    
+        public Information Information => _information;
+        public IAbility Ability => _ability;
+
+        public ContextAdapter Context
+        {
+            get { return _agent.Context; }
+        }
 
         // Information
         public string ContextId => _information.Id;
@@ -25,8 +28,8 @@ namespace Technologai
         public InformationState State => _information.State;
         public string? Input => _information.Input;
         public string? Output => _information.Output;
-        public Assessment Assessment { get; set; } = new Assessment();
-        
+        public Assessment Assessment { get; set; } = new();
+
         public string AbilityId => _ability.Id;
 
         public InformationAdapter(TechnologaiAgent agent, IAbility ability, Information information)
@@ -48,20 +51,27 @@ namespace Technologai
         }
 
         public static InformationAdapter? Create(TechnologaiAgent agent, string abilityId, string? input = null)
-        {            
+        {
             return Create(agent, agent.Abilities[abilityId], input);
         }
 
         public static InformationAdapter Create(TechnologaiAgent agent, IAbility ability, string? input = null)
         {
             var information = Information.Create(agent.Identity.Id, ability.Id, input);
-            //agent.Context.Add(information);
+            agent.Context.Add(information);
 
             var adapter = new InformationAdapter(agent, ability, information);
             adapter.WorkerId = ability.MemberId ?? agent.Identity.Id;
 
             agent.SendStatusMessage($"{information.Id} Create> {ability.Id} | {information.Input}");
             return adapter;
+        }
+
+        public string Summarize()
+        {
+            _agent.SendStatusMessage($"{ContextId} Summarize> {AbilityId} | {Input} | {Output}");
+
+            return Context.Summarize(ContextId);
         }
 
         protected internal async Task<Assessment> Assess()
@@ -91,8 +101,8 @@ namespace Technologai
 
         public InformationAdapter GetSpawn(string abilityId, string? input = null)
         {
-            var information = Create(_agent, abilityId, input ?? Input);
-            _agent.Library.Spawn(information.ContextId, _information.Id);
+            var information = Create(_agent, abilityId, input);
+            _agent.Context.Spawn(information.ContextId, _information.Id);
             information.WorkerId = _ability.MemberId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {abilityId} | {information.Input}");
             return information;
@@ -117,6 +127,7 @@ namespace Technologai
         {
             return JsonConvert.DeserializeObject<T>(Output ?? string.Empty);
         }
+
 
         public static implicit operator Information(InformationAdapter value) => value._information;
 
