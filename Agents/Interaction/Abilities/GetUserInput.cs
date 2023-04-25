@@ -15,21 +15,20 @@ public class GetUserInput : IAbility
         return Task.FromResult(information.Assessment);
     }
 
-    public async Task<string> Execute(Assessment assessment)
+    public async Task<Dictionary<string, object>> Execute(Dictionary<string,object> data)
     {
         var value = await Task.Run(() =>
         {
             return Console.ReadLine() ?? string.Empty;
         });
 
+        /*
         if (value.Equals("32Bytes", StringComparison.OrdinalIgnoreCase))
         {
             Console.WriteLine(Utils.GenerateNewIdString(32));
-        }
+        }*/
 
-        assessment.Data.Add("output", value);
-
-        return value;
+        return new Dictionary<string, object> { { "output", value } };
     }
 
     public Task<List<Information>> Spawn(InformationAdapter information)

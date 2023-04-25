@@ -25,9 +25,11 @@ public class InteractWithUser : IAbility
         return Task.FromResult(information.Assessment);
     }
 
-    public Task<string> Execute(Assessment assessment)
+    public Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
     {
-        return Task.FromResult((string)assessment.Data["output"]);
+        //data["output"] = data["input"];
+
+        return Task.FromResult(data);
     }
 
     public Task<List<Information>> Spawn(InformationAdapter information)

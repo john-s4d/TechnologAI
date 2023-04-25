@@ -20,9 +20,9 @@ public class Ability : IAbility
         return Task.FromResult(information.Assessment);
     }
 
-    public virtual Task<string> Execute(Assessment assessment)
+    public virtual Task<Dictionary<string, object>> Execute(Dictionary<string,object> data)
     {
-        return Task.FromResult(assessment.Summary);
+        return Task.FromResult(data);
     }
 
     public virtual Task<List<Information>> Spawn(InformationAdapter information)

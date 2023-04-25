@@ -2,8 +2,8 @@
 
 public interface IExecute
 {
-    public string Description { get; set; }
-    public string SampleJsonIn { get; set; }
-    public string SampleJsonOut { get; set; }
-    public Task<string> Execute(Assessment assessment);    
+    public string Description { get; }
+    public string SampleJsonIn { get; }
+    public string SampleJsonOut { get; }
+    public Task<Dictionary<string, object>> Execute(Dictionary<string,object> data);    
 }

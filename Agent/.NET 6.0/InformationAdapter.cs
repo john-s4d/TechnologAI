@@ -83,7 +83,8 @@ namespace Technologai
         protected internal async Task Execute(Assessment assessment)
         {
             _agent.SendStatusMessage($"{ContextId} Execute> {AbilityId} | {Input} | {Output}");
-            _information.Output = await _ability.Execute(assessment);
+            var result = await _ability.Execute(assessment.Data);
+            _information.Output = JsonConvert.SerializeObject(result, Formatting.None);
             _information.State = InformationState.CLOSED;
             WorkerId = CreatorId;
             await Publish();

@@ -19,11 +19,11 @@ public class ShowUserOutput : IAbility
         return Task.FromResult(information.Assessment);
     }
 
-    public Task<string> Execute(Assessment assessment)
+    public Task<Dictionary<string, object>> Execute(Dictionary<string,object> data)
     {
-        OutputMessage?.Invoke((string)assessment.Data["message"]);
+        OutputMessage?.Invoke((string)data["message"]);
 
-        return Task.FromResult(string.Empty);
+        return Task.FromResult(data);
     }
 
     public Task<List<Information>> Spawn(InformationAdapter information)
