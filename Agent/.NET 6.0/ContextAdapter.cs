@@ -11,7 +11,7 @@ namespace Technologai
     public class ContextAdapter //<T> : BidirectionalGraph<string?, T> where T : IEdge<string?>
     {
         private readonly Dictionary<string, Information> _library = new();
-        private readonly Dictionary<string, IAbility> _abilities = new();
+        //private readonly Dictionary<string, IAbility> _abilities = new();
         private readonly Dictionary<string, List<string>> _forward = new();
         private readonly Dictionary<string, List<string>> _reverse = new();
         private readonly Dictionary<string, string> _lineage = new();
@@ -28,7 +28,7 @@ namespace Technologai
         public void Add(InformationAdapter information)
         {
             _library[information.ContextId] = information;
-            _abilities[information.AbilityId] = information.Ability;
+            //_abilities[information.AbilityId] = information.Ability;
         }
 
         public void Add(Information information)
