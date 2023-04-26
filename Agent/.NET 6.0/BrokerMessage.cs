@@ -5,11 +5,14 @@ namespace Technologai
 {
     public class BrokerMessage
     {
-        public string TopicMember => $"{AgencyId}/{MemberId}";
-        public string TopicAgency => $"{AgencyId}/0";
+        //public string TopicMember => $"{AgencyId}/{MemberId}";
+        //public string TopicAgency => $"{AgencyId}/0";
+
+        public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }
         public Information? Information { get; set; }
         public string? AgencyId { get; set; }
         public string? MemberId { get; set; }
+        public bool IsBroadcast { get { return MemberId?.Equals("0") ?? false; } }
 
         private BrokerMessage() { }
 
@@ -28,7 +31,7 @@ namespace Technologai
         internal BrokerMessage(Identity identity)
         {
             AgencyId = identity.AgencyId;
-            MemberId = identity.Id;
-        }        
+            //MemberId = identity.Id;
+        }
     }
 }

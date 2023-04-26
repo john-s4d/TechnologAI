@@ -10,7 +10,7 @@ namespace Technologai
 
         public string? Name { get; private set; }
 
-        public AbilityCatalog Abilities { get; private set; }        
+        public AbilityCatalog Abilities { get; private set; }
         internal ContextAdapter Context { get; private set; }
         //private Dictionary<string, Information> _active { get; } = new();
 
@@ -27,23 +27,33 @@ namespace Technologai
             Context = new ContextAdapter(Identity);
 
             _mqtt = new MqttClient(Identity);
-            _mqtt.MessageReceived += _mqtt_MessageReceived;       }
+            _mqtt.MessageReceived += _mqtt_MessageReceived;
+        }
 
         // ** TRANSPORT **
 
         private void _mqtt_MessageReceived(object? sender, MqttApplicationMessageReceivedEventArgs args)
         {
-            var information = BrokerMessage.FromMqttArgs(args).Information;
 
-            if (information != null)
+            var brokerMessage = BrokerMessage.FromMqttArgs(args);
+
+            if (brokerMessage.IsBroadcast)
             {
-                Receive(new InformationAdapter(this, information)).Wait();
-            }
+                // TODO: Handle broadcast
+                // : AnnounceProcess
+                // : Context related
+            }            
+
+            else if (brokerMessage.Information != null)
+            {
+                Receive(new InformationAdapter(this, brokerMessage.Information)).Wait();
+            }            
+          
         }
 
         private async Task Receive(InformationAdapter information)
         {
-            Context.Add(information);            
+            Context.Add(information);
 
             if (information.State == InformationState.CLOSED && information.CreatorId == Identity.Id)
             {
@@ -59,6 +69,11 @@ namespace Technologai
                     return;
                 }
                 information = new InformationAdapter(this, creator);
+            }
+
+            if (information.State == InformationState.CLOSED && information.CreatorId != Identity.Id)
+            {
+                // This is closed but I'm not the creator. Sent to me for review.
             }
 
             if (information.State == InformationState.OPEN && information.WorkerId == Identity.Id)
@@ -115,15 +130,31 @@ namespace Technologai
                 MemberId = information.WorkerId
             };
 
-            string? topic = Identity.GetMaskedTopic(message.TopicMember);
+            var topic = message.Topic;
 
-            await _mqtt.PublishAsync(topic ?? string.Empty, message.Information.ToJson());
-
+            await _mqtt.PublishAsync(topic, message.Information.ToJson());
         }
 
-        internal void SendStatusMessage(string message)
+        public async Task Broadcast(InformationAdapter information)
         {
-            StatusMessage?.Invoke(this, message);
+            information.Information.State = InformationState.CLOSED;
+
+            var message = new BrokerMessage(Identity)
+            {
+                Information = information,
+                MemberId = "0"
+            };
+
+            var topic = message.Topic;
+
+            await _mqtt.PublishAsync(topic, message.Information.ToJson());
+        }
+
+        internal async Task SendStatusMessage(string message)
+        {
+            await Create("display_log_message", message).Publish();
+
+            //StatusMessage?.Invoke(this, message);
         }
 
         // Startup
