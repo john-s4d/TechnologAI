@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using QuikGraph;
 
 namespace Technologai
 {
@@ -11,17 +10,14 @@ namespace Technologai
         CLOSED
     }
 
-    public class Information : IComparable<Information> //, IEdge<string?>
+    public class Information : IComparable<Information>
     {           
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
-        //public string? CompletorId { get; private set; }
         public InformationState State { get; internal set; }
         public string? Input { get; internal set; }
         public string? Output { get; internal set; }
         public string AbilityId { get; internal set; }
-       //public string? Source => Input;
-       //public string? Target => Output;
 
         // TODO History, Signatures, ReadOnly fields ?        
 

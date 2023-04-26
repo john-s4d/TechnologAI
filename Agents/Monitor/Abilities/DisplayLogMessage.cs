@@ -6,20 +6,20 @@ using System.Threading.Tasks;
 
 namespace Technologai.Agents.Core.Monitor
 {
-    internal class DisplayLogMessageExecute : IExecute
+    internal class DisplayLogMessage : DisplayLogMessageExecute, IAbility
     {
-        internal event Action<string>? LogMessage;
-        public string Description => "Show a message on the output log screen.";
+        public string Id { get; set; } = "display_log_message";
+        public string? MemberId { get; set; }
 
-        public string SampleJsonIn => "{\"message\":\"string\"}";
-
-        public string SampleJsonOut => string.Empty;
-
-        public Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public Task<Assessment> Assess(InformationAdapter information)
         {
-            LogMessage?.Invoke((string)data["message"]);
+            information.Assessment.Result = AssessmentResult.EXECUTE;
+            return Task.FromResult(information.Assessment);
+        }
 
-            return Task.FromResult(data);
+        public Task<List<Information>> Spawn(InformationAdapter information)
+        {
+            throw new NotImplementedException();
         }
     }
 }
