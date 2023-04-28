@@ -11,15 +11,19 @@ namespace Technologai.Agents.Core.Monitor
         internal event Action<string>? LogMessage;
         public string Description => "Show a message on the output log screen.";
 
-        public string SampleJsonIn => "{\"message\":\"string\"}";
+        public string SampleJsonIn => "{\"message\":\"string\",\"count\":\"string\"}";
+        
 
         public string SampleJsonOut => string.Empty;
 
         public Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
         {
+            int count = int.Parse((string)data["count"]);
+
             LogMessage?.Invoke((string)data["message"]);
 
-            return Task.FromResult(data);
+            return Task.FromResult(new Dictionary<string, object>());
+            
         }
     }
 }

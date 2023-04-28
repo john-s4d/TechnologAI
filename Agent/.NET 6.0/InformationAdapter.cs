@@ -5,7 +5,7 @@ namespace Technologai
     public class InformationAdapter
     {
         private TechnologaiAgent _agent;
-        private IAbility _ability;
+        private IProcess _process;
         private Information _information;
 
         // Agent
@@ -15,7 +15,7 @@ namespace Technologai
         // Context
         public TechnologaiAgent Agent => _agent;
         public Information Information => _information;
-        public IAbility Ability => _ability;
+        public IProcess Process => _process;
 
         public ContextAdapter Context
         {
@@ -30,32 +30,32 @@ namespace Technologai
         public string? Output => _information.Output;
         public Assessment Assessment { get; set; } = new();
 
-        public string AbilityId => _ability.Id;
+        public string ProcessId => _process.Id;
 
-        public InformationAdapter(TechnologaiAgent agent, IAbility ability, Information information)
+        public InformationAdapter(TechnologaiAgent agent, IProcess process, Information information)
         {
             _agent = agent;
-            _ability = ability;
+            _process = process;
             _information = information;
             //_context = _agent.Context.Neighbors(information.Id);
-            WorkerId = _ability.MemberId ?? _agent.Identity.Id;
+            WorkerId = _process.MemberId ?? _agent.Identity.Id;
         }
 
         public InformationAdapter(TechnologaiAgent agent, Information information)
         {
             _agent = agent;
-            _ability = _agent.Abilities[information.AbilityId];
+            _process = _agent.Processes[information.ProcessId];
             _information = information;
             //_context = _agent.Context.RelatedTo(information.Id);
-            WorkerId = _ability.MemberId ?? _agent.Identity.Id;
+            WorkerId = _process.MemberId ?? _agent.Identity.Id;
         }
 
         public static InformationAdapter? Create(TechnologaiAgent agent, string abilityId, string? input = null)
         {
-            return Create(agent, agent.Abilities[abilityId], input);
+            return Create(agent, agent.Processes[abilityId], input);
         }
 
-        public static InformationAdapter Create(TechnologaiAgent agent, IAbility ability, string? input = null)
+        public static InformationAdapter Create(TechnologaiAgent agent, IProcess ability, string? input = null)
         {
             var information = Information.Create(agent.Identity.Id, ability.Id, input);
             agent.Context.Add(information);
@@ -69,21 +69,21 @@ namespace Technologai
 
         public string Summarize()
         {
-            _agent.SendStatusMessage($"{ContextId} Summarize> {AbilityId} | {Input} | {Output}");
+            _agent.SendStatusMessage($"{ContextId} Summarize> {ProcessId} | {Input} | {Output}");
 
             return Context.Summarize(ContextId);
         }
 
         protected internal async Task<Assessment> Assess()
         {
-            _agent.SendStatusMessage($"{ContextId} Assess> {AbilityId} | {Input} | {Output}");
-            return await _ability.Assess(this);
+            _agent.SendStatusMessage($"{ContextId} Assess> {ProcessId} | {Input} | {Output}");
+            return await _process.Assess(this);
         }
 
         protected internal async Task Execute(Assessment assessment)
         {
-            _agent.SendStatusMessage($"{ContextId} Execute> {AbilityId} | {Input} | {Output}");
-            var result = await _ability.Execute(assessment.Data);
+            _agent.SendStatusMessage($"{ContextId} Execute> {ProcessId} | {Input} | {Output}");
+            var result = await _process.Execute(assessment.Data);
             _information.Output = JsonConvert.SerializeObject(result, Formatting.None);
             _information.State = InformationState.CLOSED;
             WorkerId = CreatorId;
@@ -92,9 +92,9 @@ namespace Technologai
 
         protected internal async Task Spawn(Assessment assessment)
         {
-            _agent.SendStatusMessage($"{ContextId} Spawn> {AbilityId} | {Input} | {Output}");
+            _agent.SendStatusMessage($"{ContextId} Spawn> {ProcessId} | {Input} | {Output}");
 
-            foreach (Information item in await _ability.Spawn(this))
+            foreach (Information item in await _process.Spawn(this))
             {
                 await (new InformationAdapter(_agent, item).Publish());
             }
@@ -104,7 +104,7 @@ namespace Technologai
         {
             var information = Create(_agent, abilityId, input);
             _agent.Context.Spawn(information.ContextId, _information.Id);
-            information.WorkerId = _ability.MemberId ?? _agent.Identity.Id;
+            information.WorkerId = _process.MemberId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {abilityId} | {information.Input}");
             return information;
         }

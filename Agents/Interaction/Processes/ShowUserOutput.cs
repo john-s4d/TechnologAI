@@ -1,6 +1,6 @@
 ﻿using Technologai;
 
-public class ShowUserOutput : IAbility
+public class ShowUserOutput : IProcess
 {   
     internal event Action<string>? OutputMessage;
 

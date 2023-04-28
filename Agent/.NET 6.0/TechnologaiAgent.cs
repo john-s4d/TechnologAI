@@ -10,7 +10,7 @@ namespace Technologai
 
         public string? Name { get; private set; }
 
-        public AbilityCatalog Abilities { get; private set; }
+        public ProcessCatalog Processes { get; private set; }
         internal ContextAdapter Context { get; private set; }
         //private Dictionary<string, Information> _active { get; } = new();
 
@@ -23,7 +23,7 @@ namespace Technologai
         public TechnologaiAgent(string authorityName, string clientId, string clientSecret, string memberId)
         {
             Identity = new Identity(authorityName, clientId, clientSecret, memberId);
-            Abilities = new AbilityCatalog(Identity);
+            Processes = new ProcessCatalog(Identity);
             Context = new ContextAdapter(Identity);
 
             _mqtt = new MqttClient(Identity);
@@ -109,7 +109,7 @@ namespace Technologai
 
         public async Task Publish(InformationAdapter information)
         {
-            SendStatusMessage($"{information.ContextId} Publish> {information.AbilityId} | {information.Input} | {information.Output}");
+            SendStatusMessage($"{information.ContextId} Publish> {information.ProcessId} | {information.Input} | {information.Output}");
 
             // TODO: short circuit.
             /*
