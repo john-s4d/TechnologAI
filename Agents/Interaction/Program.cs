@@ -24,11 +24,11 @@ namespace Technologai.Agents.Core.Interaction
 
                 _agent.StatusMessage += _agent_statusMessage;
 
-                _agent.Abilities.Add(new GetUserInput());
-                _agent.Abilities.Add(new InteractWithUser());
+                _agent.Processes.Add(new GetUserInput());
+                _agent.Processes.Add(new InteractWithUser());
                 var showUserOutput = new ShowUserOutput();
                 showUserOutput.OutputMessage += showUserOutput_OutputMessage;
-                _agent.Abilities.Add(showUserOutput);
+                _agent.Processes.Add(showUserOutput);
 
                 await _agent.Start();
 

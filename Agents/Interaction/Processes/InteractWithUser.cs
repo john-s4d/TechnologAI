@@ -1,7 +1,7 @@
 ﻿using System.Xml;
 using Technologai;
 
-public class InteractWithUser : IAbility
+public class InteractWithUser : IProcess
 {
     public string Id { get; set; } = "interact_with_user";
     public string Description { get; set; } = "Provide the user with information and receive a response from the user.";
@@ -13,7 +13,7 @@ public class InteractWithUser : IAbility
     public Task<Assessment> Assess(InformationAdapter information)
     {
         foreach(var item in information.Context.GetForward(information.ContextId)) { 
-            if (item.AbilityId == "get_user_input")
+            if (item.ProcessId == "get_user_input")
             {
                 information.Assessment.Data.Add("output", item.Output ?? string.Empty);
                 break;

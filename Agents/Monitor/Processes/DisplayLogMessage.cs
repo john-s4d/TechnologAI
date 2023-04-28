@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Technologai.Agents.Core.Monitor
 {
-    internal class DisplayLogMessage : DisplayLogMessageExecute, IAbility
+    internal class DisplayLogMessage : DisplayLogMessageExecute, IProcess
     {
         public string Id { get; set; } = "display_log_message";
         public string? MemberId { get; set; }

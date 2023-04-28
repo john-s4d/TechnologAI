@@ -1,6 +1,6 @@
 ﻿using Technologai;
 
-public class GetUserInput : IAbility
+public class GetUserInput : IProcess
 {
     public string Id { get; set; } = "get_user_input";
     public string Description { get; set; } = "Receive a response from the user.";

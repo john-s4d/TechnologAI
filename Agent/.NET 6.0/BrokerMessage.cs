@@ -5,9 +5,6 @@ namespace Technologai
 {
     public class BrokerMessage
     {
-        //public string TopicMember => $"{AgencyId}/{MemberId}";
-        //public string TopicAgency => $"{AgencyId}/0";
-
         public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }
         public Information? Information { get; set; }
         public string? AgencyId { get; set; }
@@ -22,7 +19,7 @@ namespace Technologai
 
             return new BrokerMessage
             {
-                AgencyId = topicParts[0],
+                AgencyId = topicParts[0] ,
                 MemberId = topicParts[1],
                 Information = Information.FromJson(args.ApplicationMessage.ConvertPayloadToString())
             };
@@ -31,7 +28,6 @@ namespace Technologai
         internal BrokerMessage(Identity identity)
         {
             AgencyId = identity.AgencyId;
-            //MemberId = identity.Id;
         }
     }
 }

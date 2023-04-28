@@ -11,9 +11,9 @@ namespace Technologai
     public class ContextAdapter //<T> : BidirectionalGraph<string?, T> where T : IEdge<string?>
     {
         private readonly Dictionary<string, Information> _library = new();
-        //private readonly Dictionary<string, IAbility> _abilities = new();
-        private readonly Dictionary<string, List<string>> _forward = new();
-        private readonly Dictionary<string, List<string>> _reverse = new();
+        private readonly Dictionary<string, IProcess> _processes = new();
+        private readonly Dictionary<string, List<string>> _forwardContext = new();
+        private readonly Dictionary<string, List<string>> _reverseContext = new();
         private readonly Dictionary<string, string> _lineage = new();
 
         public ContextAdapter(Identity identity) { }
@@ -28,7 +28,7 @@ namespace Technologai
         public void Add(InformationAdapter information)
         {
             _library[information.ContextId] = information;
-            //_abilities[information.AbilityId] = information.Ability;
+            //_abilities[information.ProcessId] = information.Process;
         }
 
         public void Add(Information information)
@@ -38,26 +38,26 @@ namespace Technologai
 
         public void AddReverse(string forwardId, string reverseId)
         {
-            if (!_reverse.ContainsKey(forwardId))
+            if (!_reverseContext.ContainsKey(forwardId))
             {
-                _reverse.Add(forwardId, new List<string>());
+                _reverseContext.Add(forwardId, new List<string>());
             }
-            if (!_reverse[forwardId].Contains(reverseId))
+            if (!_reverseContext[forwardId].Contains(reverseId))
             {
-                _reverse[forwardId].Add(reverseId);
+                _reverseContext[forwardId].Add(reverseId);
             }
         }
 
         public void AddForward(string forwardId, string reverseId)
         {
 
-            if (!_forward.ContainsKey(reverseId))
+            if (!_forwardContext.ContainsKey(reverseId))
             {
-                _forward.Add(reverseId, new List<string>());
+                _forwardContext.Add(reverseId, new List<string>());
             }
-            if (!_forward[reverseId].Contains(forwardId))
+            if (!_forwardContext[reverseId].Contains(forwardId))
             {
-                _forward[reverseId].Add(forwardId);
+                _forwardContext[reverseId].Add(forwardId);
             }
         }
 
@@ -78,7 +78,7 @@ namespace Technologai
             foreach (string contextId in contextIds)
             {
                 var information = _library[contextId];
-                result.Add(information.AbilityId, information);
+                result.Add(information.ProcessId, information);
             }
             return result;
         }
@@ -86,13 +86,13 @@ namespace Technologai
 
         public List<Information> GetForward(string reverseId)
         {
-            return _forward.ContainsKey(reverseId) ? ToList(_forward[reverseId]) : new();
+            return _forwardContext.ContainsKey(reverseId) ? ToList(_forwardContext[reverseId]) : new();
 
         }
 
         public List<Information> GetReverse(string forwardId)
         {
-            return _reverse.ContainsKey(forwardId) ? ToList(_reverse[forwardId]) : new();
+            return _reverseContext.ContainsKey(forwardId) ? ToList(_reverseContext[forwardId]) : new();
         }
 
         public Information? GetCreator(string forwardId)
@@ -103,15 +103,15 @@ namespace Technologai
         public string Summarize(string contextId)
         {
             var currentInfo = _library[contextId];
-            string summary = $"{currentInfo.Input} {currentInfo.AbilityId} {currentInfo.Output}\n";
+            string summary = $"{currentInfo.Input} {currentInfo.ProcessId} {currentInfo.Output}\n";
 
             foreach (Information information in GetReverse(contextId))
             {
-                summary += $"{information.Input} {information.AbilityId} {information.Output}\n"; // TODO: Ability Description
+                summary += $"{information.Input} {information.ProcessId} {information.Output}\n"; // TODO: Ability Description
             }
             foreach (Information information in GetForward(contextId))
             {
-                summary += $"{information.Input} {information.AbilityId} {information.Output} \n"; // TODO: Ability Description
+                summary += $"{information.Input} {information.ProcessId} {information.Output} \n"; // TODO: Ability Description
             }
             return summary;
         }

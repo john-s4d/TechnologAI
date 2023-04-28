@@ -10,23 +10,22 @@ namespace Technologai.Agents.Core.Interaction
         public Interaction(string authorityName, string clientId, string clientSecret, string memberId)
             : base(authorityName, clientId, clientSecret, memberId)
         {
+            /*
             // TODO: This ability should be stored on ChatGPT Member and advised after joining agency.
-            Abilities.Add(
-                new Ability("choose_agency_ability")
-                {   
-                    SampleJsonOut = "{\"name\":\"string\"}",
-                    Description = "Choose an agency-wide ability to use for the response.",
-                    MemberId = "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q"
-                }
+            Processes.Add(
+                new Process("choose_agency_ability",
+                            "Choose an agency-wide ability to use for the response.",
+                            "{\"name\":\"string\"}",                    
+                            "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q")
             );
 
-            Abilities.Add(
-               new Ability("chatgpt_prompt")
+            Processes.Add(
+               new Process("chatgpt_prompt")
                {   
                    Description = "Send a prompt to ChatGPT and receive a response.",
                    MemberId = "S6MbUNVhvXhClcJT5o3vdD8RDcx1dEkOWN69uzxEJ-Q"
                }
-           );
+           );*/
         }
 
         public class choose_agency_ability_response

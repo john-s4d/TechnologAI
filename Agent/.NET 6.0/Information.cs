@@ -17,7 +17,7 @@ namespace Technologai
         public InformationState State { get; internal set; }
         public string? Input { get; internal set; }
         public string? Output { get; internal set; }
-        public string AbilityId { get; internal set; }
+        public string ProcessId { get; internal set; }
 
         // TODO History, Signatures, ReadOnly fields ?        
 
@@ -25,7 +25,7 @@ namespace Technologai
         public Information(
             string id,
             string creatorId,
-            string abilityId,
+            string processId,
             InformationState state,
             string? input = null,
             string? output = null
@@ -33,7 +33,7 @@ namespace Technologai
         {
             Id = id;
             CreatorId = creatorId;
-            AbilityId = abilityId;
+            ProcessId = processId;
             State = state;
             Input = input;
             Output = output;
