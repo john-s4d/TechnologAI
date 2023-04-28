@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Technologai.ChatGPT
+namespace Core.Processes
 {
     internal class Processes
     {
