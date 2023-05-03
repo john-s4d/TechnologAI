@@ -1,23 +1,23 @@
-<mxfile host="app.diagrams.net" modified="2023-05-03T13:39:37.366Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36" etag="0UWLSv8qqUp-Eb-3vwse" version="21.2.3" type="github">
+<mxfile host="app.diagrams.net" modified="2023-05-03T14:00:27.778Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36" etag="Rp2z7O5T3ZAxM_6m8p93" version="21.2.3" type="github">
   <diagram id="C5RBs43oDa-KdzZeNtuy" name="Page-1">
     <mxGraphModel dx="1434" dy="699" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="WIyWlLk6GJQsqaUBKTNV-0" />
         <mxCell id="WIyWlLk6GJQsqaUBKTNV-1" parent="WIyWlLk6GJQsqaUBKTNV-0" />
-        <mxCell id="g9C8Vi4M1RPrEzxjZ8ja-2" value="&lt;b&gt;AWS API Gateway&lt;br&gt;Lambda&lt;br&gt;&lt;br&gt;auth.technologai.com&lt;/b&gt;&lt;br&gt;OpenId.Registration&lt;br&gt;OpenId.Token&lt;br&gt;OpenId.Discovery&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;OpenId.JWKS" style="rounded=1;whiteSpace=wrap;html=1;" parent="WIyWlLk6GJQsqaUBKTNV-1" vertex="1">
-          <mxGeometry x="670" y="484" width="180" height="150" as="geometry" />
+        <mxCell id="g9C8Vi4M1RPrEzxjZ8ja-2" value="&lt;b&gt;AWS API Gateway&lt;br&gt;Lambda&lt;br&gt;&lt;br&gt;auth.technologai.com&lt;/b&gt;&lt;br&gt;OpenId.Registration&lt;br&gt;OpenId.Token&lt;br&gt;OpenId.Discovery&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;OpenId.JWKS&lt;br&gt;mqtt.auth&lt;br&gt;icecast.auth" style="rounded=1;whiteSpace=wrap;html=1;" parent="WIyWlLk6GJQsqaUBKTNV-1" vertex="1">
+          <mxGeometry x="675" y="470" width="180" height="166" as="geometry" />
         </mxCell>
         <mxCell id="g9C8Vi4M1RPrEzxjZ8ja-7" value="AWS Cognito" style="rounded=1;whiteSpace=wrap;html=1;" parent="WIyWlLk6GJQsqaUBKTNV-1" vertex="1">
           <mxGeometry x="840" y="149" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="g9C8Vi4M1RPrEzxjZ8ja-10" value="Salesforce" style="rounded=1;whiteSpace=wrap;html=1;" parent="WIyWlLk6GJQsqaUBKTNV-1" vertex="1">
-          <mxGeometry x="690" y="149" width="120" height="60" as="geometry" />
+          <mxGeometry x="705" y="149" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="g9C8Vi4M1RPrEzxjZ8ja-11" value="Google" style="rounded=1;whiteSpace=wrap;html=1;" parent="WIyWlLk6GJQsqaUBKTNV-1" vertex="1">
           <mxGeometry x="980" y="149" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="g9C8Vi4M1RPrEzxjZ8ja-12" value="&lt;b&gt;AWS LightSail&lt;br&gt;&lt;br&gt;www.technologai.com&lt;/b&gt;&lt;br&gt;Wordpress" style="rounded=1;whiteSpace=wrap;html=1;" parent="WIyWlLk6GJQsqaUBKTNV-1" vertex="1">
-          <mxGeometry x="675" y="670" width="170" height="70" as="geometry" />
+          <mxGeometry x="680" y="670" width="170" height="70" as="geometry" />
         </mxCell>
         <mxCell id="g9C8Vi4M1RPrEzxjZ8ja-14" value="&lt;b&gt;AWS EC2 Ubuntu&lt;br&gt;&lt;br&gt;broker.technologai.com&lt;br&gt;MQTT Broker&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b style=&quot;border-color: var(--border-color);&quot;&gt;stream.technologai.com&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;&lt;/b&gt;&lt;b&gt;Icecast Server&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b style=&quot;border-color: var(--border-color);&quot;&gt;oidc.technologai.com&lt;br&gt;Apache Reverse Proxy&lt;/b&gt;&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;OpenId.Discovery&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;OpenId.JWKS" style="rounded=1;whiteSpace=wrap;html=1;" parent="WIyWlLk6GJQsqaUBKTNV-1" vertex="1">
           <mxGeometry x="290" y="100" width="190" height="230" as="geometry" />
