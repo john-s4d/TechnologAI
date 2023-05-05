@@ -136,8 +136,8 @@ jobs:
 
         affinity: {}
         EOF
-        git config --global user.email "${{ secrets.EMAIL }}"
-        git config --global user.name "${{ secrets.USER_NAME }}"
+        git config --global user.email "envoyfacilitation@outlook.com" #"${{ secrets.EMAIL }}"
+        git config --global user.name "qasim-aziz" #"${{ secrets.USER_NAME }}"
         git add .
         git commit -m "from pipeline $IMAGE_TAG"
         git push origin main
