@@ -51,7 +51,7 @@ jobs:
       run: |
         sudo apt-get install -y git
         git clone -b main https://qasim-aziz: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@github.com/ikailo/Helm-Charts.git
-        cd helm-charts/technologai
+        cd Helm-Charts/technologai
         git config credential.helper store
         rm -f dev-values.yaml
         cat <<EOF >> dev-values.yaml  
