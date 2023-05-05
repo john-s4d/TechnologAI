@@ -30,7 +30,7 @@ jobs:
 
     - name: Build, tag, and push image to Amazon ECR
       env:
-        ECR_REGISTRY: 154032908746.dkr.ecr.us-east-1.amazonaws.com
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ikailo-tech
         IMAGE_TAG: ${{ github.sha }}
       run: |
