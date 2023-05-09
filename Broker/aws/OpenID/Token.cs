@@ -18,6 +18,7 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using static System.Formats.Asn1.AsnWriter;
 using Amazon.Runtime.Internal.Transform;
+using System.Security.Claims;
 
 namespace Technologai.AWS.OpenID
 {
@@ -82,7 +83,10 @@ namespace Technologai.AWS.OpenID
                 string dbClientSecretSaltHash = querySaltResponse.Items[0]["ClientSecretSaltHash"].S;
 
                 if (inputClientSecretSaltHash == dbClientSecretSaltHash)
-                {   
+                {
+
+                    // Crypto authentication done. Now validate credentials.
+
                     string query = string.Empty;
 
                     foreach (string scope in new List<string>(tokenRequest.scope?.Split(' ') ?? new string[] { }))
@@ -113,7 +117,18 @@ namespace Technologai.AWS.OpenID
                         claims.Add("role", tokenClaims.role ?? string.Empty);
                         claims.Add("client_id", tokenClaims.client_id ?? string.Empty);
                         claims.Add("agency_id", tokenClaims.agency_id ?? string.Empty);
-                        claims.Add("aud", Config.TokenAudience);
+
+                        if (tokenRequest.audience?.Equals(Config.BrokerUri) ?? false)
+                        {
+                            claims.Add("aud", Config.BrokerUri);
+                        }
+
+                        if (tokenRequest.audience?.Equals(Config.StreamUri) ?? false)
+                        {
+                            claims.Add("aud", Config.StreamUri);
+                        }
+
+                        claims.Add("scp", tokenRequest.scope ?? string.Empty);
 
                         return new TokenSuccessResponse(200, new() { access_token = await getIdToken(claims) });
                     }
@@ -156,7 +171,7 @@ namespace Technologai.AWS.OpenID
                 jwtPayload.Add(key, claims[key]);
             }
 
-            //jwtPayload.Add("scp", "");
+
 
             string jwtHeaderBase64 = Base64UrlEncoder.Encode(jwtHeader.SerializeToJson());
             string jwtPayloadBase64 = Base64UrlEncoder.Encode(jwtPayload.SerializeToJson());
@@ -174,12 +189,13 @@ namespace Technologai.AWS.OpenID
             string jwtSignatureBase64 = Base64UrlEncoder.Encode(jwtSignResponse.Signature.ToArray());
 
             return $"{jwtHeaderBase64}.{jwtPayloadBase64}.{jwtSignatureBase64}";
-        }       
+        }
 
         public class TokenRequest
         {
             public string? grant_type { get; set; }
             public string? scope { get; set; }
+            public string? audience { get; set; }
         }
 
         public class TokenResponse

@@ -16,7 +16,7 @@ namespace Technologai
 
         internal event EventHandler<MqttApplicationMessageReceivedEventArgs>? MessageReceived;
 
-   
+
         public MqttClient(Identity identity)
         {
             _identity = identity;
@@ -27,12 +27,12 @@ namespace Technologai
             if (!_client.IsConnected)
             {
                 var options = new MqttClientOptionsBuilder()
-                .WithWebSocketServer($"{_identity.Authority.BrokerHost}:{PORT}")
+                .WithWebSocketServer($"{new Uri(_identity.Authority.BrokerUri).Host}:{PORT}")
                 .WithTls()
-                .WithCredentials(_identity.Token, "password")
+                .WithCredentials(_identity.Tokens[_identity.Authority.BrokerUri], "password")
                 .Build();
 
-                _client.ApplicationMessageReceivedAsync += _client_ApplicationMessageReceivedAsync;                
+                _client.ApplicationMessageReceivedAsync += _client_ApplicationMessageReceivedAsync;
 
                 await _client.ConnectAsync(options, _cancellationTokenSource.Token);
             }
@@ -49,9 +49,7 @@ namespace Technologai
             if (!_client.IsConnected) { throw new InvalidOperationException("Not Connected"); }
 
             await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic(subscribeMask).Build(), _cancellationTokenSource.Token);
-
         }
-        
 
         internal async Task DisconnectAsync()
         {
@@ -62,14 +60,23 @@ namespace Technologai
 
         internal async Task PublishAsync(string topic, string payload, bool retain = false, int qos = 0)
         {
-            var message = new MqttApplicationMessageBuilder()
+            if (!_client.IsConnected)
+            {
+                await ConnectAsync();
+            }
+
+            if (_client.IsConnected)
+            {
+                var message = new MqttApplicationMessageBuilder()
                 .WithTopic(topic)
                 .WithPayload(payload)
                 .WithRetainFlag(retain)
                 .WithQualityOfServiceLevel((MQTTnet.Protocol.MqttQualityOfServiceLevel)qos)
                 .Build();
 
-            await _client.PublishAsync(message, _cancellationTokenSource.Token);
+                await _client.PublishAsync(message, _cancellationTokenSource.Token);
+
+            }
         }
     }
 }

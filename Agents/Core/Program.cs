@@ -10,12 +10,12 @@ namespace Technologai.Agents.Abilities.ChatGPT
 
         internal static async Task Main(string[] args)
         {
-            var authorityName = _config.Authority ?? throw new ArgumentNullException(nameof(_config.Authority));
+            var authUri = _config.AuthUri ?? throw new ArgumentNullException(nameof(_config.AuthUri));
             var clientId = _config.ClientId ?? throw new ArgumentNullException(nameof(_config.ClientId));
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
 
-            _agent = new ChatGPT(authorityName, clientId, clientSecret, memberId);
+            _agent = new ChatGPT(authUri, clientId, clientSecret, memberId);
 
             _agent.StatusMessage += _agent_StatusMessage;
 
