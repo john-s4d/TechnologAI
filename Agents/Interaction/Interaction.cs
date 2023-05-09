@@ -7,8 +7,8 @@ namespace Technologai.Agents.Core.Interaction
     internal class Interaction : TechnologaiAgent
     {   
 
-        public Interaction(string authorityName, string clientId, string clientSecret, string memberId)
-            : base(authorityName, clientId, clientSecret, memberId)
+        public Interaction(string authUri, string clientId, string clientSecret, string memberId)
+            : base(authUri, clientId, clientSecret, memberId)
         {
             /*
             // TODO: This ability should be stored on ChatGPT Member and advised after joining agency.

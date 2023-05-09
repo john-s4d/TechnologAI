@@ -20,9 +20,9 @@ namespace Technologai
 
         public Identity Identity { get; }
 
-        public TechnologaiAgent(string authorityName, string clientId, string clientSecret, string memberId)
+        public TechnologaiAgent(string authUri, string clientId, string clientSecret, string memberId)
         {
-            Identity = new Identity(authorityName, clientId, clientSecret, memberId);
+            Identity = new Identity(authUri, clientId, clientSecret, memberId);
             Processes = new ProcessCatalog(Identity);
             Context = new ContextAdapter(Identity);
 
@@ -150,11 +150,11 @@ namespace Technologai
             await _mqtt.PublishAsync(topic, message.Information.ToJson());
         }
 
-        internal async Task SendStatusMessage(string message)
+        internal void SendStatusMessage(string message)
         {
-            await Create("display_log_message", message).Publish();
+            //await Create("display_log_message", message).Publish();
 
-            //StatusMessage?.Invoke(this, message);
+            StatusMessage?.Invoke(this, message);
         }
 
         // Startup
@@ -165,10 +165,10 @@ namespace Technologai
             {
                 // TODO: Fix in AI-17
                 SendStatusMessage($"Warming up...");
-                await new HttpClient().GetAsync($"https://{Identity.Authority.Host}/.well-known/jwks.json");
-                await new HttpClient().GetAsync($"https://{Identity.Authority.Host}/.well-known/openid-configuration");
+                await new HttpClient().GetAsync($"{Identity.Authority.AuthUri}/.well-known/jwks.json");
+                await new HttpClient().GetAsync($"{Identity.Authority.AuthUri}/.well-known/openid-configuration");
 
-                await Identity.Authenticate();
+                await Identity.Authenticate(Identity.Authority.BrokerUri);
 
                 this.Name = Identity.Name;
 
