@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace Technologai.Agents.Core.Interaction
+namespace Technologai.Agents
 {
     internal class AppConfig
     {

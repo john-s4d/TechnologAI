@@ -7,7 +7,7 @@ using OpenAI.GPT3.Interfaces;
 //using LaserCatEyes.HttpClientListener;
 using OpenAI.GPT3.ObjectModels.ResponseModels;
 
-namespace Technologai.Agents.Abilities.ChatGPT
+namespace Technologai.Agents
 {
     internal class OpenAI
     {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace Technologai.Agents.Abilities.ChatGPT
+namespace Technologai.Agents
 {
     internal class AppConfig
     {

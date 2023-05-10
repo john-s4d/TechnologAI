@@ -2,7 +2,7 @@
 using Microsoft.VisualBasic;
 using Newtonsoft.Json.Linq;
 
-namespace Technologai.Agents.Core.Interaction
+namespace Technologai.Agents
 {
     internal class Interaction : TechnologaiAgent
     {   

@@ -1,4 +1,4 @@
-﻿namespace Technologai.Agents.Core.Debug
+﻿namespace Technologai.Agents
 {
     internal class Monitor : TechnologaiAgent
     {

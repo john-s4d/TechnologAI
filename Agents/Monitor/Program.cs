@@ -1,4 +1,4 @@
-﻿namespace Technologai.Agents.Core.Debug
+﻿namespace Technologai.Agents
 {
     internal class Program
     {
@@ -16,7 +16,7 @@
 
             _monitor = new Monitor(authUri, clientId, clientSecret, memberId);
 
-            _monitor.StatusMessage += _debug_StatusMessage;
+            _monitor.StatusMessage += _monitor_StatusMessage;
 
             Console.WriteLine("Loading...");
 
@@ -25,9 +25,9 @@
             await _monitor.Stop();
         }
 
-        private static void _debug_StatusMessage(object? sender, string message)        {
+        private static void _monitor_StatusMessage(object? sender, string message)        {
 
-            Console.WriteLine($"{_monitor?.Name ?? "Debug.Local"} {message}");            
+            Console.WriteLine($"{_monitor?.Name ?? "Monitor.Local"} {message}");            
         }
 
         private async static Task Run()
