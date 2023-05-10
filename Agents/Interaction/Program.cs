@@ -1,7 +1,6 @@
-﻿
-using Microsoft.VisualBasic;
+﻿using Microsoft.VisualBasic;
 
-namespace Technologai.Agents.Core.Interaction
+namespace Technologai.Agents
 {
     internal class Program
     {
@@ -65,7 +64,7 @@ namespace Technologai.Agents.Core.Interaction
 
         private static void _agent_statusMessage(object? sender, string message)
         {
-            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} Status> {message}");
+            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} {message}");
         }
     }
 }

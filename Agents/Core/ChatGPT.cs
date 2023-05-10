@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using System.Linq;
 
-namespace Technologai.Agents.Abilities.ChatGPT
+namespace Technologai.Agents
 {
     internal class ChatGPT : TechnologaiAgent
     {
