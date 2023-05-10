@@ -29,19 +29,20 @@ namespace Technologai.Agents
         private static void _agent_StatusMessage(object? sender, string message)
         {
 
-            Console.WriteLine($"{_agent?.Name ?? "ChatGPT.Local"} {message}");
+            Console.WriteLine($"{_agent?.Name ?? "Core.Local"} {message}");
         }
 
         private async static Task Run()
         {
-            Console.WriteLine($"{_agent?.Name} Started.");
+            Console.WriteLine($"{_agent?.Name} Started");
 
             do
             {
+                /*
                 string value = await Task.Run(() =>
                 {
                     return Console.ReadLine() ?? "";
-                });
+                });*/
 
                 //if (value.Equals("quit", StringComparison.OrdinalIgnoreCase)) { break; }
 

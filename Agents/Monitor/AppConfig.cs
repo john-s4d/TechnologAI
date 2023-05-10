@@ -9,7 +9,7 @@ namespace Technologai.Agents
         internal string? AuthUri => _config["authUri"]; 
         internal string? ClientSecret => _config["clientSecret"];
         internal string? ClientId => _config["clientId"];
-        internal string? MemberId => _config["coordinatorMemberId"];
+        internal string? MemberId => _config["memberId"];
 
         internal AppConfig()
         {

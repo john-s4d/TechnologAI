@@ -109,7 +109,7 @@ namespace Technologai
 
         public async Task Publish(InformationAdapter information)
         {
-            SendStatusMessage($"{information.ContextId} Publish> {information.ProcessId} | {information.Input} | {information.Output}");
+            // SendStatusMessage($"{information.ContextId} Publish> {information.ProcessId} | {information.Input} | {information.Output}");
 
             // TODO: short circuit.
             /*
@@ -150,11 +150,16 @@ namespace Technologai
             await _mqtt.PublishAsync(topic, message.Information.ToJson());
         }
 
-        internal void SendStatusMessage(string message)
+        internal async Task SendStatusMessage(string message)
         {
-            //await Create("display_log_message", message).Publish();
-
-            StatusMessage?.Invoke(this, message);
+            if (_mqtt.IsConnected)
+            {
+                await Create("display_log_message", message).Publish();
+            }
+            else
+            {
+                StatusMessage?.Invoke(this, message);
+            }
         }
 
         // Startup

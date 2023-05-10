@@ -14,6 +14,8 @@ namespace Technologai
         private IMqttClient _client = new MqttFactory().CreateMqttClient();
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
+        public bool IsConnected => _client.IsConnected;
+
         internal event EventHandler<MqttApplicationMessageReceivedEventArgs>? MessageReceived;
 
 
