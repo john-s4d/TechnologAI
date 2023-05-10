@@ -32,7 +32,7 @@
 
         private async static Task Run()
         {
-            //Console.WriteLine($"{_debug?.Name} Started. \"quit\" to stop.");
+            Console.WriteLine($"{_monitor?.Name} Started");
 
             do
             {
