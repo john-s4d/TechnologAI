@@ -1,4 +1,4 @@
-﻿namespace Technologai.Agents.Core.Debug
+﻿namespace Technologai.Agents
 {
     internal class Program
     {
@@ -9,14 +9,14 @@
 
         internal static async Task Main(string[] args)
         {
-            var authorityName = _config.Authority ?? throw new ArgumentNullException(nameof(_config.Authority));
+            var authUri = _config.AuthUri ?? throw new ArgumentNullException(nameof(_config.AuthUri));
             var clientId = _config.ClientId ?? throw new ArgumentNullException(nameof(_config.ClientId));
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
 
-            _monitor = new Monitor(authorityName, clientId, clientSecret, memberId);
+            _monitor = new Monitor(authUri, clientId, clientSecret, memberId);
 
-            _monitor.StatusMessage += _debug_StatusMessage;
+            _monitor.StatusMessage += _monitor_StatusMessage;
 
             Console.WriteLine("Loading...");
 
@@ -25,14 +25,14 @@
             await _monitor.Stop();
         }
 
-        private static void _debug_StatusMessage(object? sender, string message)        {
+        private static void _monitor_StatusMessage(object? sender, string message)        {
 
-            Console.WriteLine($"{_monitor?.Name ?? "Debug.Local"} {message}");            
+            Console.WriteLine($"{_monitor?.Name ?? "Monitor.Local"} {message}");            
         }
 
         private async static Task Run()
         {
-            //Console.WriteLine($"{_debug?.Name} Started. \"quit\" to stop.");
+            Console.WriteLine($"{_monitor?.Name} Started");
 
             do
             {
