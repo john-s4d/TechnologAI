@@ -1,7 +1,6 @@
-﻿
-using Microsoft.VisualBasic;
+﻿using Microsoft.VisualBasic;
 
-namespace Technologai.Agents.Core.Interaction
+namespace Technologai.Agents
 {
     internal class Program
     {
@@ -11,7 +10,7 @@ namespace Technologai.Agents.Core.Interaction
 
         internal static async Task Main(string[] args)
         {
-            var authorityName = _config.Authority ?? throw new ArgumentNullException(nameof(_config.Authority));
+            var authUri = _config.AuthUri ?? throw new ArgumentNullException(nameof(_config.AuthUri));
             var clientId = _config.ClientId ?? throw new ArgumentNullException(nameof(_config.ClientId));
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
@@ -20,12 +19,13 @@ namespace Technologai.Agents.Core.Interaction
             {
                 Console.WriteLine("Loading...");
 
-                _agent = new Interaction(authorityName, clientId, clientSecret, memberId);
+                _agent = new Interaction(authUri, clientId, clientSecret, memberId);
 
                 _agent.StatusMessage += _agent_statusMessage;
 
                 _agent.Processes.Add(new GetUserInput());
                 _agent.Processes.Add(new InteractWithUser());
+
                 var showUserOutput = new ShowUserOutput();
                 showUserOutput.OutputMessage += showUserOutput_OutputMessage;
                 _agent.Processes.Add(showUserOutput);
@@ -64,7 +64,7 @@ namespace Technologai.Agents.Core.Interaction
 
         private static void _agent_statusMessage(object? sender, string message)
         {
-            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} Status> {message}");
+            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} {message}");
         }
     }
 }

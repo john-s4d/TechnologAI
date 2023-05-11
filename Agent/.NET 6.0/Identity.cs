@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net;
 using System.Security.Claims;
+using Newtonsoft.Json.Linq;
 
 namespace Technologai
 {
@@ -18,23 +19,24 @@ namespace Technologai
         }
         internal Authority Authority { get; private set; }
         internal string ClientId { get; private set; }
-        internal string ClientSecret { get; private set; }
-        internal string? Token { get; private set; }
+        internal string ClientSecret { get; private set; }        
+        
+        internal Dictionary<string, string> Tokens = new Dictionary<string, string>();
         internal string PublishMask => $"{AgencyId}/+";
         internal string SubscribeMemberMask => $"{AgencyId}/{Id}";
         internal string SubscribeAgencyMask => $"{AgencyId}/0";        
 
         private string? _agencyId;
 
-        public Identity(string authorityName, string clientId, string clientSecret, string memberId)
+        public Identity(string authUri, string clientId, string clientSecret, string memberId)
         {
-            Authority = new Authority(authorityName);
+            Authority = new Authority(authUri);
             ClientId = clientId;
             ClientSecret = clientSecret;
             Id = memberId;
         }
 
-        internal async Task Authenticate()
+        internal async Task Authenticate(string audience)
         {
             using (var httpClient = new HttpClient())
             {
@@ -44,8 +46,11 @@ namespace Technologai
                 var parameters = new Dictionary<string, string>();
                 parameters.Add("grant_type", "client_credentials");
                 parameters.Add("scope", $"member:{Id}");
+                parameters.Add("audience", audience);
 
-                var httpResponse = await httpClient.PostAsJsonAsync(Authority?.TokenEndpoint, parameters);
+                var endpoint = Authority?.AuthUri + Authority?.TokenApi;
+
+                var httpResponse = await httpClient.PostAsJsonAsync(endpoint, parameters);
 
                 if (httpResponse.StatusCode == HttpStatusCode.OK)
                 {
@@ -53,9 +58,7 @@ namespace Technologai
 
                     if (tokenResponse != null)
                     {
-                        Token = tokenResponse.access_token;
-
-                        foreach (Claim claim in new JwtSecurityTokenHandler().ReadJwtToken(Token).Claims)
+                        foreach (Claim claim in new JwtSecurityTokenHandler().ReadJwtToken(tokenResponse.access_token).Claims)
                         {
                             if (claim.Type == "agency_id")
                             {
@@ -64,6 +67,10 @@ namespace Technologai
                             if (claim.Type == "name")
                             {
                                 Name = claim.Value;
+                            }
+                            if (claim.Type == "aud")
+                            {
+                                Tokens[claim.Value] = tokenResponse.access_token;
                             }
                         }
                         return;

@@ -132,7 +132,7 @@ namespace Technologai.AWS
                 return false;
             }
 
-            if (claims["aud"] != Config.TokenAudience)
+            if (claims["aud"] != Config.BrokerUri)
             {
                 message = "wrong_audience";
                 return false;

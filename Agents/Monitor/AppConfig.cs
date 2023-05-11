@@ -1,15 +1,15 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace Technologai.Agents.Core.Debug
+namespace Technologai.Agents
 {
     internal class AppConfig
     {
         private readonly IConfiguration _config;
 
-        internal string? Authority => _config["authority"]; 
+        internal string? AuthUri => _config["authUri"]; 
         internal string? ClientSecret => _config["clientSecret"];
         internal string? ClientId => _config["clientId"];
-        internal string? MemberId => _config["coordinatorMemberId"];
+        internal string? MemberId => _config["memberId"];
 
         internal AppConfig()
         {
