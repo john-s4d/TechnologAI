@@ -34,7 +34,7 @@ jobs:
         ECR_REPOSITORY: ikailo-tech
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Api/Dockerfile
+        docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Agents/Api/Dockerfile
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
   patch-deployment:
     needs: [build-job]
@@ -50,7 +50,7 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         sudo apt-get install -y git
-        git clone -b main https://qasim-aziz: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@github.com/ikailo/Helm-Charts.git
+        git clone -b main https://ikailo-bot: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@github.com/ikailo/Helm-Charts.git
         cd Helm-Charts/technologai
         git config credential.helper store
         rm -f dev-values.yaml
