@@ -1,4 +1,4 @@
-namespace API
+namespace Technologai.Agents.Api
 {
     public class WeatherForecast
     {

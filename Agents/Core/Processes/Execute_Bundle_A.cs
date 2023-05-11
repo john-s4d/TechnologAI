@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Net;
 
-namespace Technologai.Processes
+namespace Technologai.Agents.Processes
 {
     class Execute_Bundle_A
     {

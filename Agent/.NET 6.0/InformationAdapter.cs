@@ -50,39 +50,39 @@ namespace Technologai
             WorkerId = _process.MemberId ?? _agent.Identity.Id;
         }
 
-        public static InformationAdapter? Create(TechnologaiAgent agent, string abilityId, string? input = null)
+        public static InformationAdapter? Create(TechnologaiAgent agent, string processId, string? input = null)
         {
-            return Create(agent, agent.Processes[abilityId], input);
+            return Create(agent, agent.Processes[processId], input).Result;
         }
 
-        public static InformationAdapter Create(TechnologaiAgent agent, IProcess ability, string? input = null)
+        public async static Task<InformationAdapter> Create(TechnologaiAgent agent, IProcess process, string? input = null)
         {
-            var information = Information.Create(agent.Identity.Id, ability.Id, input);
+            var information = Information.Create(agent.Identity.Id, process.Id, input);
             agent.Context.Add(information);
 
-            var adapter = new InformationAdapter(agent, ability, information);
-            adapter.WorkerId = ability.MemberId ?? agent.Identity.Id;
+            var adapter = new InformationAdapter(agent, process, information);
+            adapter.WorkerId = process.MemberId ?? agent.Identity.Id;
 
-            agent.SendStatusMessage($"{information.Id} Create> {ability.Id} | {information.Input}");
+            await agent.SendStatusMessage($"{information.Id} Create> {process.Id} | {information.Input}");
             return adapter;
         }
 
-        public string Summarize()
+        public async Task<string> Summarize()
         {
-            _agent.SendStatusMessage($"{ContextId} Summarize> {ProcessId} | {Input} | {Output}");
+            await _agent.SendStatusMessage($"{ContextId} Summarize> {ProcessId} | {Input} | {Output}");
 
             return Context.Summarize(ContextId);
         }
 
         protected internal async Task<Assessment> Assess()
         {
-            _agent.SendStatusMessage($"{ContextId} Assess> {ProcessId} | {Input} | {Output}");
+            await _agent.SendStatusMessage($"{ContextId} Assess> {ProcessId} | {Input} | {Output}");
             return await _process.Assess(this);
         }
 
         protected internal async Task Execute(Assessment assessment)
         {
-            _agent.SendStatusMessage($"{ContextId} Execute> {ProcessId} | {Input} | {Output}");
+            await _agent.SendStatusMessage($"{ContextId} Execute> {ProcessId} | {Input} | {Output}");
             var result = await _process.Execute(assessment.Data);
             _information.Output = JsonConvert.SerializeObject(result, Formatting.None);
             _information.State = InformationState.CLOSED;
@@ -92,7 +92,7 @@ namespace Technologai
 
         protected internal async Task Spawn(Assessment assessment)
         {
-            _agent.SendStatusMessage($"{ContextId} Spawn> {ProcessId} | {Input} | {Output}");
+            await _agent.SendStatusMessage($"{ContextId} Spawn> {ProcessId} | {Input} | {Output}");
 
             foreach (Information item in await _process.Spawn(this))
             {

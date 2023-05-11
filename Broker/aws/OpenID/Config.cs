@@ -26,9 +26,8 @@ namespace Technologai.AWS.OpenID
         internal static readonly List<string> SubjectTypesSupported = new List<string>() { "public" };
         internal static readonly List<string> IdTokenSigningAlgValuesSupported = new List<string>() { "RS256", "PS256" };
         internal static readonly List<string> ScopesSupported = new List<string>() { "openid" };
-        internal static readonly string TokenAudience = "https://broker.technologai.com";
-        
-
+        internal static readonly string BrokerUri = "https://broker.technologai.com";
+        internal static readonly string StreamUri = "https://stream.technologai.com";
 
     }
 }
