@@ -50,7 +50,7 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         sudo apt-get install -y git
-        git clone -b main https://ikailo-bot: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@github.com/ikailo/Helm-Charts.git
+        git clone -b main https://ikailo-bot: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@github.com/ikailo/Helm-Charts.git
         cd Helm-Charts/technologai
         git config credential.helper store
         rm -f dev-values.yaml
