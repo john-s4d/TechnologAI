@@ -2,14 +2,14 @@
 using Newtonsoft.Json;
 using System.Linq;
 
-namespace Technologai.Agents.Abilities.ChatGPT
+namespace Technologai.Agents
 {
     internal class ChatGPT : TechnologaiAgent
     {
         private static OpenAI _openAI = new OpenAI();
 
-        public ChatGPT(string authorityName, string clientId, string clientSecret, string memberId)
-            : base(authorityName, clientId, clientSecret, memberId)
+        public ChatGPT(string authUri, string clientId, string clientSecret, string memberId)
+            : base(authUri, clientId, clientSecret, memberId)
         {
            
         }

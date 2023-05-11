@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Technologai.Agents.Core.Monitor
+namespace Technologai.Agents
 {
     internal class DisplayLogMessage : DisplayLogMessageExecute, IProcess
     {
