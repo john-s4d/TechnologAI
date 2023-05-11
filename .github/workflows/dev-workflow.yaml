@@ -1,0 +1,143 @@
+name: technologai .net app dev workflow 
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  
+  build-job:
+    
+    name: Build Image
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Check out code
+      uses: actions/checkout@v2
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: 154032908746.dkr.ecr.us-east-1.amazonaws.com
+        ECR_REPOSITORY: ikailo-tech
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Api/Dockerfile
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+  patch-deployment:
+    needs: [build-job]
+    if: success()
+    runs-on: ubuntu-latest
+      
+    steps:
+      
+    - name: install git
+      env:
+        ECR_REGISTRY: 154032908746.dkr.ecr.us-east-1.amazonaws.com
+        ECR_REPOSITORY: ikailo-tech
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        sudo apt-get install -y git
+        git clone -b main https://qasim-aziz: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@github.com/ikailo/Helm-Charts.git
+        cd Helm-Charts/technologai
+        git config credential.helper store
+        rm -f dev-values.yaml
+        cat <<EOF >> dev-values.yaml  
+        replicaCount: 1
+
+        image:
+          repository: $ECR_REGISTRY/$ECR_REPOSITORY
+          pullPolicy: IfNotPresent
+          # Overrides the image tag whose default is the chart appVersion.
+          tag: "$IMAGE_TAG"
+
+        imagePullSecrets: 
+        - name: regcred
+
+        nameOverride: ""
+        fullnameOverride: ""
+
+        serviceAccount:
+          # Specifies whether a service account should be created
+          create: true
+          # Annotations to add to the service account
+          annotations: {}
+          # The name of the service account to use.
+          # If not set and create is true, a name is generated using the fullname template
+          name: ""
+
+        podAnnotations: {}
+
+        podSecurityContext: {}
+          # fsGroup: 2000
+
+        securityContext: {}
+          # capabilities:
+          #   drop:
+          #   - ALL
+          # readOnlyRootFilesystem: true
+          # runAsNonRoot: true
+          # runAsUser: 1000
+
+        service:
+          type: ClusterIP
+          port: 80
+
+        ingress:
+          enabled: true
+          className: "nginx"
+          annotations: {}
+            # kubernetes.io/ingress.class: nginx
+            # kubernetes.io/tls-acme: "true"
+          hosts:
+            - host: a0099eaa685cb4ed0ad4e0f43f468e30-1194026936.us-east-1.elb.amazonaws.com
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific
+          tls: []
+          #  - secretName: chart-example-tls
+          #    hosts:
+          #      - chart-example.local
+
+        resources:
+          # We usually recommend not to specify default resources and to leave this as a conscious
+          # choice for the user. This also increases chances charts run on environments with little
+          # resources, such as Minikube. If you do want to specify resources, uncomment the following
+          # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+          limits:
+            cpu: 250m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+
+        autoscaling:
+          enabled: true
+          minReplicas: 1
+          maxReplicas: 5
+          targetCPUUtilizationPercentage: 80
+          targetMemoryUtilizationPercentage: 80
+
+        nodeSelector: {}
+
+        tolerations: []
+
+        affinity: {}
+        EOF
+        git config --global user.email "envoyfacilitation@outlook.com" #"${{ secrets.EMAIL }}"
+        git config --global user.name "qasim-aziz" #"${{ secrets.USER_NAME }}"
+        git add .
+        git commit -m "from pipeline $IMAGE_TAG"
+        git push origin main
