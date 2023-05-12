@@ -15,6 +15,8 @@ namespace Technologai
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
         public bool IsConnected => _client.IsConnected;
+        
+        private bool _isConnecting;
 
         internal event EventHandler<MqttApplicationMessageReceivedEventArgs>? MessageReceived;
 
@@ -26,8 +28,9 @@ namespace Technologai
 
         internal async Task ConnectAsync()
         {
-            if (!_client.IsConnected)
+            if (!_client.IsConnected && !_isConnecting)
             {
+                _isConnecting = true;
                 var options = new MqttClientOptionsBuilder()
                 .WithWebSocketServer($"{new Uri(_identity.Authority.BrokerUri).Host}:{PORT}")
                 .WithTls()
@@ -37,6 +40,7 @@ namespace Technologai
                 _client.ApplicationMessageReceivedAsync += _client_ApplicationMessageReceivedAsync;
 
                 await _client.ConnectAsync(options, _cancellationTokenSource.Token);
+                _isConnecting = false;
             }
         }
 
