@@ -22,6 +22,7 @@ namespace Technologai.Agents
             Console.WriteLine("Loading...");
 
             await _agent.Start();
+
             await Program.Run();
             await _agent.Stop();
         }

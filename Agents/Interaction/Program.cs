@@ -23,14 +23,14 @@ namespace Technologai.Agents
 
                 _agent.StatusMessage += _agent_statusMessage;
 
+                await _agent.Start();
+
                 _agent.Processes.Add(new GetUserInput());
                 _agent.Processes.Add(new InteractWithUser());
 
                 var showUserOutput = new ShowUserOutput();
                 showUserOutput.OutputMessage += showUserOutput_OutputMessage;
                 _agent.Processes.Add(showUserOutput);
-
-                await _agent.Start();
 
                 _agent.PublishWithCallback(_agent.Create("interact_with_user", "Hello"), information_OnPublishedCallback);
 

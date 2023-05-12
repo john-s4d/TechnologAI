@@ -100,12 +100,12 @@ namespace Technologai
             }
         }
 
-        public InformationAdapter GetSpawn(string abilityId, string? input = null)
+        public InformationAdapter GetSpawn(string processId, string? input = null)
         {
-            var information = Create(_agent, abilityId, input);
+            var information = Create(_agent, processId, input);
             _agent.Context.Spawn(information.ContextId, _information.Id);
             information.WorkerId = _process.MemberId ?? _agent.Identity.Id;
-            //_agent.SendStatusMessage($"{information.Id} Spawn> {abilityId} | {information.Input}");
+            //_agent.SendStatusMessage($"{information.Id} Spawn> {processId} | {information.Input}");
             return information;
         }
 

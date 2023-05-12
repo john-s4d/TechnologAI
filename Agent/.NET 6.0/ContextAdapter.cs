@@ -70,7 +70,7 @@ namespace Technologai
             }
             return result;
         }
-
+        /*
         public Dictionary<string, Information> MapByAbility(List<string> contextIds)
         {
             Dictionary<string, Information> result = new();
@@ -81,7 +81,7 @@ namespace Technologai
                 result.Add(information.ProcessId, information);
             }
             return result;
-        }
+        }*/
 
 
         public List<Information> GetForward(string reverseId)
@@ -107,11 +107,11 @@ namespace Technologai
 
             foreach (Information information in GetReverse(contextId))
             {
-                summary += $"{information.Input} {information.ProcessId} {information.Output}\n"; // TODO: Ability Description
+                summary += $"{information.Input} {information.ProcessId} {information.Output}\n"; // TODO: Process Description
             }
             foreach (Information information in GetForward(contextId))
             {
-                summary += $"{information.Input} {information.ProcessId} {information.Output} \n"; // TODO: Ability Description
+                summary += $"{information.Input} {information.ProcessId} {information.Output} \n"; // TODO: Process Description
             }
             return summary;
         }
