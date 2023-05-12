@@ -52,8 +52,9 @@ jobs:
         sudo apt-get install -y git
         git config user.email "actions@github.com"
         git config user.name "GitHub Actions"
-        git clone -b main https://ikailo-bot:${{ secrets.IKAILO_BOT_TOKEN }}@github.com/ikailo/Helm-Charts.git
+        git clone -b main https://ikailo-bot:${{ secrets.GIT_TOKEN }}@github.com/ikailo/Helm-Charts.git
         cd Helm-Charts/technologai
+        git rev-parse --is-inside-work-tree  # Check if we're in a git repository
         git config credential.helper store
         rm -f dev-values.yaml
         cat <<EOF >> dev-values.yaml  
