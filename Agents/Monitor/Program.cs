@@ -21,6 +21,7 @@
             Console.WriteLine("Loading...");
 
             await _monitor.Start();
+
             await Program.Run();
             await _monitor.Stop();
         }
