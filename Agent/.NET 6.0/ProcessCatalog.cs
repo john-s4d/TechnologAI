@@ -10,10 +10,13 @@ namespace Technologai
     public class ProcessCatalog : Dictionary<string, IProcess>
     {
         private Identity _identity;
+        private TechnologaiAgent _agent;
 
-        public ProcessCatalog(Identity identity)
+        public ProcessCatalog(Identity identity, TechnologaiAgent agent)
         {
             _identity = identity;
+            _agent = agent;
+
             /*
             Add(new Process("add_process_to_agency_catalog",
                             "Add a process to the agency's process catalog.",
@@ -29,16 +32,18 @@ namespace Technologai
         }
 
         public void Add(IProcess process)
-        {   
+        {
             if (!string.IsNullOrEmpty(process.Id))
             {
                 Add(process.Id, process);
+
+                 _agent.Broadcast(process).Wait();
             }
         }
 
         public void AddRange(IEnumerable<IProcess> processes)
         {
-            foreach(Process process in processes)
+            foreach (Process process in processes)
             {
                 Add(process);
             }

@@ -1,4 +1,5 @@
 ﻿using MQTTnet.Client;
+using Newtonsoft.Json;
 
 namespace Technologai
 {
@@ -23,7 +24,7 @@ namespace Technologai
         public TechnologaiAgent(string authUri, string clientId, string clientSecret, string memberId)
         {
             Identity = new Identity(authUri, clientId, clientSecret, memberId);
-            Processes = new ProcessCatalog(Identity);
+            Processes = new ProcessCatalog(Identity, this);
             Context = new ContextAdapter(Identity);
 
             _mqtt = new MqttClient(Identity);
@@ -39,16 +40,19 @@ namespace Technologai
 
             if (brokerMessage.IsBroadcast)
             {
+                // HERE
+
                 // TODO: Handle broadcast
+                string foo = "bar";
                 // : AnnounceProcess
                 // : Context related
-            }            
+            }
 
             else if (brokerMessage.Information != null)
             {
                 Receive(new InformationAdapter(this, brokerMessage.Information)).Wait();
-            }            
-          
+            }
+
         }
 
         private async Task Receive(InformationAdapter information)
@@ -94,9 +98,9 @@ namespace Technologai
             }
         }
 
-        public InformationAdapter Create(string abilityName, string? input = null)
+        public InformationAdapter Create(string processId, string? input = null)
         {
-            var information = InformationAdapter.Create(this, abilityName, input);
+            var information = InformationAdapter.Create(this, processId, input);
             //_active[information.ContextId] = information;
             return information;
         }
@@ -130,29 +134,27 @@ namespace Technologai
                 MemberId = information.WorkerId
             };
 
-            var topic = message.Topic;
-
-            await _mqtt.PublishAsync(topic, message.Information.ToJson());
+            await _mqtt.PublishAsync(message.Topic, message.Information.ToJson());
         }
 
-        public async Task Broadcast(InformationAdapter information)
+        public async Task Broadcast(IProcess process)
         {
-            information.Information.State = InformationState.CLOSED;
+            await SendStatusMessage($"{process.Id} Broadcast");
+
+            process.MemberId = Identity.Id;
 
             var message = new BrokerMessage(Identity)
             {
-                Information = information,
+                Process = process,
                 MemberId = "0"
             };
 
-            var topic = message.Topic;
-
-            await _mqtt.PublishAsync(topic, message.Information.ToJson());
+            await _mqtt.PublishAsync(message.Topic, JsonConvert.SerializeObject(message.Process));
         }
 
         internal async Task SendStatusMessage(string message)
         {
-            if (_mqtt.IsConnected)
+            if (_mqtt.IsConnected && Processes.ContainsKey("display_log_message"))
             {
                 await Create("display_log_message", message).Publish();
             }
@@ -166,33 +168,25 @@ namespace Technologai
 
         public async Task Start()
         {
-            try
-            {
-                // TODO: Fix in AI-17
-                SendStatusMessage($"Warming up...");
-                await new HttpClient().GetAsync($"{Identity.Authority.AuthUri}/.well-known/jwks.json");
-                await new HttpClient().GetAsync($"{Identity.Authority.AuthUri}/.well-known/openid-configuration");
+            // TODO: Fix in AI-17
+            await SendStatusMessage($"Warming up...");
+            await new HttpClient().GetAsync($"{Identity.Authority.AuthUri}/.well-known/jwks.json");
+            await new HttpClient().GetAsync($"{Identity.Authority.AuthUri}/.well-known/openid-configuration");
 
-                await Identity.Authenticate(Identity.Authority.BrokerUri);
+            await Identity.Authenticate(Identity.Authority.BrokerUri);
 
-                this.Name = Identity.Name;
+            this.Name = Identity.Name;
 
-                SendStatusMessage($"Authenticated");
+            await SendStatusMessage($"Authenticated");
 
-                await _mqtt.ConnectAsync();
-                SendStatusMessage($"Connected");
+            await _mqtt.ConnectAsync();
+            await SendStatusMessage($"Connected");
 
-                //await _mqtt.SubscribeAsync(Identity.SubscribeAgencyMask);
-                //SendStatusMessage($"Agency Subscribed> {Identity.SubscribeAgencyMask}");
+            await _mqtt.SubscribeAsync(Identity.SubscribeAgencyMask);
+            await SendStatusMessage($"Agency Subscribed> {Identity.SubscribeAgencyMask}");
 
-                await _mqtt.SubscribeAsync(Identity.SubscribeMemberMask);
-                SendStatusMessage($"Member Subscribed> {Identity.SubscribeMemberMask}");
-
-            }
-            catch (Exception ex)
-            {
-                SendStatusMessage(ex.ToString());
-            }
+            await _mqtt.SubscribeAsync(Identity.SubscribeMemberMask);
+            await SendStatusMessage($"Member Subscribed> {Identity.SubscribeMemberMask}");
         }
 
         public async Task Stop()

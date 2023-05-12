@@ -7,6 +7,7 @@ namespace Technologai
     {
         public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }
         public Information? Information { get; set; }
+        public IProcess? Process { get; set; }
         public string? AgencyId { get; set; }
         public string? MemberId { get; set; }
         public bool IsBroadcast { get { return MemberId?.Equals("0") ?? false; } }
@@ -17,12 +18,22 @@ namespace Technologai
         {
             var topicParts = args.ApplicationMessage.Topic.Split('/');
 
-            return new BrokerMessage
+            var brokerMessage = new BrokerMessage()
             {
-                AgencyId = topicParts[0] ,
+                AgencyId = topicParts[0],
                 MemberId = topicParts[1],
-                Information = Information.FromJson(args.ApplicationMessage.ConvertPayloadToString())
             };
+
+            if (brokerMessage.IsBroadcast)
+            {
+                brokerMessage.Process = Technologai.Process.FromJson(args.ApplicationMessage.ConvertPayloadToString());
+            }
+            else            
+            {
+                brokerMessage.Information = Information.FromJson(args.ApplicationMessage.ConvertPayloadToString());
+            };
+
+            return brokerMessage;
         }
 
         internal BrokerMessage(Identity identity)
