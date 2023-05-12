@@ -138,9 +138,7 @@ jobs:
         tolerations: []
 
         affinity: {}
-        EOF
-        git config user.email "actions@github.com"
-        git config user.name "GitHub Actions"
+        EOF        
         git add .
         git commit -m "from pipeline $IMAGE_TAG"
         git push origin main
