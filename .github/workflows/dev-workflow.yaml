@@ -50,8 +50,8 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         sudo apt-get install -y git
-        git config --global user.email "${{ secrets.EMAIL }}"
-        git config --global user.name "${{ secrets.USER_NAME }}"
+        git config user.email "actions@github.com"
+        git config user.name "GitHub Actions"
         git clone -b main https://ikailo-bot:${{ secrets.IKAILO_BOT_TOKEN }}@github.com/ikailo/Helm-Charts.git
         cd Helm-Charts/technologai
         git config credential.helper store
