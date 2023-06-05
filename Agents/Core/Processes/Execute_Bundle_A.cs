@@ -306,7 +306,7 @@ namespace Technologai.Agents.Processes
         /// </summary>
         public class GitClone : IExecute
         {
-            public string Description { get; } = "Takes clone of a repository.";
+            public string Description { get; } = "Git clone a repository.";
             public string SampleJsonIn { get; } = "{\"repoLink\":\"string\", \"directory\":\"string\"}";
             public string SampleJsonOut { get; } = string.Empty;
 
@@ -343,7 +343,7 @@ namespace Technologai.Agents.Processes
         /// </summary>
         public class DownloadFile : IExecute
         {
-            public string Description { get; } = "Downloaded a file from web url in the local filesystem.";
+            public string Description { get; } = "Downloaded a file to the local filesystem.";
             public string SampleJsonIn { get; } = "{\"weburl\":\"string\",\"filepath\":\"string\" }";
             public string SampleJsonOut { get; } = string.Empty;
 

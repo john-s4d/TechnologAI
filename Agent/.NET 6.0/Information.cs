@@ -19,6 +19,8 @@ namespace Technologai
         public string? Output { get; internal set; }
         public string ProcessId { get; internal set; }
 
+
+
         // TODO History, Signatures, ReadOnly fields ?        
 
         [JsonConstructor]

@@ -1,5 +1,6 @@
 ﻿using MQTTnet.Client;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace Technologai
 {
@@ -35,20 +36,20 @@ namespace Technologai
 
         private void _mqtt_MessageReceived(object? sender, MqttApplicationMessageReceivedEventArgs args)
         {
-
             var brokerMessage = BrokerMessage.FromMqttArgs(args);
 
-            if (brokerMessage.IsBroadcast)
-            {
-                // HERE
+            if (brokerMessage.IsBroadcast && brokerMessage.Process != null)
+            {                
+                Processes.Add(brokerMessage.Process, false);
 
-                // TODO: Handle broadcast
-                string foo = "bar";
-                // : AnnounceProcess
+                SendStatusMessage($"Received: {brokerMessage.Process.Id}").Wait();
+
+                // TODO:                 
+
                 // : Context related
             }
 
-            else if (brokerMessage.Information != null)
+            else if (!brokerMessage.IsBroadcast && brokerMessage.Information != null)
             {
                 Receive(new InformationAdapter(this, brokerMessage.Information)).Wait();
             }
@@ -139,7 +140,7 @@ namespace Technologai
 
         public async Task Broadcast(IProcess process)
         {
-            await SendStatusMessage($"{process.Id} Broadcast");
+            await SendStatusMessage($"Broadcasting: {process.Id}");
 
             process.MemberId = Identity.Id;
 
