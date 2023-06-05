@@ -31,21 +31,30 @@ namespace Technologai
                     ));*/
         }
 
-        public void Add(IProcess process)
+        internal void Add(IProcess process, Boolean broadcast)
         {
-            if (!string.IsNullOrEmpty(process.Id))
+
+            if (!string.IsNullOrEmpty(process.Id) && !this.ContainsKey(process.Id)) // TODO: clustered embeddings for fuzzy lookup
             {
                 Add(process.Id, process);
 
-                 _agent.Broadcast(process).Wait();
+                if (broadcast)
+                {
+                    _agent.Broadcast(process).Wait();
+                }
             }
         }
 
-        public void AddRange(IEnumerable<IProcess> processes)
+        public void Add(IProcess process)
+        {
+            Add(process, true);
+        }
+
+        public void AddRange(IEnumerable<IProcess> processes, Boolean broadcast)
         {
             foreach (Process process in processes)
             {
-                Add(process);
+                Add(process, broadcast);
             }
         }
     }
