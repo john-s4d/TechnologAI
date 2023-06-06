@@ -33,7 +33,7 @@ namespace Technologai
         {
             return Task.FromResult(new List<Information>());
         }
-
+        /*
         public static Process? FromJson(string json)
         {
             return JsonSerializer.Deserialize<Process>(json);
@@ -42,6 +42,6 @@ namespace Technologai
         public string ToJson()
         {
             return JsonSerializer.Serialize(this);
-        }
+        }*/
     }
 }
