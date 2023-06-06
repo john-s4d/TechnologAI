@@ -54,6 +54,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Monitor", "Agents\Monitor\M
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tools", "Agents\Tools\Tools.csproj", "{87D52585-D668-4A53-9848-7739C22756B9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cognition", "Cognition\Cognition.csproj", "{052B91A9-0946-407E-BAD0-C3A3AE278DFB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -96,6 +98,10 @@ Global
 		{87D52585-D668-4A53-9848-7739C22756B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{87D52585-D668-4A53-9848-7739C22756B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{87D52585-D668-4A53-9848-7739C22756B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{052B91A9-0946-407E-BAD0-C3A3AE278DFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{052B91A9-0946-407E-BAD0-C3A3AE278DFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{052B91A9-0946-407E-BAD0-C3A3AE278DFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{052B91A9-0946-407E-BAD0-C3A3AE278DFB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -113,6 +119,7 @@ Global
 		{EB2DFC80-5388-4A3F-A202-2F543268A5A9} = {6226C593-2DD5-4021-93B0-53846F05C4F7}
 		{A21B93AA-90FD-456E-8140-2394E37B1A16} = {6226C593-2DD5-4021-93B0-53846F05C4F7}
 		{87D52585-D668-4A53-9848-7739C22756B9} = {6226C593-2DD5-4021-93B0-53846F05C4F7}
+		{052B91A9-0946-407E-BAD0-C3A3AE278DFB} = {6226C593-2DD5-4021-93B0-53846F05C4F7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D7755621-BA51-411A-B04D-20AB0C57BA0D}

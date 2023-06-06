@@ -52,7 +52,7 @@ namespace Technologai
                 null
                 );
         }
-
+        /*
         public static Information? FromJson(string json)
         {
             return JsonSerializer.Deserialize<Information>(json);
@@ -61,7 +61,7 @@ namespace Technologai
         public string ToJson()
         {
             return JsonSerializer.Serialize(this);
-        }
+        }*/
 
         public int CompareTo(Information? other)
         {

@@ -53,7 +53,6 @@ namespace Technologai
             {
                 Receive(new InformationAdapter(this, brokerMessage.Information)).Wait();
             }
-
         }
 
         private async Task Receive(InformationAdapter information)
@@ -89,7 +88,7 @@ namespace Technologai
 
                 if (assessment.Result == AssessmentResult.EXECUTE)
                 {
-                    // TODO: Debounce?
+                    // TODO: Debounce
                     await information.Execute(assessment);
                 }
                 else if (assessment.Result == AssessmentResult.SPAWN)

@@ -1,44 +1,41 @@
 ﻿using MQTTnet;
 using MQTTnet.Client;
+using System.Text.Json;
 
 namespace Technologai
 {
     public class BrokerMessage
     {
-        public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }
-        public Information? Information { get; set; }
-        public IProcess? Process { get; set; }
+        private static JsonSerializerOptions options = new JsonSerializerOptions();
+
         public string? AgencyId { get; set; }
         public string? MemberId { get; set; }
+        public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }
+        public AgentMessage? AgentMessage { get; set; }
         public bool IsBroadcast { get { return MemberId?.Equals("0") ?? false; } }
 
         private BrokerMessage() { }
+
+        internal BrokerMessage(Identity identity)
+        {
+            AgencyId = identity.AgencyId;
+        }
+
+        static BrokerMessage()
+        {
+            options.Converters.Add(new AgentMessageConverter());
+        }
 
         internal static BrokerMessage FromMqttArgs(MqttApplicationMessageReceivedEventArgs args)
         {
             var topicParts = args.ApplicationMessage.Topic.Split('/');
 
-            var brokerMessage = new BrokerMessage()
+            return new BrokerMessage()
             {
                 AgencyId = topicParts[0],
                 MemberId = topicParts[1],
+                AgentMessage = JsonSerializer.Deserialize<AgentMessage>(args.ApplicationMessage.ConvertPayloadToString(), options)
             };
-
-            if (brokerMessage.IsBroadcast)
-            {
-                brokerMessage.Process = Technologai.Process.FromJson(args.ApplicationMessage.ConvertPayloadToString());
-            }
-            else            
-            {
-                brokerMessage.Information = Information.FromJson(args.ApplicationMessage.ConvertPayloadToString());
-            };
-
-            return brokerMessage;
-        }
-
-        internal BrokerMessage(Identity identity)
-        {
-            AgencyId = identity.AgencyId;
         }
     }
 }
