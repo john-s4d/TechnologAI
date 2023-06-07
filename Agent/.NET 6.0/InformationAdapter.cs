@@ -28,8 +28,6 @@ namespace Technologai
         public InformationState State => _information.State;
         public string? Input => _information.Input;
         public string? Output => _information.Output;
-        public Assessment Assessment { get; set; } = new();
-
         public string ProcessId => _process.Id;
 
         public InformationAdapter(TechnologaiAgent agent, IProcess process, Information information)
@@ -82,9 +80,8 @@ namespace Technologai
 
         protected internal async Task Execute(Assessment assessment)
         {
-            await _agent.SendStatusMessage($"{ContextId} Execute> {ProcessId} | {Input} | {Output}");
-            var result = await _process.Execute(assessment.Data);
-            _information.Output = JsonConvert.SerializeObject(result, Formatting.None);
+            await _agent.SendStatusMessage($"{ContextId} Execute> {ProcessId} | {Input} | {Output}");            
+            _information.Output = (await _process.Execute(assessment)).Output;
             _information.State = InformationState.CLOSED;
             WorkerId = CreatorId;
             await Publish();

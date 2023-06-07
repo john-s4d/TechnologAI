@@ -1,15 +1,15 @@
-﻿using System.Text.Json;
-
-namespace Technologai
+﻿namespace Technologai
 {
     public class Process : IProcess
     {
-        public string Id { get; set; }
-        public string Description { get; set; }
-        public string? Prompt { get; set; }
-        public string SampleJsonIn { get; set; }
-        public string SampleJsonOut { get; set; }
+        public string? Id { get; set; } = string.Empty;
+        public string? Name { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;        
+        public string? SampleJsonIn { get; set; }
+        public string? SampleJsonOut { get; set; }
         public string? MemberId { get; set; }
+
+        public Process() { }
 
         public Process(string id, string description, string sampleJsonIn, string sampleJsonOut)
         {
@@ -21,27 +21,20 @@ namespace Technologai
 
         public virtual Task<Assessment> Assess(InformationAdapter information)
         {
-            return Task.FromResult(information.Assessment);
+            return Task.FromResult(new Assessment());
         }
 
-        public virtual Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public Task<ExecuteResult> Execute(Assessment assessment)
         {
-            return Task.FromResult(data);
+            return Task.FromResult(new ExecuteResult());
         }
+
 
         public virtual Task<List<Information>> Spawn(InformationAdapter information)
         {
             return Task.FromResult(new List<Information>());
         }
-        /*
-        public static Process? FromJson(string json)
-        {
-            return JsonSerializer.Deserialize<Process>(json);
-        }
 
-        public string ToJson()
-        {
-            return JsonSerializer.Serialize(this);
-        }*/
+
     }
 }
