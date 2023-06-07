@@ -10,8 +10,8 @@ namespace Technologai
 
         public string? AgencyId { get; set; }
         public string? MemberId { get; set; }
-        public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }
         public AgentMessage? AgentMessage { get; set; }
+        public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }        
         public bool IsBroadcast { get { return MemberId?.Equals("0") ?? false; } }
 
         private BrokerMessage() { }
@@ -36,6 +36,11 @@ namespace Technologai
                 MemberId = topicParts[1],
                 AgentMessage = JsonSerializer.Deserialize<AgentMessage>(args.ApplicationMessage.ConvertPayloadToString(), options)
             };
+        }
+
+        internal string ConvertAgentMessageToString()
+        {
+            return JsonSerializer.Serialize(AgentMessage, options);
         }
     }
 }

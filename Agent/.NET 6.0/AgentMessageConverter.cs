@@ -67,7 +67,7 @@ namespace Technologai
                     JsonSerializer.Serialize(writer, value.Data as Information, options);
                     break;
                 case AgentMessageType.PROCESS:
-                    JsonSerializer.Serialize(writer, value.Data as Process, options);
+                    JsonSerializer.Serialize(writer, value.Data as IProcess, options);
                     break;
                 default:
                     throw new JsonException("Unknown type: " + value.Type);

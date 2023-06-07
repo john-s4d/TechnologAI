@@ -15,11 +15,9 @@ namespace Technologai
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
         public InformationState State { get; internal set; }
-        public string? Input { get; internal set; }
-        public string? Output { get; internal set; }
+        public string? Input { get; internal set; } // TODO: Use embeddings
+        public string? Output { get; internal set; } // TODO: Use embeddings
         public string ProcessId { get; internal set; }
-
-
 
         // TODO History, Signatures, ReadOnly fields ?        
 
@@ -52,16 +50,6 @@ namespace Technologai
                 null
                 );
         }
-        /*
-        public static Information? FromJson(string json)
-        {
-            return JsonSerializer.Deserialize<Information>(json);
-        }
-
-        public string ToJson()
-        {
-            return JsonSerializer.Serialize(this);
-        }*/
 
         public int CompareTo(Information? other)
         {
