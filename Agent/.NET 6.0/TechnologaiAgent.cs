@@ -44,7 +44,7 @@ namespace Technologai
             if (brokerMessage.AgentMessage?.Type == AgentMessageType.INFORMATION)
             {
                 Information? information = brokerMessage.AgentMessage?.Data as Information;
-                
+
                 if (information != null)
                 {
                     Receive(new InformationAdapter(this, information)).Wait();
@@ -67,41 +67,47 @@ namespace Technologai
         {
             Context.Add(information);
 
+            // Closed and this agent is the creator
             if (information.State == InformationState.CLOSED && information.CreatorId == Identity.Id)
             {
                 //_active.Remove(information.ContextId);
 
                 // Activate the calling information
-                var creator = Context.GetCreator(information.ContextId);
+                var creator = Context.GetCreator(information.Id);
 
                 if (creator == null)
                 {
                     // This is a root request. End here and send a callback.                        
-                    _publishCallbacks[information.ContextId]?.Invoke(information);
+                    _publishCallbacks[information.Id]?.Invoke(information);
                     return;
                 }
                 information = new InformationAdapter(this, creator);
             }
 
+            // Closed, and this agent is not the creator
             if (information.State == InformationState.CLOSED && information.CreatorId != Identity.Id)
             {
-                // This is closed but I'm not the creator. Sent to me for review.
+                // TODO: Review
             }
 
+            // Open, and this agent is the worker
             if (information.State == InformationState.OPEN && information.WorkerId == Identity.Id)
             {
                 //_active[information.ContextId] = information;
 
-                var assessment = await information.Assess();
-
-                if (assessment.Result == AssessmentResult.EXECUTE)
+                switch (information.ProcessState)
                 {
                     // TODO: Debounce
-                    await information.Execute(assessment);
-                }
-                else if (assessment.Result == AssessmentResult.SPAWN)
-                {
-                    await information.Spawn(assessment);
+
+                    case ProcessState.ASSESS:
+                        await information.Assess();
+                        break;
+                    case ProcessState.EXECUTE:
+                        await information.Execute();
+                        break;
+                    case ProcessState.SPAWN:
+                        await information.Spawn();
+                        break;
                 }
             }
         }
@@ -115,7 +121,7 @@ namespace Technologai
 
         public async void PublishWithCallback(InformationAdapter information, OnPublished onPublished)
         {
-            _publishCallbacks.Add(information.ContextId, onPublished);
+            _publishCallbacks.Add(information.Id, onPublished);
             await Publish(information);
         }
 
@@ -155,7 +161,7 @@ namespace Technologai
         {
             await SendStatusMessage($"Broadcasting: {process.Id}");
 
-            process.MemberId = Identity.Id;
+            process.WorkerId = Identity.Id;
 
             AgentMessage agentMessage = new AgentMessage()
             {

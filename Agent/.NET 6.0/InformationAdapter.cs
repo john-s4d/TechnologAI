@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Runtime.CompilerServices;
 
 namespace Technologai
 {
@@ -13,22 +14,21 @@ namespace Technologai
         public string WorkerId { get; set; }
 
         // Context
-        public TechnologaiAgent Agent => _agent;
-        public Information Information => _information;
-        public IProcess Process => _process;
+        public ContextAdapter Context => _agent.Context;
+        public TechnologaiAgent Agent => _agent;        
 
-        public ContextAdapter Context
-        {
-            get { return _agent.Context; }
-        }
+        // Process
+        public IProcess Process => _process;
+        public string ProcessId => _process.Id;
+        public ProcessState ProcessState => _process.State;
 
         // Information
-        public string ContextId => _information.Id;
+        public Information Information => _information;
+        public string Id => _information.Id;
         public string CreatorId => _information.CreatorId;
         public InformationState State => _information.State;
         public string? Input => _information.Input;
-        public string? Output => _information.Output;
-        public string ProcessId => _process.Id;
+        public string? Output => _information.Output;        
 
         public InformationAdapter(TechnologaiAgent agent, IProcess process, Information information)
         {
@@ -36,7 +36,7 @@ namespace Technologai
             _process = process;
             _information = information;
             //_context = _agent.Context.Neighbors(information.Id);
-            WorkerId = _process.MemberId ?? _agent.Identity.Id;
+            WorkerId = _process.WorkerId ?? _agent.Identity.Id;
         }
 
         public InformationAdapter(TechnologaiAgent agent, Information information)
@@ -45,7 +45,7 @@ namespace Technologai
             _process = _agent.Processes[information.ProcessId];
             _information = information;
             //_context = _agent.Context.RelatedTo(information.Id);
-            WorkerId = _process.MemberId ?? _agent.Identity.Id;
+            WorkerId = _process.WorkerId ?? _agent.Identity.Id;
         }
 
         public static InformationAdapter? Create(TechnologaiAgent agent, string processId, string? input = null)
@@ -59,39 +59,32 @@ namespace Technologai
             agent.Context.Add(information);
 
             var adapter = new InformationAdapter(agent, process, information);
-            adapter.WorkerId = process.MemberId ?? agent.Identity.Id;
+            adapter.WorkerId = process.WorkerId ?? agent.Identity.Id;
 
             await agent.SendStatusMessage($"{information.Id} Create> {process.Id} | {information.Input}");
             return adapter;
+        }      
+
+        protected internal async Task<ProcessState> Assess()
+        {
+            await _agent.SendStatusMessage($"{Id} Assess> {ProcessId} | {Input} | {Output}");
+            return _process.Assess(this);
         }
 
-        public async Task<string> Summarize()
+        protected internal async Task Execute()
         {
-            await _agent.SendStatusMessage($"{ContextId} Summarize> {ProcessId} | {Input} | {Output}");
-
-            return Context.Summarize(ContextId);
-        }
-
-        protected internal async Task<Assessment> Assess()
-        {
-            await _agent.SendStatusMessage($"{ContextId} Assess> {ProcessId} | {Input} | {Output}");
-            return await _process.Assess(this);
-        }
-
-        protected internal async Task Execute(Assessment assessment)
-        {
-            await _agent.SendStatusMessage($"{ContextId} Execute> {ProcessId} | {Input} | {Output}");            
-            _information.Output = (await _process.Execute(assessment)).Output;
+            await _agent.SendStatusMessage($"{Id} Execute> {ProcessId} | {Input} | {Output}");            
+            _information.Output = _process.Execute(this);
             _information.State = InformationState.CLOSED;
             WorkerId = CreatorId;
             await Publish();
         }
 
-        protected internal async Task Spawn(Assessment assessment)
+        protected internal async Task Spawn()
         {
-            await _agent.SendStatusMessage($"{ContextId} Spawn> {ProcessId} | {Input} | {Output}");
+            await _agent.SendStatusMessage($"{Id} Spawn> {ProcessId} | {Input} | {Output}");
 
-            foreach (Information item in await _process.Spawn(this))
+            foreach (Information item in _process.Spawn(this))
             {
                 await (new InformationAdapter(_agent, item).Publish());
             }
@@ -100,8 +93,8 @@ namespace Technologai
         public InformationAdapter GetSpawn(string processId, string? input = null)
         {
             var information = Create(_agent, processId, input);
-            _agent.Context.Spawn(information.ContextId, _information.Id);
-            information.WorkerId = _process.MemberId ?? _agent.Identity.Id;
+            _agent.Context.Spawn(information.Id, _information.Id);
+            information.WorkerId = _process.WorkerId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {processId} | {information.Input}");
             return information;
         }
@@ -116,6 +109,12 @@ namespace Technologai
             _agent.PublishWithCallback(this, onPublished);
         }
 
+        public InformationAdapter this[int i]
+        {
+
+        }
+
+        /*
         public T? DeserializeInput<T>()
         {
             return JsonConvert.DeserializeObject<T>(Input ?? string.Empty);
@@ -124,8 +123,7 @@ namespace Technologai
         public T? DeserializeOutput<T>()
         {
             return JsonConvert.DeserializeObject<T>(Output ?? string.Empty);
-        }
-
+        }*/
 
         public static implicit operator Information(InformationAdapter value) => value._information;
 
