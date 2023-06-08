@@ -1,40 +1,41 @@
 ﻿namespace Technologai
 {
+    public enum ProcessState
+    {
+        ASSESS,        
+        EXECUTE,
+        SPAWN
+    }
+
     public class Process : IProcess
     {
-        public string? Id { get; set; } = string.Empty;
-        public string? Name { get; set; } = string.Empty;
-        public string? Description { get; set; } = string.Empty;        
-        public string? SampleJsonIn { get; set; }
-        public string? SampleJsonOut { get; set; }
-        public string? MemberId { get; set; }
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public string[]? ParametersIn { get; set; }
+        public string[]? ParametersOut { get; set; }        
+        public string? WorkerId { get; set; }
+        public ProcessState State { get; set; } = ProcessState.ASSESS;
 
-        public Process() { }
-
-        public Process(string id, string description, string sampleJsonIn, string sampleJsonOut)
+        public virtual ProcessState Assess(in InformationAdapter information)
         {
-            Id = id;
-            Description = description;
-            SampleJsonIn = sampleJsonIn;
-            SampleJsonOut = sampleJsonOut;
+            // Assess the information and set this.State property.
+
+            return this.State;
         }
 
-        public virtual Task<Assessment> Assess(InformationAdapter information)
+        public virtual string? Execute(in InformationAdapter information)
         {
-            return Task.FromResult(new Assessment());
+            // Execute the process and return the output            
+
+            return null;
         }
 
-        public Task<ExecuteResult> Execute(Assessment assessment)
+        public virtual List<Information> Spawn(in InformationAdapter information)
         {
-            return Task.FromResult(new ExecuteResult());
+            // Spawn new information and return it.
+
+            return new List<Information>();
         }
-
-
-        public virtual Task<List<Information>> Spawn(InformationAdapter information)
-        {
-            return Task.FromResult(new List<Information>());
-        }
-
-
     }
 }

@@ -27,7 +27,7 @@ namespace Technologai
 
         public void Add(InformationAdapter information)
         {
-            _library[information.ContextId] = information;
+            _library[information.Id] = information;
             //_abilities[information.ProcessId] = information.Process;
         }
 

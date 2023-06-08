@@ -2,16 +2,16 @@
 {
     public class Generate32BitString : Process
     {   
-        public new string? Name { get; set; } = "Generate 32 Bit String";
-        public new string Description { get; set; } = "Generate a randomized 32-bit string.";
-        public new string SampleJsonOut { get; set; } = "{\"content\":\"string\"}";
+        public Generate32BitString() 
+        { 
+            Name = "Generate 32 Bit String";
+            Description =  "Generate a randomized 32-bit string.";
+            State = ProcessState.EXECUTE;
+        }
 
-        public new Task<ExecuteResult> Execute(Assessment assessment)
-        {
-            return Task.FromResult(new ExecuteResult
-            {   
-                Output = Utils.GenerateNewIdString(32)
-            });
+        public new string? Execute(in InformationAdapter information)
+        {   
+            return Utils.GenerateNewIdString(32);
         }
     }
 }

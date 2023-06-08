@@ -39,12 +39,12 @@ namespace Technologai
             Output = output;
         }
 
-        public static Information Create(string creatorId, string abilityId, string? input = null)
+        public static Information Create(string creatorId, string processId, string? input = null)
         {
             return new Information(
                 Technologai.ContextId.Create(creatorId),
                 creatorId,
-                abilityId,
+                processId,
                 InformationState.DRAFT,
                 input,
                 null
