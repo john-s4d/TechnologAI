@@ -7,15 +7,12 @@ public class GetUserInput : Process
     public new string SampleJsonIn { get; set; } = string.Empty;
     public new string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";
 
-    public new Task<Assessment> Assess(InformationAdapter information)
+    public new ProcessState Assess(InformationAdapter information)
     {
-        return Task.FromResult(new Assessment
-        {
-            Result = AssessmentResult.EXECUTE
-        });
+        return ProcessState.EXECUTE;
     }
 
-public async Task<Dictionary<string, object>> Execute(Assessment assessment)
+public async Task<Dictionary<string, object>> Execute(InformationAdapter information)
 {
     var value = await Task.Run(() =>
     {

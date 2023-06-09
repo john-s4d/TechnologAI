@@ -47,7 +47,7 @@ namespace Technologai
 
                 if (information != null)
                 {
-                    Receive(new InformationAdapter(this, information)).Wait();
+                    Receive(InformationAdapter.Create(this, information)).Wait();
                 }
             }
 
@@ -81,7 +81,7 @@ namespace Technologai
                     _publishCallbacks[information.Id]?.Invoke(information);
                     return;
                 }
-                information = new InformationAdapter(this, creator);
+                information = InformationAdapter.Create(this, creator);
             }
 
             // Closed, and this agent is not the creator
@@ -139,7 +139,7 @@ namespace Technologai
 
             if (information.State == InformationState.DRAFT)
             {
-                information.Information.State = InformationState.OPEN;
+                information.State = InformationState.OPEN;
             }
 
             AgentMessage agentMessage = new AgentMessage()

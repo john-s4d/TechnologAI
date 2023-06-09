@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\openai\OpenAI.SDK\OpenAI.GPT3.csproj" />
+    <ProjectReference Include="..\..\..\symbl-csharp-sdk\Sdk\SymblAISharp.csproj" />
     <ProjectReference Include="..\..\Agent\.NET 6.0\Technologai.csproj" />
   </ItemGroup>
 

@@ -8,10 +8,9 @@ public class InteractWithUser : Process
     public new string SampleJsonIn { get; set; } = "{\"input\":\"string\"}";
     public new string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";    
 
-    public Task<Assessment> Assess(InformationAdapter information)
+    public ProcessState Assess(InformationAdapter information)
     {
-        Assessment assessment = new Assessment();
-
+        /*
         foreach(var item in information.Context.GetForward(information.ContextId)) { 
             if (item.ProcessId == "get_user_input")
             {
@@ -21,8 +20,12 @@ public class InteractWithUser : Process
         }
 
         assessment.Result = assessment.Data.ContainsKey("output") ? AssessmentResult.EXECUTE : AssessmentResult.SPAWN;
+        
 
         return Task.FromResult(assessment);
+        */
+
+        return ProcessState.EXECUTE;
     }
 
     public Task<List<Information>> Spawn(InformationAdapter information)

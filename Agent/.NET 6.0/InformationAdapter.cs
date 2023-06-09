@@ -1,13 +1,11 @@
-﻿using Newtonsoft.Json;
-using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
 
 namespace Technologai
 {
-    public class InformationAdapter
+    public class InformationAdapter : Information
     {
         private TechnologaiAgent _agent;
         private IProcess _process;
-        private Information _information;
 
         // Agent
         public string AgentId => _agent.Identity.Id;
@@ -15,55 +13,47 @@ namespace Technologai
 
         // Context
         public ContextAdapter Context => _agent.Context;
-        public TechnologaiAgent Agent => _agent;        
+        public TechnologaiAgent Agent => _agent;
 
         // Process
         public IProcess Process => _process;
-        public string ProcessId => _process.Id;
         public ProcessState ProcessState => _process.State;
 
-        // Information
-        public Information Information => _information;
-        public string Id => _information.Id;
-        public string CreatorId => _information.CreatorId;
-        public InformationState State => _information.State;
-        public string? Input => _information.Input;
-        public string? Output => _information.Output;        
+        private InformationAdapter(string id, string creatorId, string processId, InformationState state, string? input = null, string? output = null)
+            : base(id, creatorId, processId, state, input, output) { }
 
-        public InformationAdapter(TechnologaiAgent agent, IProcess process, Information information)
+        public static InformationAdapter Create(TechnologaiAgent agent, Information information)
         {
-            _agent = agent;
-            _process = process;
-            _information = information;
-            //_context = _agent.Context.Neighbors(information.Id);
-            WorkerId = _process.WorkerId ?? _agent.Identity.Id;
+            return new InformationAdapter(
+                information.Id,
+                information.CreatorId,
+                information.ProcessId,
+                information.State,
+                information.Input,
+                information.Output
+                                                                                                                         )
+            {
+                _agent = agent,
+                _process = agent.Processes[information.ProcessId]
+            };
         }
 
-        public InformationAdapter(TechnologaiAgent agent, Information information)
-        {
-            _agent = agent;
-            _process = _agent.Processes[information.ProcessId];
-            _information = information;
-            //_context = _agent.Context.RelatedTo(information.Id);
-            WorkerId = _process.WorkerId ?? _agent.Identity.Id;
-        }
 
-        public static InformationAdapter? Create(TechnologaiAgent agent, string processId, string? input = null)
+        public static InformationAdapter Create(TechnologaiAgent agent, string processId, string? input = null)
         {
             return Create(agent, agent.Processes[processId], input).Result;
         }
 
         public async static Task<InformationAdapter> Create(TechnologaiAgent agent, IProcess process, string? input = null)
         {
-            var information = Information.Create(agent.Identity.Id, process.Id, input);
+            var information = InformationAdapter.Create(agent, process.Id, input);
             agent.Context.Add(information);
 
-            var adapter = new InformationAdapter(agent, process, information);
-            adapter.WorkerId = process.WorkerId ?? agent.Identity.Id;
+            information.WorkerId = process.WorkerId ?? agent.Identity.Id;
 
             await agent.SendStatusMessage($"{information.Id} Create> {process.Id} | {information.Input}");
-            return adapter;
-        }      
+            return information;
+        }
 
         protected internal async Task<ProcessState> Assess()
         {
@@ -73,9 +63,9 @@ namespace Technologai
 
         protected internal async Task Execute()
         {
-            await _agent.SendStatusMessage($"{Id} Execute> {ProcessId} | {Input} | {Output}");            
-            _information.Output = _process.Execute(this);
-            _information.State = InformationState.CLOSED;
+            await _agent.SendStatusMessage($"{Id} Execute> {ProcessId} | {Input} | {Output}");
+            Output = _process.Execute(this);
+            State = InformationState.CLOSED;
             WorkerId = CreatorId;
             await Publish();
         }
@@ -84,16 +74,16 @@ namespace Technologai
         {
             await _agent.SendStatusMessage($"{Id} Spawn> {ProcessId} | {Input} | {Output}");
 
-            foreach (Information item in _process.Spawn(this))
+            foreach (InformationAdapter item in _process.Spawn(this))
             {
-                await (new InformationAdapter(_agent, item).Publish());
+                await (item.Publish());
             }
         }
 
         public InformationAdapter GetSpawn(string processId, string? input = null)
         {
             var information = Create(_agent, processId, input);
-            _agent.Context.Spawn(information.Id, _information.Id);
+            _agent.Context.Spawn(information.Id, this.Id);
             information.WorkerId = _process.WorkerId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {processId} | {information.Input}");
             return information;
@@ -109,9 +99,13 @@ namespace Technologai
             _agent.PublishWithCallback(this, onPublished);
         }
 
-        public InformationAdapter this[int i]
+        public object? this[string key]
         {
-
+            get
+            {
+                return null;
+            }
+            set { }
         }
 
         /*
@@ -125,7 +119,7 @@ namespace Technologai
             return JsonConvert.DeserializeObject<T>(Output ?? string.Empty);
         }*/
 
-        public static implicit operator Information(InformationAdapter value) => value._information;
+        //public static implicit operator Information(InformationAdapter value) => value._information;
 
     }
 }
