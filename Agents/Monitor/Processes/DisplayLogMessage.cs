@@ -15,11 +15,13 @@ namespace Technologai.Agents
             return Task.FromResult(data);
         }
 
-        public new Task<Assessment> Assess(InformationAdapter information)
+        public new ProcessState Assess(InformationAdapter information)
         {
-            Assessment assessment = new Assessment();
-            assessment.Result = AssessmentResult.EXECUTE;
-            return Task.FromResult(assessment);
+            //Assessment assessment = new Assessment();
+            //assessment.Result = AssessmentResult.EXECUTE;
+            //return Task.FromResult(assessment);
+            this.State = ProcessState.EXECUTE;
+            return this.State;
         }
 
         public new Task<List<Information>> Spawn(InformationAdapter information)

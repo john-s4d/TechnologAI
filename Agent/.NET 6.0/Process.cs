@@ -30,12 +30,17 @@
 
             return null;
         }
-
+        /*
         public virtual List<Information> Spawn(in InformationAdapter information)
         {
             // Spawn new information and return it.
 
             return new List<Information>();
+        }*/
+
+        List<InformationAdapter> IProcess.Spawn(in InformationAdapter information)
+        {
+            return new List<InformationAdapter>();
         }
     }
 }

@@ -13,11 +13,7 @@ namespace Technologai.Agents
         {
            
         }
-        
-         protected Task<Assessment> Assess(InformationAdapter information)
-        {
-            throw new NotImplementedException();
-        }
+
 
         protected async Task<Dictionary<string, object>> Execute(Dictionary<string,object> data)
         {

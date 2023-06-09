@@ -14,15 +14,18 @@
 
         public new ProcessState Assess(in InformationAdapter information)
         {
-            return (information["fileName"] != null && information["content"] != null) ?
+           /* return (information.Input["fileName"] != null && information.Input["content"] != null) ?
                 ProcessState.EXECUTE : 
-                    ProcessState.ASSESS;
+                    ProcessState.ASSESS;*/
+           return ProcessState.EXECUTE;
         }
 
         public new string? Execute(in InformationAdapter information)
-        {   
-            using StreamWriter writer = new((string)information["fileName"], true);
+        {
+            /*
+            using StreamWriter writer = new((string)information.Input["fileName"], true);
             writer.WriteAsync((string)information["content"]).Wait();            
+            return null;*/
             return null;
         }
     }

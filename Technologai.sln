@@ -52,6 +52,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "Agents\Core\Core.cs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cognition", "Agents\Cognition\Cognition.csproj", "{DDEEE302-320A-4209-BFEA-8466E01BA9BC}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tensor.NET", "..\Tensor.NET\csharp\Tensor.NET\Tensor.NET.csproj", "{562CC7E9-EDE0-4464-85AE-75081A6E5616}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -94,6 +96,10 @@ Global
 		{DDEEE302-320A-4209-BFEA-8466E01BA9BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDEEE302-320A-4209-BFEA-8466E01BA9BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDEEE302-320A-4209-BFEA-8466E01BA9BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{562CC7E9-EDE0-4464-85AE-75081A6E5616}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{562CC7E9-EDE0-4464-85AE-75081A6E5616}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{562CC7E9-EDE0-4464-85AE-75081A6E5616}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{562CC7E9-EDE0-4464-85AE-75081A6E5616}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -111,6 +117,7 @@ Global
 		{A21B93AA-90FD-456E-8140-2394E37B1A16} = {6226C593-2DD5-4021-93B0-53846F05C4F7}
 		{D27A9A15-FED3-4D90-A223-3BA1BFA5AAC1} = {6226C593-2DD5-4021-93B0-53846F05C4F7}
 		{DDEEE302-320A-4209-BFEA-8466E01BA9BC} = {6226C593-2DD5-4021-93B0-53846F05C4F7}
+		{562CC7E9-EDE0-4464-85AE-75081A6E5616} = {55F43CA4-40F5-4A16-80DF-B4E0C9034D25}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D7755621-BA51-411A-B04D-20AB0C57BA0D}

@@ -8,14 +8,17 @@ public class ShowUserOutput : Process
     public new string Description { get; set; } = "Provide the user with information.";
     public new string SampleJsonIn { get; set; } = "{\"message\":\"string\"}";
 
-    public Task<Assessment> Assess(InformationAdapter information)
+    public ProcessState Assess(InformationAdapter information)
     {
+        /*
         Assessment assessment = new Assessment();
 
         assessment.Data.Add("message", information.Input ?? string.Empty);
         assessment.Result = AssessmentResult.EXECUTE;
 
         return Task.FromResult(assessment);
+        */
+        return this.State;
     }
 
     public Task<Dictionary<string, object>> Execute(Dictionary<string,object> data)
