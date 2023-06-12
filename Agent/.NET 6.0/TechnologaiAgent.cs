@@ -1,6 +1,9 @@
-﻿using MQTTnet.Client;
-using Newtonsoft.Json;
+﻿using Microsoft.VisualBasic;
+using MQTTnet.Client;
+//using Newtonsoft.Json;
+using System.CodeDom;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace Technologai
 {
@@ -38,63 +41,73 @@ namespace Technologai
         {
             var brokerMessage = BrokerMessage.FromMqttArgs(args);
 
-            if (brokerMessage.IsBroadcast && brokerMessage.Process != null)
-            {                
-                Processes.Add(brokerMessage.Process, false);
-
-                SendStatusMessage($"Received: {brokerMessage.Process.Id}").Wait();
-
-                // TODO:                 
-
-                // : Context related
-            }
-
-            else if (!brokerMessage.IsBroadcast && brokerMessage.Information != null)
+            if (brokerMessage.AgentMessage?.Type == AgentMessageType.INFORMATION)
             {
-                Receive(new InformationAdapter(this, brokerMessage.Information)).Wait();
+                Information? information = brokerMessage.AgentMessage?.Data as Information;
+
+                if (information != null)
+                {
+                    Receive(InformationAdapter.Create(this, information)).Wait();
+                }
             }
 
+            else if (brokerMessage.AgentMessage?.Type == AgentMessageType.PROCESS)
+            {
+                IProcess? process = brokerMessage.AgentMessage?.Data as IProcess;
+
+                if (process != null)
+                {
+                    Processes.Add(process, false);
+                    SendStatusMessage($"Received: {process.Id}").Wait();
+                }
+            }
         }
 
         private async Task Receive(InformationAdapter information)
         {
             Context.Add(information);
 
+            // Closed and this agent is the creator
             if (information.State == InformationState.CLOSED && information.CreatorId == Identity.Id)
             {
                 //_active.Remove(information.ContextId);
 
                 // Activate the calling information
-                var creator = Context.GetCreator(information.ContextId);
+                var creator = Context.GetCreator(information.Id);
 
                 if (creator == null)
                 {
                     // This is a root request. End here and send a callback.                        
-                    _publishCallbacks[information.ContextId]?.Invoke(information);
+                    _publishCallbacks[information.Id]?.Invoke(information);
                     return;
                 }
-                information = new InformationAdapter(this, creator);
+                information = InformationAdapter.Create(this, creator);
             }
 
+            // Closed, and this agent is not the creator
             if (information.State == InformationState.CLOSED && information.CreatorId != Identity.Id)
             {
-                // This is closed but I'm not the creator. Sent to me for review.
+                // TODO: Review
             }
 
+            // Open, and this agent is the worker
             if (information.State == InformationState.OPEN && information.WorkerId == Identity.Id)
             {
                 //_active[information.ContextId] = information;
 
-                var assessment = await information.Assess();
+                switch (information.ProcessState)
+                {
+                    // TODO: Debounce
 
-                if (assessment.Result == AssessmentResult.EXECUTE)
-                {
-                    // TODO: Debounce?
-                    await information.Execute(assessment);
-                }
-                else if (assessment.Result == AssessmentResult.SPAWN)
-                {
-                    await information.Spawn(assessment);
+                    case ProcessState.ASSESS:
+                        await information.Assess();
+                        break;
+                    case ProcessState.EXECUTE:
+                        await information.Execute();
+                        break;
+                    case ProcessState.SPAWN:
+                        await information.Spawn();
+                        break;
                 }
             }
         }
@@ -108,7 +121,7 @@ namespace Technologai
 
         public async void PublishWithCallback(InformationAdapter information, OnPublished onPublished)
         {
-            _publishCallbacks.Add(information.ContextId, onPublished);
+            _publishCallbacks.Add(information.Id, onPublished);
             await Publish(information);
         }
 
@@ -126,31 +139,45 @@ namespace Technologai
 
             if (information.State == InformationState.DRAFT)
             {
-                information.Information.State = InformationState.OPEN;
+                information.State = InformationState.OPEN;
             }
 
-            var message = new BrokerMessage(Identity)
+            AgentMessage agentMessage = new AgentMessage()
             {
-                Information = information,
+                Data = information,
+                Type = AgentMessageType.INFORMATION
+            };
+
+            var brokerMessage = new BrokerMessage(Identity)
+            {
+                AgentMessage = agentMessage,
                 MemberId = information.WorkerId
             };
 
-            await _mqtt.PublishAsync(message.Topic, message.Information.ToJson());
+            await _mqtt.PublishAsync(brokerMessage.Topic, brokerMessage.ConvertAgentMessageToString());
         }
 
         public async Task Broadcast(IProcess process)
         {
             await SendStatusMessage($"Broadcasting: {process.Id}");
 
-            process.MemberId = Identity.Id;
+            process.WorkerId = Identity.Id;
 
-            var message = new BrokerMessage(Identity)
+            AgentMessage agentMessage = new AgentMessage()
             {
-                Process = process,
+                Data = process,
+                Type = AgentMessageType.PROCESS
+            };
+
+            var brokerMessage = new BrokerMessage(Identity)
+            {
+                AgentMessage = agentMessage,
                 MemberId = "0"
             };
 
-            await _mqtt.PublishAsync(message.Topic, JsonConvert.SerializeObject(message.Process));
+            string agentMessageJson = brokerMessage.ConvertAgentMessageToString();
+
+            await _mqtt.PublishAsync(brokerMessage.Topic, agentMessageJson);
         }
 
         internal async Task SendStatusMessage(string message)

@@ -1,35 +1,31 @@
 ﻿using System.Xml;
 using Technologai;
 
-public class InteractWithUser : IProcess
+public class InteractWithUser : Process
 {
-    public string Id { get; set; } = "interact_with_user";
-    public string Description { get; set; } = "Provide the user with information and receive a response from the user.";
-    public string SampleJsonIn { get; set; } = "{\"input\":\"string\"}";
-    public string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";
-    public string? MemberId { get; set; }
-    public string? Prompt { get; set; }
+    public new string Name { get; set; } = "Interact with user.";
+    public new string Description { get; set; } = "Provide the user with information and receive a response from the user.";
+    public new string SampleJsonIn { get; set; } = "{\"input\":\"string\"}";
+    public new string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";    
 
-    public Task<Assessment> Assess(InformationAdapter information)
+    public ProcessState Assess(InformationAdapter information)
     {
+        /*
         foreach(var item in information.Context.GetForward(information.ContextId)) { 
             if (item.ProcessId == "get_user_input")
             {
-                information.Assessment.Data.Add("output", item.Output ?? string.Empty);
+                assessment.Data.Add("output", item.Output ?? string.Empty);
                 break;
             }
         }
 
-        information.Assessment.Result = information.Assessment.Data.ContainsKey("output") ? AssessmentResult.EXECUTE : AssessmentResult.SPAWN;
+        assessment.Result = assessment.Data.ContainsKey("output") ? AssessmentResult.EXECUTE : AssessmentResult.SPAWN;
+        
 
-        return Task.FromResult(information.Assessment);
-    }
+        return Task.FromResult(assessment);
+        */
 
-    public Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
-    {
-        //data["output"] = data["input"];
-
-        return Task.FromResult(data);
+        return ProcessState.EXECUTE;
     }
 
     public Task<List<Information>> Spawn(InformationAdapter information)
