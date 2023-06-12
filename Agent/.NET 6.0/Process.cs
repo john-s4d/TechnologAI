@@ -1,47 +1,46 @@
-﻿using System.Text.Json;
-
-namespace Technologai
+﻿namespace Technologai
 {
+    public enum ProcessState
+    {
+        ASSESS,        
+        EXECUTE,
+        SPAWN
+    }
+
     public class Process : IProcess
     {
-        public string Id { get; set; }
-        public string Description { get; set; }
-        public string? Prompt { get; set; }
-        public string SampleJsonIn { get; set; }
-        public string SampleJsonOut { get; set; }
-        public string? MemberId { get; set; }
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public string[]? ParametersIn { get; set; }
+        public string[]? ParametersOut { get; set; }        
+        public string? WorkerId { get; set; }
+        public ProcessState State { get; set; } = ProcessState.ASSESS;
 
-        public Process(string id, string description, string sampleJsonIn, string sampleJsonOut)
+        public virtual ProcessState Assess(in InformationAdapter information)
         {
-            Id = id;
-            Description = description;
-            SampleJsonIn = sampleJsonIn;
-            SampleJsonOut = sampleJsonOut;
+            // Assess the information and set this.State property.
+
+            return this.State;
         }
 
-        public virtual Task<Assessment> Assess(InformationAdapter information)
+        public virtual string? Execute(in InformationAdapter information)
         {
-            return Task.FromResult(information.Assessment);
-        }
+            // Execute the process and return the output            
 
-        public virtual Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
-        {
-            return Task.FromResult(data);
+            return null;
         }
-
-        public virtual Task<List<Information>> Spawn(InformationAdapter information)
+        /*
+        public virtual List<Information> Spawn(in InformationAdapter information)
         {
-            return Task.FromResult(new List<Information>());
-        }
+            // Spawn new information and return it.
 
-        public static Process? FromJson(string json)
-        {
-            return JsonSerializer.Deserialize<Process>(json);
-        }
+            return new List<Information>();
+        }*/
 
-        public string ToJson()
+        List<InformationAdapter> IProcess.Spawn(in InformationAdapter information)
         {
-            return JsonSerializer.Serialize(this);
+            return new List<InformationAdapter>();
         }
     }
 }

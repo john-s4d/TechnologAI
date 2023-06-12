@@ -4,7 +4,7 @@ using OpenAI.GPT3.ObjectModels.RequestModels;
 using OpenAI.GPT3.ObjectModels;
 using OpenAI.GPT3.Extensions;
 using OpenAI.GPT3.Interfaces;
-using LaserCatEyes.HttpClientListener;
+//using LaserCatEyes.HttpClientListener;
 using OpenAI.GPT3.ObjectModels.ResponseModels;
 
 namespace Technologai.External.TestApp

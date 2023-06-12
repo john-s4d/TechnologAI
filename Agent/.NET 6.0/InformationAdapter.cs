@@ -1,110 +1,90 @@
-﻿using Newtonsoft.Json;
+﻿using System.Diagnostics;
 
 namespace Technologai
 {
-    public class InformationAdapter
+    public class InformationAdapter : Information
     {
         private TechnologaiAgent _agent;
         private IProcess _process;
-        private Information _information;
 
         // Agent
         public string AgentId => _agent.Identity.Id;
         public string WorkerId { get; set; }
 
         // Context
+        public ContextAdapter Context => _agent.Context;
         public TechnologaiAgent Agent => _agent;
-        public Information Information => _information;
+
+        // Process
         public IProcess Process => _process;
+        public ProcessState ProcessState => _process.State;
 
-        public ContextAdapter Context
+        private InformationAdapter(string id, string creatorId, string processId, InformationState state, string? input = null, string? output = null)
+            : base(id, creatorId, processId, state, input, output) { }
+
+        public static InformationAdapter Create(TechnologaiAgent agent, Information information)
         {
-            get { return _agent.Context; }
+            return new InformationAdapter(
+                information.Id,
+                information.CreatorId,
+                information.ProcessId,
+                information.State,
+                information.Input,
+                information.Output
+                                                                                                                         )
+            {
+                _agent = agent,
+                _process = agent.Processes[information.ProcessId]
+            };
         }
 
-        // Information
-        public string ContextId => _information.Id;
-        public string CreatorId => _information.CreatorId;
-        public InformationState State => _information.State;
-        public string? Input => _information.Input;
-        public string? Output => _information.Output;
-        public Assessment Assessment { get; set; } = new();
 
-        public string ProcessId => _process.Id;
-
-        public InformationAdapter(TechnologaiAgent agent, IProcess process, Information information)
-        {
-            _agent = agent;
-            _process = process;
-            _information = information;
-            //_context = _agent.Context.Neighbors(information.Id);
-            WorkerId = _process.MemberId ?? _agent.Identity.Id;
-        }
-
-        public InformationAdapter(TechnologaiAgent agent, Information information)
-        {
-            _agent = agent;
-            _process = _agent.Processes[information.ProcessId];
-            _information = information;
-            //_context = _agent.Context.RelatedTo(information.Id);
-            WorkerId = _process.MemberId ?? _agent.Identity.Id;
-        }
-
-        public static InformationAdapter? Create(TechnologaiAgent agent, string processId, string? input = null)
+        public static InformationAdapter Create(TechnologaiAgent agent, string processId, string? input = null)
         {
             return Create(agent, agent.Processes[processId], input).Result;
         }
 
         public async static Task<InformationAdapter> Create(TechnologaiAgent agent, IProcess process, string? input = null)
         {
-            var information = Information.Create(agent.Identity.Id, process.Id, input);
+            var information = InformationAdapter.Create(agent, process.Id, input);
             agent.Context.Add(information);
 
-            var adapter = new InformationAdapter(agent, process, information);
-            adapter.WorkerId = process.MemberId ?? agent.Identity.Id;
+            information.WorkerId = process.WorkerId ?? agent.Identity.Id;
 
             await agent.SendStatusMessage($"{information.Id} Create> {process.Id} | {information.Input}");
-            return adapter;
+            return information;
         }
 
-        public async Task<string> Summarize()
+        protected internal async Task<ProcessState> Assess()
         {
-            await _agent.SendStatusMessage($"{ContextId} Summarize> {ProcessId} | {Input} | {Output}");
-
-            return Context.Summarize(ContextId);
+            await _agent.SendStatusMessage($"{Id} Assess> {ProcessId} | {Input} | {Output}");
+            return _process.Assess(this);
         }
 
-        protected internal async Task<Assessment> Assess()
+        protected internal async Task Execute()
         {
-            await _agent.SendStatusMessage($"{ContextId} Assess> {ProcessId} | {Input} | {Output}");
-            return await _process.Assess(this);
-        }
-
-        protected internal async Task Execute(Assessment assessment)
-        {
-            await _agent.SendStatusMessage($"{ContextId} Execute> {ProcessId} | {Input} | {Output}");
-            var result = await _process.Execute(assessment.Data);
-            _information.Output = JsonConvert.SerializeObject(result, Formatting.None);
-            _information.State = InformationState.CLOSED;
+            await _agent.SendStatusMessage($"{Id} Execute> {ProcessId} | {Input} | {Output}");
+            Output = _process.Execute(this);
+            State = InformationState.CLOSED;
             WorkerId = CreatorId;
             await Publish();
         }
 
-        protected internal async Task Spawn(Assessment assessment)
+        protected internal async Task Spawn()
         {
-            await _agent.SendStatusMessage($"{ContextId} Spawn> {ProcessId} | {Input} | {Output}");
+            await _agent.SendStatusMessage($"{Id} Spawn> {ProcessId} | {Input} | {Output}");
 
-            foreach (Information item in await _process.Spawn(this))
+            foreach (InformationAdapter item in _process.Spawn(this))
             {
-                await (new InformationAdapter(_agent, item).Publish());
+                await (item.Publish());
             }
         }
 
         public InformationAdapter GetSpawn(string processId, string? input = null)
         {
             var information = Create(_agent, processId, input);
-            _agent.Context.Spawn(information.ContextId, _information.Id);
-            information.WorkerId = _process.MemberId ?? _agent.Identity.Id;
+            _agent.Context.Spawn(information.Id, this.Id);
+            information.WorkerId = _process.WorkerId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {processId} | {information.Input}");
             return information;
         }
@@ -119,6 +99,16 @@ namespace Technologai
             _agent.PublishWithCallback(this, onPublished);
         }
 
+        public object? this[string key]
+        {
+            get
+            {
+                return null;
+            }
+            set { }
+        }
+
+        /*
         public T? DeserializeInput<T>()
         {
             return JsonConvert.DeserializeObject<T>(Input ?? string.Empty);
@@ -127,10 +117,9 @@ namespace Technologai
         public T? DeserializeOutput<T>()
         {
             return JsonConvert.DeserializeObject<T>(Output ?? string.Empty);
-        }
+        }*/
 
-
-        public static implicit operator Information(InformationAdapter value) => value._information;
+        //public static implicit operator Information(InformationAdapter value) => value._information;
 
     }
 }

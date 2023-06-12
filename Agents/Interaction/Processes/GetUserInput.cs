@@ -1,38 +1,31 @@
 ﻿using Technologai;
 
-public class GetUserInput : IProcess
+public class GetUserInput : Process
 {
-    public string Id { get; set; } = "get_user_input";
-    public string Description { get; set; } = "Receive a response from the user.";
-    public string SampleJsonIn { get; set; } = string.Empty;
-    public string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";
-    public string? MemberId { get; set; }
+    public string? Name { get; set; } = "get_user_input";
+    public new string Description { get; set; } = "Receive a response from the user.";
+    public new string SampleJsonIn { get; set; } = string.Empty;
+    public new string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";
 
-    public Task<Assessment> Assess(InformationAdapter information)
+    public new ProcessState Assess(InformationAdapter information)
     {
-        information.Assessment.Result = AssessmentResult.EXECUTE;
-
-        return Task.FromResult(information.Assessment);
+        return ProcessState.EXECUTE;
     }
 
-    public async Task<Dictionary<string, object>> Execute(Dictionary<string,object> data)
+public async Task<Dictionary<string, object>> Execute(InformationAdapter information)
+{
+    var value = await Task.Run(() =>
     {
-        var value = await Task.Run(() =>
-        {
-            return Console.ReadLine() ?? string.Empty;
-        });
+        return Console.ReadLine() ?? string.Empty;
+    });
 
-        /*
-        if (value.Equals("32Bytes", StringComparison.OrdinalIgnoreCase))
-        {
-            Console.WriteLine(Utils.GenerateNewIdString(32));
-        }*/
 
-        return new Dictionary<string, object> { { "output", value } };
-    }
 
-    public Task<List<Information>> Spawn(InformationAdapter information)
-    {
-        return Task.FromResult(new List<Information>());
-    }
+    return new Dictionary<string, object> { { "output", value } };
+}
+
+public Task<List<Information>> Spawn(InformationAdapter information)
+{
+    return Task.FromResult(new List<Information>());
+}
 }

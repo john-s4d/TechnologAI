@@ -1,11 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenAI.GPT3.ObjectModels.RequestModels;
-using OpenAI.GPT3.ObjectModels;
+using ObjectModels = OpenAI.GPT3.ObjectModels;
 using OpenAI.GPT3.Extensions;
 using OpenAI.GPT3.Interfaces;
 //using LaserCatEyes.HttpClientListener;
-using OpenAI.GPT3.ObjectModels.ResponseModels;
 
 namespace Technologai.Agents
 {
@@ -67,7 +66,7 @@ namespace Technologai.Agents
                         //ChatMessage.FromSystem("You are a helpful assistant proficient with Salesforce."),                        
                         ChatMessage.FromUser(prompt)
                     },
-                    Model = Models.ChatGpt3_5Turbo0301
+                    Model = ObjectModels.Models.ChatGpt3_5Turbo0301
                 });
 
                 if (completionResult.Successful)

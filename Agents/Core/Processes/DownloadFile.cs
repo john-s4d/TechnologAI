@@ -1,11 +1,12 @@
-﻿internal class DownloadFile : IExecute
+﻿using Technologai;
+
+public class DownloadFile : Process
 {
+    public string? LocalPath { get; set; }
 
-    public string LocalPath { get; set; }
-
-    public string Description { get; } = "Read a text file on the local filesystem.";
-    public string SampleJsonIn { get; } = "{\"filename\":\"string\"}";
-    public string SampleJsonOut { get; } = "{\"contents\":\"string\"}";
+    public new string Description { get; } = "Read a text file on the local filesystem.";
+    public new string SampleJsonIn { get; } = "{\"filename\":\"string\"}";
+    public new string SampleJsonOut { get; } = "{\"contents\":\"string\"}";
 
     public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
     {
@@ -24,5 +25,10 @@
         {
             return new Dictionary<string, object> { { "error", $"Error reading file '{filename}': {ex.Message}" } };
         }
+    }
+
+    public Task<List<Information>> Spawn(InformationAdapter information)
+    {
+        throw new NotImplementedException();
     }
 }
