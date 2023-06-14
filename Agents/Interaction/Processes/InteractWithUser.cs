@@ -32,8 +32,8 @@ public class InteractWithUser : Process
     {
         List<Information> result = new List<Information>();
         
-        result.Add(information.GetSpawn("show_user_output", information.Input));
-        result.Add(information.GetSpawn("get_user_input"));
+        result.Add(information.GetAncestors("show_user_output", information.InputText));
+        result.Add(information.GetAncestors("get_user_input"));
 
         return Task.FromResult(result);
     }

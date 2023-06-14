@@ -45,9 +45,9 @@ namespace Technologai.Agents
 
         private static void information_OnPublishedCallback(InformationAdapter information)
         {
-            Console.WriteLine($"{_agent?.Name} Received> {information.Output}");
+            Console.WriteLine($"{_agent?.Name} Received> {information.OutputText}");
 
-            if (information.Output?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
+            if (information.OutputText?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
             {
                 _isStarted = false;
             }

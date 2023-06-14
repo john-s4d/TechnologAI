@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System.CodeDom;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection.Metadata.Ecma335;
 using System.Windows.Markup;
 
 namespace Technologai
@@ -24,8 +26,8 @@ namespace Technologai
                 information.CreatorId,
                 information.ProcessId,
                 information.State,
-                information.Input,
-                information.Output
+                information.InputText,
+                information.OutputText
                                                                                                                          )
             {
                 _agent = agent,
@@ -46,34 +48,33 @@ namespace Technologai
 
             information.WorkerId = process.WorkerId ?? agent.Identity.Id;
 
-            await agent.SendStatusMessage($"{information.Id} Create> {process.Id} | {information.Input}");
+            await agent.SendStatusMessage($"{information.Id} Create> {process.Id} | {information.InputText}");
             return information;
         }
 
         protected internal async Task<ProcessState> Assess()
         {
-            await _agent.SendStatusMessage($"{Id} Assess> {ProcessId} | {Input} | {Output}");
-            this.State = _process.Assess(this);
+            await _agent.SendStatusMessage($"{Id} Assess> {ProcessId} | {InputText} | {OutputText}");
 
-            return result;
+            Process.State = await _process.Assess(this);
+
+            return Process.State;
         }
 
         protected internal async Task Execute()
         {
-            await _agent.SendStatusMessage($"{Id} Execute> {ProcessId} | {Input} | {Output}");
+            await _agent.SendStatusMessage($"{Id} Execute> {ProcessId} | {InputText} | {OutputText}");
 
-            switch (Structure)
+            var output = await _process.Execute(this);
+
+            if (output is string)
             {
-                case InformationStructure.TEXT:
-                    _process.Execute(this, out string? output);
-                    Output = output;
-                    break;
-                case InformationStructure.PARAMETERS:
-                    _process.Execute(this, out Dictionary<string, string>? outputParameters);
-                    OutputParameters = outputParameters;
-                    break;
-                case InformationStructure.UNKNOWN:
-                    throw new InvalidOperationException("Structure is UNKNOWN");
+                OutputText = (string)output;
+            }
+
+            if (output is Dictionary<string,string>)
+            {
+                OutputData = (Dictionary<string, string>)output;
             }
 
             State = InformationState.CLOSED;
@@ -84,17 +85,20 @@ namespace Technologai
 
         protected internal async Task Spawn()
         {
-            await _agent.SendStatusMessage($"{Id} Spawn> {ProcessId} | {Input} | {Output}");
+            await _agent.SendStatusMessage($"{Id} Spawn> {ProcessId} | {InputText} | {OutputText}");
 
-            _process.Spawn(this, out List<InformationAdapter> items);
+            var items = await _process.Spawn(this); // TODO: clunky
 
-            foreach (InformationAdapter item in items)
+            if (items != null)
             {
-                await (item.Publish());
+                foreach (var item in items)
+                {
+                    await (item.Publish());
+                }
             }
         }
 
-        public InformationAdapter GetSpawn(string processId, string? input = null)
+        public InformationAdapter GetAncestors(string processId, string? input = null)
         {
             var information = Create(_agent, processId, input);
             _agent.Context.Spawn(information.Id, this.Id);

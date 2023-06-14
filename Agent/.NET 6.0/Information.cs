@@ -16,7 +16,7 @@ namespace Technologai
     {
         UNKNOWN,
         TEXT,
-        PARAMETERS        
+        PARAMETERS
     }
 
     public class Information : IComparable<Information>
@@ -24,66 +24,52 @@ namespace Technologai
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
         public InformationState State { get; internal set; }
-        //public InformationStructure InputStructure { get; internal set; } = InformationStructure.UNKNOWN;
-        //public InformationStructure OutputStructure { get; internal set; } = InformationStructure.UNKNOWN;
 
-        private string? _input;
-        private string? _output;
+        private string? _inputText;
+        private string? _outputText;
 
-        private Dictionary<string,string>? _inputParameters;
-        private Dictionary<string, string>? _outputParameters;
-        /*
-        public void SetInput(string input)
-        {
-            InputStructure = InformationStructure.TEXT;
-            _input = input;
-        }
+        private Dictionary<string, string>? _inputData;
+        private Dictionary<string, string>? _outputData;
 
-        public void SetInput(Dictionary<string,string> input)
-        {
-            InputStructure = InformationStructure.PARAMETERS;
-            _inputParameters = input;
-            _input = JsonSerializer.Serialize(input);
-        }*/
-
-        public string? Input
+        public string? InputText
         {
             get
             {
-                return InputStructure == InformationStructure.PARAMETERS ? JsonSerializer.Serialize(InputParameters) : _input; // TODO: Cache, JIT
+                return _inputData != null ? JsonSerializer.Serialize(_inputData) : _inputText; // TODO: Cache
             }
-            private set
+            set
             {
-                _input = InputStructure == InformationStructure.PARAMETERS ? value : throw new InvalidOperationException("Input is only writable when Structure is TEXT");
+                _inputText = _inputText == null ? value : throw new InvalidOperationException("Input is already set");
             }
         }
-                
-        public string? Output
+
+        public string? OutputText
         {
             get
             {
-                return OutputStructure == InformationStructure.PARAMETERS ? JsonSerializer.Serialize(OutputParameters) : _output; // TODO: Cache, JIT
+                return _outputData != null ? JsonSerializer.Serialize(_outputData) : _outputText; // TODO: Cache
             }
-            internal set
+            set
             {
-                _output = OutputStructure == InformationStructure.PARAMETERS ? value : throw new InvalidOperationException("Output is only writable when Structure is TEXT");
+                _outputText = _outputText == null ? value : throw new InvalidOperationException("Input is already set");
             }
         }
 
         [JsonIgnore]
-        public Dictionary<string, string>? InputParameters { get; internal set; }
+        public Dictionary<string, string>? InputData
+        {
+            get => _inputData;
+            set => _inputData = value;
+        }
 
         [JsonIgnore]
-        public Dictionary<string, string>? OutputParameters { get; internal set; }
-
-        //[JsonIgnore]
-        //public Tensor<float>? OutputTensor { get; internal set; }
-
-        //[JsonIgnore]
-        //public Tensor<float>? InputTensor { get; internal set; }
+        public Dictionary<string, string>? OutputData
+        {
+            get => _outputData; 
+            set => _outputData = value;
+        }
 
         public string ProcessId { get; internal set; }
-
 
 
         // TODO History, Signatures, ReadOnly fields ?        
@@ -95,8 +81,8 @@ namespace Technologai
             CreatorId = creatorId;
             ProcessId = processId;
             State = state;
-            Input = input;
-            Output = output;
+            InputText = input;
+            OutputText = output;
         }
 
         public static Information Create(string creatorId, string processId, string? input = null)
