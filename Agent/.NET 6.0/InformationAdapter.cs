@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Windows.Markup;
 
 namespace Technologai
 {
@@ -7,17 +9,10 @@ namespace Technologai
         private TechnologaiAgent _agent;
         private IProcess _process;
 
-        // Agent
-        public string AgentId => _agent.Identity.Id;
         public string WorkerId { get; set; }
-
-        // Context
         public ContextAdapter Context => _agent.Context;
         public TechnologaiAgent Agent => _agent;
-
-        // Process
         public IProcess Process => _process;
-        public ProcessState ProcessState => _process.State;
 
         private InformationAdapter(string id, string creatorId, string processId, InformationState state, string? input = null, string? output = null)
             : base(id, creatorId, processId, state, input, output) { }
@@ -46,7 +41,7 @@ namespace Technologai
 
         public async static Task<InformationAdapter> Create(TechnologaiAgent agent, IProcess process, string? input = null)
         {
-            var information = InformationAdapter.Create(agent, process.Id, input);
+            var information = Create(agent, process.Id, input);
             agent.Context.Add(information);
 
             information.WorkerId = process.WorkerId ?? agent.Identity.Id;
@@ -58,15 +53,32 @@ namespace Technologai
         protected internal async Task<ProcessState> Assess()
         {
             await _agent.SendStatusMessage($"{Id} Assess> {ProcessId} | {Input} | {Output}");
-            return _process.Assess(this);
+            this.State = _process.Assess(this);
+
+            return result;
         }
 
         protected internal async Task Execute()
         {
             await _agent.SendStatusMessage($"{Id} Execute> {ProcessId} | {Input} | {Output}");
-            Output = _process.Execute(this);
+
+            switch (Structure)
+            {
+                case InformationStructure.TEXT:
+                    _process.Execute(this, out string? output);
+                    Output = output;
+                    break;
+                case InformationStructure.PARAMETERS:
+                    _process.Execute(this, out Dictionary<string, string>? outputParameters);
+                    OutputParameters = outputParameters;
+                    break;
+                case InformationStructure.UNKNOWN:
+                    throw new InvalidOperationException("Structure is UNKNOWN");
+            }
+
             State = InformationState.CLOSED;
             WorkerId = CreatorId;
+
             await Publish();
         }
 
@@ -74,7 +86,9 @@ namespace Technologai
         {
             await _agent.SendStatusMessage($"{Id} Spawn> {ProcessId} | {Input} | {Output}");
 
-            foreach (InformationAdapter item in _process.Spawn(this))
+            _process.Spawn(this, out List<InformationAdapter> items);
+
+            foreach (InformationAdapter item in items)
             {
                 await (item.Publish());
             }
@@ -107,19 +121,5 @@ namespace Technologai
             }
             set { }
         }
-
-        /*
-        public T? DeserializeInput<T>()
-        {
-            return JsonConvert.DeserializeObject<T>(Input ?? string.Empty);
-        }
-
-        public T? DeserializeOutput<T>()
-        {
-            return JsonConvert.DeserializeObject<T>(Output ?? string.Empty);
-        }*/
-
-        //public static implicit operator Information(InformationAdapter value) => value._information;
-
     }
 }

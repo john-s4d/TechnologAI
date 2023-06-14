@@ -9,7 +9,7 @@ public interface IProcess
     public string[]? ParametersOut { get; set; }
     public string? WorkerId { get; set; }    
     public ProcessState State { get; set; }
-    public ProcessState Assess(in InformationAdapter information);    
-    public string? Execute(in InformationAdapter information);
-    public List<InformationAdapter> Spawn(in InformationAdapter information);
+    public Task<ProcessState> Assess(InformationAdapter information);
+    public Task<object?> Execute(InformationAdapter information);
+    public Task<List<InformationAdapter>?> Spawn(InformationAdapter information);
 }

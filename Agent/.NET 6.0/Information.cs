@@ -12,18 +12,63 @@ namespace Technologai
         CLOSED
     }
 
+    public enum InformationStructure
+    {
+        UNKNOWN,
+        TEXT,
+        PARAMETERS        
+    }
+
     public class Information : IComparable<Information>
     {
-
-
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
         public InformationState State { get; internal set; }
+        //public InformationStructure InputStructure { get; internal set; } = InformationStructure.UNKNOWN;
+        //public InformationStructure OutputStructure { get; internal set; } = InformationStructure.UNKNOWN;
 
-        // Returns either a string or json
-        public string? Input { get; internal set; }
+        private string? _input;
+        private string? _output;
 
-        public string? Output { get; internal set; }
+        private Dictionary<string,string>? _inputParameters;
+        private Dictionary<string, string>? _outputParameters;
+        /*
+        public void SetInput(string input)
+        {
+            InputStructure = InformationStructure.TEXT;
+            _input = input;
+        }
+
+        public void SetInput(Dictionary<string,string> input)
+        {
+            InputStructure = InformationStructure.PARAMETERS;
+            _inputParameters = input;
+            _input = JsonSerializer.Serialize(input);
+        }*/
+
+        public string? Input
+        {
+            get
+            {
+                return InputStructure == InformationStructure.PARAMETERS ? JsonSerializer.Serialize(InputParameters) : _input; // TODO: Cache, JIT
+            }
+            private set
+            {
+                _input = InputStructure == InformationStructure.PARAMETERS ? value : throw new InvalidOperationException("Input is only writable when Structure is TEXT");
+            }
+        }
+                
+        public string? Output
+        {
+            get
+            {
+                return OutputStructure == InformationStructure.PARAMETERS ? JsonSerializer.Serialize(OutputParameters) : _output; // TODO: Cache, JIT
+            }
+            internal set
+            {
+                _output = OutputStructure == InformationStructure.PARAMETERS ? value : throw new InvalidOperationException("Output is only writable when Structure is TEXT");
+            }
+        }
 
         [JsonIgnore]
         public Dictionary<string, string>? InputParameters { get; internal set; }
@@ -39,8 +84,7 @@ namespace Technologai
 
         public string ProcessId { get; internal set; }
 
-        private IConvertible? _input;
-        private IConvertible? _output;
+
 
         // TODO History, Signatures, ReadOnly fields ?        
 
@@ -58,7 +102,7 @@ namespace Technologai
         public static Information Create(string creatorId, string processId, string? input = null)
         {
             return new Information(
-                Technologai.ContextId.Create(creatorId),
+                InformationId.Create(creatorId),
                 creatorId,
                 processId,
                 InformationState.DRAFT,
@@ -69,7 +113,7 @@ namespace Technologai
 
         public int CompareTo(Information? other)
         {
-            return object.ReferenceEquals(other, null) ? 1 : ((ContextId)Id).CompareTo((ContextId)other.Id);
+            return object.ReferenceEquals(other, null) ? 1 : ((InformationId)Id).CompareTo((InformationId)other.Id);
         }
     }
 }

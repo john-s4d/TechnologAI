@@ -4,7 +4,8 @@
     {
         ASSESS,        
         EXECUTE,
-        SPAWN
+        SPAWN,
+        COMPLETE
     }
 
     public class Process : IProcess
@@ -17,30 +18,24 @@
         public string? WorkerId { get; set; }
         public ProcessState State { get; set; } = ProcessState.ASSESS;
 
-        public virtual ProcessState Assess(in InformationAdapter information)
-        {
-            // Assess the information and set this.State property.
+        // NOTE: We don't expect these methods to set the object properties (input,output,process). This way they can be inspected before the change is committed.
 
-            return this.State;
+        public virtual Task<ProcessState> Assess(InformationAdapter information)
+        {
+            // Assess the information and return the new or existing state.
+            return Task.FromResult(State);
         }
 
-        public virtual string? Execute(in InformationAdapter information)
+        public virtual Task<object?> Execute(InformationAdapter information)
         {
-            // Execute the process and return the output            
-
-            return null;
+            // Execute the process and return the output text            
+            return Task.FromResult((object?)null);
         }
-        /*
-        public virtual List<Information> Spawn(in InformationAdapter information)
-        {
-            // Spawn new information and return it.
 
-            return new List<Information>();
-        }*/
-
-        List<InformationAdapter> IProcess.Spawn(in InformationAdapter information)
+        public virtual Task<List<InformationAdapter>?> Spawn(InformationAdapter information)
         {
-            return new List<InformationAdapter>();
+            // Spawn new information as needed
+            return Task.FromResult((List<InformationAdapter>?)null);
         }
     }
 }
