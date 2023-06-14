@@ -4,27 +4,28 @@
     {
         public AppendToFile()
         {
-            Name = "Append to File";
-            Description = "Append text to file on the local filesystem.";
-            ParametersIn = new string[] { "fileName", "content" };
+            // TODO: Case Sensitivity
+
+            Id = "append_to_file";
+            Description = "Append text to file in the local filesystem.";
+            InputKeys = new string[] { "filename", "content" };
         }
 
-        public new ProcessState Assess(InformationAdapter information)
+        public static new ProcessState Assess(InformationAdapter information)
         {
-
-           return (information.Input["fileName"] != null && information.Input["content"] != null) ?
-                ProcessState.EXECUTE : 
-                    ProcessState.ASSESS;*/
-           return ProcessState.EXECUTE;
+            return (information.InputData?["filename"] != null &&
+                    information.InputData?["content"] != null) ?
+                        ProcessState.EXECUTE :
+                        ProcessState.ASSESS;
         }
 
-        public new string? Execute(in InformationAdapter information)
+        public static new async Task Execute(InformationAdapter information)
         {
-            /*
-            using StreamWriter writer = new((string)information.Input["fileName"], true);
-            writer.WriteAsync((string)information["content"]).Wait();            
-            return null;*/
-            return null;
+            using (var writer = new StreamWriter(information?.InputData?["filename"] 
+                       ?? throw new ArgumentNullException("filename"), true))
+            {
+                await writer.WriteAsync(information?.InputData?["content"]);
+            }
         }
     }
 }

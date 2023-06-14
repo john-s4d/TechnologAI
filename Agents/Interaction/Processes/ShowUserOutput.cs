@@ -12,11 +12,11 @@ public class ShowUserOutput : Process
     
     public new ProcessState Assess(InformationAdapter information)
     {   
-        return information.Input != null ? ProcessState.EXECUTE : this.State;
+        return information.InputText != null ? ProcessState.EXECUTE : this.State;
     }
 
     public new void Execute(InformationAdapter information)
     {   
-        OutputMessage?.Invoke(information.Input ?? string.Empty);
+        OutputMessage?.Invoke(information.InputText ?? string.Empty);
     }
 }

@@ -103,15 +103,15 @@ namespace Technologai
         public string Summarize(string contextId)
         {
             var currentInfo = _library[contextId];
-            string summary = $"{currentInfo.Input} {currentInfo.ProcessId} {currentInfo.Output}\n";
+            string summary = $"{currentInfo.InputText} {currentInfo.ProcessId} {currentInfo.OutputText}\n";
 
             foreach (Information information in GetReverse(contextId))
             {
-                summary += $"{information.Input} {information.ProcessId} {information.Output}\n"; // TODO: Process Description
+                summary += $"{information.InputText} {information.ProcessId} {information.OutputText}\n"; // TODO: Process Description
             }
             foreach (Information information in GetForward(contextId))
             {
-                summary += $"{information.Input} {information.ProcessId} {information.Output} \n"; // TODO: Process Description
+                summary += $"{information.InputText} {information.ProcessId} {information.OutputText} \n"; // TODO: Process Description
             }
             return summary;
         }
