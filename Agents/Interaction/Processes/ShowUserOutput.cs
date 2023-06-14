@@ -4,27 +4,19 @@ public class ShowUserOutput : Process
 {   
     internal event Action<string>? OutputMessage;
 
-    public new string Name { get; set; } = "Show User Output";
-    public new string Description { get; set; } = "Provide the user with information.";
-    public new string SampleJsonIn { get; set; } = "{\"message\":\"string\"}";
-
-    public ProcessState Assess(InformationAdapter information)
+    public ShowUserOutput()
     {
-        /*
-        Assessment assessment = new Assessment();
-
-        assessment.Data.Add("message", information.Input ?? string.Empty);
-        assessment.Result = AssessmentResult.EXECUTE;
-
-        return Task.FromResult(assessment);
-        */
-        return this.State;
+        Name = "Show User Output";
+        Description = "Display a message on the output log screen.";
+    }   
+    
+    public new ProcessState Assess(InformationAdapter information)
+    {   
+        return information.Input != null ? ProcessState.EXECUTE : this.State;
     }
 
-    public Task<Dictionary<string, object>> Execute(Dictionary<string,object> data)
-    {
-        OutputMessage?.Invoke((string)data["message"]);
-
-        return Task.FromResult(data);
+    public new void Execute(InformationAdapter information)
+    {   
+        OutputMessage?.Invoke(information.Input ?? string.Empty);
     }
 }

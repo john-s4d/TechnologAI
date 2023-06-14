@@ -1,8 +1,5 @@
 ﻿namespace Technologai
 {
-    /// <summary>
-    /// Append to a text file on the local filesystem.
-    /// </summary>
     internal class AppendToFile : Process
     {
         public AppendToFile()
@@ -12,9 +9,10 @@
             ParametersIn = new string[] { "fileName", "content" };
         }
 
-        public new ProcessState Assess(in InformationAdapter information)
+        public new ProcessState Assess(InformationAdapter information)
         {
-           /* return (information.Input["fileName"] != null && information.Input["content"] != null) ?
+
+           return (information.Input["fileName"] != null && information.Input["content"] != null) ?
                 ProcessState.EXECUTE : 
                     ProcessState.ASSESS;*/
            return ProcessState.EXECUTE;

@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Technologai
 {
-    public class ContextId : IComparable<ContextId>
+    public class InformationId : IComparable<InformationId>
     {
         // hash compute of an id allows to verify which party created this contextId. If that's ever needed.
                 
@@ -12,15 +12,15 @@ namespace Technologai
         private readonly byte[] _unixTimestampBytes = new byte[8];
         private readonly byte[] _hashComputeBytes = new byte[8];
 
-        internal ContextId(ulong unixTimestamp, byte[] idHash)
+        internal InformationId(ulong unixTimestamp, byte[] idHash)
         {
             _unixTimestampBytes = BitConverter.GetBytes(unixTimestamp);
-            _hashComputeBytes = MD5.HashData(idHash.Concat(_unixTimestampBytes).ToArray()).Take(8).ToArray(); // just half of the hash
+            _hashComputeBytes = MD5.HashData(idHash.Concat(_unixTimestampBytes).ToArray()).Take(8).ToArray(); // just half of the hash to fit into 8 bytes
             _id = Base64UrlEncoder.Encode(_unixTimestampBytes.Concat(_hashComputeBytes).ToArray());
         }
 
         [JsonConstructor]
-        public ContextId(string contextId)
+        public InformationId(string contextId)
         {
             _id = contextId;
             var contextBytes = Base64UrlEncoder.DecodeBytes(_id);
@@ -29,9 +29,9 @@ namespace Technologai
             Array.Copy(contextBytes, 8, _hashComputeBytes, 0, 8);
         }
 
-        internal static ContextId Create(string creatorIdBase64)        {
+        internal static InformationId Create(string creatorIdBase64)        {
 
-            return new ContextId(GetTimestampTicksBytes(), GetBase64Bytes(creatorIdBase64, 8));
+            return new InformationId(GetTimestampTicksBytes(), GetBase64Bytes(creatorIdBase64, 8));
         }
 
         public static ulong GetTimestampTicksBytes()
@@ -44,7 +44,7 @@ namespace Technologai
             return Base64UrlEncoder.DecodeBytes(creatorIdBase64).Take(count).ToArray();
         }
 
-        public int CompareTo(ContextId? other)
+        public int CompareTo(InformationId? other)
         {
             if (object.ReferenceEquals(other, null))
             {
@@ -64,9 +64,9 @@ namespace Technologai
             return result;
         }
 
-        public static implicit operator ContextId(string value) => new ContextId(value);
+        public static implicit operator InformationId(string value) => new InformationId(value);
 
-        public static implicit operator string(ContextId value) => value.ToString();       
+        public static implicit operator string(InformationId value) => value.ToString();       
 
         public override string ToString()
         {
