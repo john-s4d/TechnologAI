@@ -28,12 +28,12 @@
 
         private static void _monitor_StatusMessage(object? sender, string message)        {
 
-            Console.WriteLine($"{_monitor?.Name ?? "Monitor.Local"} {message}");            
+            Console.WriteLine($"{_monitor?.Name ?? "Monitor.Local"} | {message}");            
         }
 
         private async static Task Run()
         {
-            Console.WriteLine($"{_monitor?.Name} Started");
+            Console.WriteLine($"{_monitor?.Name} | Started");
 
             do
             {

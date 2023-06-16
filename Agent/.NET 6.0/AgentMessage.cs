@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Technologai
+﻿namespace Technologai
 {
     public enum AgentMessageType
     {
-        INFORMATION = 0,
-        PROCESS = 1,
-        CONTEXT = 2
+        PROCESS_INQUIRY,
+        PROCESS,
+        //INFORMATION_INQUIRY, // Broadcast
+        INFORMATION,
+        CONTEXT
     }
 
     public class AgentMessage

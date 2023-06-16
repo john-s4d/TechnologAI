@@ -1,4 +1,5 @@
-﻿using System.CodeDom;
+﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
@@ -19,6 +20,7 @@ namespace Technologai
         private InformationAdapter(string id, string creatorId, string processId, InformationState state, string? input = null, string? output = null)
             : base(id, creatorId, processId, state, input, output) { }
 
+        
         public static InformationAdapter Create(TechnologaiAgent agent, Information information)
         {
             return new InformationAdapter(
@@ -33,17 +35,13 @@ namespace Technologai
                 _agent = agent,
                 _process = agent.Processes[information.ProcessId]
             };
-        }
-
-
-        public static InformationAdapter Create(TechnologaiAgent agent, string processId, string? input = null)
-        {
-            return Create(agent, agent.Processes[processId], input).Result;
+            // TODO: Do we need to add this to the context?
         }
 
         public async static Task<InformationAdapter> Create(TechnologaiAgent agent, IProcess process, string? input = null)
-        {
-            var information = Create(agent, process.Id, input);
+        {   
+            var information = Create(agent, Create(agent.Identity.Id, process.Id, input));
+
             agent.Context.Add(information);
 
             information.WorkerId = process.WorkerId ?? agent.Identity.Id;
@@ -98,9 +96,10 @@ namespace Technologai
             }
         }
 
-        public InformationAdapter GetAncestors(string processId, string? input = null)
+        public async Task<InformationAdapter> Spawn(string processId, string? input = null)
         {
-            var information = Create(_agent, processId, input);
+            //var information = Create(_agent, Create(agent.Identity.Id, process.Id, input));
+            var information = await Create(_agent, _agent.Processes[processId], input);
             _agent.Context.Spawn(information.Id, this.Id);
             information.WorkerId = _process.WorkerId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {processId} | {information.Input}");

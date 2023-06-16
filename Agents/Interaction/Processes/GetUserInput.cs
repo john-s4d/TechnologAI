@@ -4,12 +4,12 @@ public class GetUserInput : Process
 {
     public GetUserInput()
     {
-        Name = "get_user_input";
+        Id = "get_user_input";
         Description = "Receive a text input from the user.";
-        State = ProcessState.EXECUTE;        
+        State = ProcessState.EXECUTE;
     }
     
-    public new async Task<string> Execute(InformationAdapter information)
+    public new async Task<string?> Execute(InformationAdapter information)
     {
         return await Task.Run(() =>
         {

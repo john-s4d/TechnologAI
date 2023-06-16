@@ -30,11 +30,13 @@ namespace Technologai
         {
             var topicParts = args.ApplicationMessage.Topic.Split('/');
 
+            var payload = args.ApplicationMessage.ConvertPayloadToString();
+
             return new BrokerMessage()
             {
                 AgencyId = topicParts[0],
                 MemberId = topicParts[1],
-                AgentMessage = JsonSerializer.Deserialize<AgentMessage>(args.ApplicationMessage.ConvertPayloadToString(), options)
+                AgentMessage = JsonSerializer.Deserialize<AgentMessage>(payload, options)
             };
         }
 
