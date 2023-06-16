@@ -4,7 +4,7 @@ namespace Technologai.Agents
 {
     internal class Program
     {
-        private static Interaction? _agent;
+        private static TechnologaiAgent? _agent;
         private static AppConfig _config = new AppConfig();
         private static bool _isStarted = true;
 
@@ -19,7 +19,7 @@ namespace Technologai.Agents
             {
                 Console.WriteLine("Loading...");
 
-                _agent = new Interaction(authUri, clientId, clientSecret, memberId);
+                _agent = new TechnologaiAgent(authUri, clientId, clientSecret, memberId);
 
                 _agent.StatusMessage += _agent_statusMessage;
 
@@ -32,7 +32,9 @@ namespace Technologai.Agents
                 showUserOutput.OutputMessage += showUserOutput_OutputMessage;
                 _agent.Processes.Add(showUserOutput);
 
-                _agent.PublishWithCallback(_agent.Create("interact_with_user", "Hello"), information_OnPublishedCallback);
+                var interact_with_user = await _agent.Create("interact_with_user", "Hello");
+
+                _agent.PublishWithCallback(interact_with_user, information_OnPublishedCallback);
 
                 do { } while (_isStarted);
 
@@ -53,7 +55,7 @@ namespace Technologai.Agents
             }
             else
             {
-                _agent?.PublishWithCallback(_agent.Create("interact_with_user", "Hello Again"), information_OnPublishedCallback);
+                //_agent?.PublishWithCallback(_agent.Create("interact_with_user", "Hello Again"), information_OnPublishedCallback);
             }
         }
 
@@ -64,7 +66,7 @@ namespace Technologai.Agents
 
         private static void _agent_statusMessage(object? sender, string message)
         {
-            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} {message}");
+            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} | {message}");
         }
     }
 }

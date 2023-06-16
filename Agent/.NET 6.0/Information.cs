@@ -12,13 +12,6 @@ namespace Technologai
         CLOSED
     }
 
-    public enum InformationStructure
-    {
-        UNKNOWN,
-        TEXT,
-        PARAMETERS
-    }
-
     public class Information : IComparable<Information>
     {
         public string Id { get; private set; }
@@ -75,14 +68,14 @@ namespace Technologai
         // TODO History, Signatures, ReadOnly fields ?        
 
         [JsonConstructor]
-        public Information(string id, string creatorId, string processId, InformationState state, string? input = null, string? output = null)
+        public Information(string id, string creatorId, string processId, InformationState state, string? inputText = null, string? outputText = null)
         {
             Id = id;
             CreatorId = creatorId;
             ProcessId = processId;
             State = state;
-            InputText = input;
-            OutputText = output;
+            InputText = inputText;
+            OutputText = outputText;
         }
 
         public static Information Create(string creatorId, string processId, string? input = null)

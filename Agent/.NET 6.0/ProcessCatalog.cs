@@ -31,16 +31,15 @@ namespace Technologai
                     ));*/
         }
 
-        internal void Add(IProcess process, Boolean broadcast)
+        internal async void Add(IProcess process, Boolean broadcast)
         {
-
             if (!string.IsNullOrEmpty(process.Id) && !this.ContainsKey(process.Id)) // TODO: clustered embeddings for fuzzy lookup
             {
                 Add(process.Id, process);
 
-                if (broadcast)
+                if (broadcast && _agent.IsConnected)
                 {
-                    _agent.Broadcast(process).Wait();
+                    await _agent.Broadcast(process);
                 }
             }
         }

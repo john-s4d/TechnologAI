@@ -4,7 +4,7 @@ namespace Technologai.Agents
     internal class Program
     {
 
-        private static ChatGPT? _agent;        
+        private static TechnologaiAgent? _agent;        
 
         private static AppConfig _config = new AppConfig();
 
@@ -15,9 +15,10 @@ namespace Technologai.Agents
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
 
-            _agent = new ChatGPT(authUri, clientId, clientSecret, memberId);
-
+            _agent = new TechnologaiAgent(authUri, clientId, clientSecret, memberId);
             _agent.StatusMessage += _agent_StatusMessage;
+
+            _agent.Processes.Add(new AppendToFile());
 
             Console.WriteLine("Loading...");
 
@@ -30,12 +31,12 @@ namespace Technologai.Agents
         private static void _agent_StatusMessage(object? sender, string message)
         {
 
-            Console.WriteLine($"{_agent?.Name ?? "Core.Local"} {message}");
+            Console.WriteLine($"{_agent?.Name ?? "Core.Local"} | {message}");
         }
 
         private async static Task Run()
         {
-            Console.WriteLine($"{_agent?.Name} Started");
+            Console.WriteLine($"{_agent?.Name} | Started");
 
             do
             {
@@ -53,7 +54,10 @@ namespace Technologai.Agents
         }
 
     }
-
-
-
+        /*
+        var prompt = $"Your response MUST be a compliant machine-readable JSON document.\r\n\r\n" +
+        $"{JsonConvert.SerializeObject(choose_ability)}" +
+        $"\r\n\r\nGiven the list of abilities provided, specify which one you would like to use to respond to the input. " +
+        $"Your response should consist of a single JSON object with the name of the selected ability. For example: {information.Process.SampleJsonOut}";
+        */
 }

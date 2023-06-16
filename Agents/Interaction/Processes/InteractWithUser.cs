@@ -3,38 +3,25 @@ using Technologai;
 
 public class InteractWithUser : Process
 {
-    public new string Name { get; set; } = "Interact with user.";
-    public new string Description { get; set; } = "Provide the user with information and receive a response from the user.";
-    public new string SampleJsonIn { get; set; } = "{\"input\":\"string\"}";
-    public new string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";    
-
-    public ProcessState Assess(InformationAdapter information)
+    public InteractWithUser()
     {
-        /*
-        foreach(var item in information.Context.GetForward(information.ContextId)) { 
-            if (item.ProcessId == "get_user_input")
-            {
-                assessment.Data.Add("output", item.Output ?? string.Empty);
-                break;
-            }
-        }
-
-        assessment.Result = assessment.Data.ContainsKey("output") ? AssessmentResult.EXECUTE : AssessmentResult.SPAWN;
-        
-
-        return Task.FromResult(assessment);
-        */
-
-        return ProcessState.EXECUTE;
+        Id = "interact_with_user";
+        Description = "Provide the user with information and receive a response from the user.";
+    }
+  
+    public new ProcessState Assess(InformationAdapter information)
+    {
+        return information.InputText != null ? ProcessState.EXECUTE : this.State;
     }
 
-    public Task<List<Information>> Spawn(InformationAdapter information)
+    public async static new Task<List<Information>> Spawn(InformationAdapter information)
     {
-        List<Information> result = new List<Information>();
-        
-        result.Add(information.GetAncestors("show_user_output", information.InputText));
-        result.Add(information.GetAncestors("get_user_input"));
+        List<Information> result = new List<Information>
+        {
+            await information.Spawn("show_user_output", information.InputText),
+            await information.Spawn("get_user_input")
+        };
 
-        return Task.FromResult(result);
+        return result;
     }
 }

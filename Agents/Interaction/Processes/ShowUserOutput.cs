@@ -6,7 +6,7 @@ public class ShowUserOutput : Process
 
     public ShowUserOutput()
     {
-        Name = "Show User Output";
+        Id = "show_user_output";
         Description = "Display a message on the output log screen.";
     }   
     

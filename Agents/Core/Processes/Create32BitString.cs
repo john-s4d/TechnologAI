@@ -4,7 +4,7 @@
     {   
         public Generate32BitString() 
         { 
-            Name = "Generate 32 Bit String";
+            Id = "generate_32_bit_string";
             Description =  "Generate a randomized 32-bit string.";
             State = ProcessState.EXECUTE;
         }

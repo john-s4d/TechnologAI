@@ -7,7 +7,7 @@ using System.Text.Json;
 
 namespace Technologai
 {
-    public abstract class TechnologaiAgent
+    public class TechnologaiAgent
     {
         public event EventHandler<string>? StatusMessage;
 
@@ -15,9 +15,10 @@ namespace Technologai
 
         public string? Name { get; private set; }
 
+        public bool IsConnected => _mqtt.IsConnected;
+
         public ProcessCatalog Processes { get; private set; }
         internal ContextAdapter Context { get; private set; }
-        //private Dictionary<string, Information> _active { get; } = new();
 
         Dictionary<string, OnPublished> _publishCallbacks = new Dictionary<string, OnPublished>();
 
@@ -37,7 +38,7 @@ namespace Technologai
 
         // ** TRANSPORT **
 
-        private void _mqtt_MessageReceived(object? sender, MqttApplicationMessageReceivedEventArgs args)
+        private async void _mqtt_MessageReceived(object? sender, MqttApplicationMessageReceivedEventArgs args)
         {
             var brokerMessage = BrokerMessage.FromMqttArgs(args);
 
@@ -47,7 +48,7 @@ namespace Technologai
 
                 if (information != null)
                 {
-                    Receive(InformationAdapter.Create(this, information)).Wait();
+                    await Receive(InformationAdapter.Create(this, information));
                 }
             }
 
@@ -55,10 +56,10 @@ namespace Technologai
             {
                 IProcess? process = brokerMessage.AgentMessage?.Data as IProcess;
 
-                if (process != null)
+                if (process != null && process.WorkerId != Identity.Id)
                 {
                     Processes.Add(process, false);
-                    SendStatusMessage($"Received: {process.Id}").Wait();
+                    await SendStatusMessage($"Received: {process.Id}");
                 }
             }
         }
@@ -73,15 +74,15 @@ namespace Technologai
                 //_active.Remove(information.ContextId);
 
                 // Activate the calling information
-                var creator = Context.GetCreator(information.Id);
+                var parentInformation = Context.GetCreator(information.Id);
 
-                if (creator == null)
+                if (parentInformation == null)
                 {
                     // This is a root request. End here and send a callback.                        
                     _publishCallbacks[information.Id]?.Invoke(information);
                     return;
                 }
-                information = InformationAdapter.Create(this, creator);
+                information = InformationAdapter.Create(this, parentInformation);
             }
 
             // Closed, and this agent is not the creator
@@ -112,11 +113,10 @@ namespace Technologai
             }
         }
 
-        public InformationAdapter Create(string processId, string? input = null)
+        public async Task<InformationAdapter> Create(string processId, string? input = null)
         {
-            var information = InformationAdapter.Create(this, processId, input);
-            //_active[information.ContextId] = information;
-            return information;
+            //_active[information.ContextId] = information;  
+            return await InformationAdapter.Create(this, Processes[processId], input);
         }
 
         public async void PublishWithCallback(InformationAdapter information, OnPublished onPublished)
@@ -157,6 +157,19 @@ namespace Technologai
             await _mqtt.PublishAsync(brokerMessage.Topic, brokerMessage.ConvertAgentMessageToString());
         }
 
+        public async Task BroadcastProcesses()
+        {
+            // await SendStatusMessage($"Broadcasting Processes");
+
+            foreach (var process in Processes.Values)
+            {
+                if (process.WorkerId == Identity.Id || process.WorkerId == null)
+                {
+                    await Broadcast(process);
+                }
+            }
+        }
+
         public async Task Broadcast(IProcess process)
         {
             await SendStatusMessage($"Broadcasting: {process.Id}");
@@ -184,7 +197,8 @@ namespace Technologai
         {
             if (_mqtt.IsConnected && Processes.ContainsKey("display_log_message"))
             {
-                await Create("display_log_message", message).Publish();
+                var information = await Create("display_log_message", message);
+                await information.Publish();
             }
             else
             {
@@ -215,6 +229,8 @@ namespace Technologai
 
             await _mqtt.SubscribeAsync(Identity.SubscribeMemberMask);
             await SendStatusMessage($"Member Subscribed> {Identity.SubscribeMemberMask}");
+
+            await BroadcastProcesses();
         }
 
         public async Task Stop()
