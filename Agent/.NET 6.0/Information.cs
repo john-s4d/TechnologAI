@@ -1,7 +1,5 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-//using System.Numerics.Tensors;
-//using Tensornet;
 
 namespace Technologai
 {
@@ -17,6 +15,7 @@ namespace Technologai
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
         public InformationState State { get; internal set; }
+        public ProcessState ProcessState { get; internal set; }
 
         private string? _inputText;
         private string? _outputText;

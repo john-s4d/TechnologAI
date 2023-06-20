@@ -2,9 +2,8 @@
 {
     public enum AgentMessageType
     {
-        PROCESS_INQUIRY,
-        PROCESS,
-        //INFORMATION_INQUIRY, // Broadcast
+        HELLO,        
+        PROCESS,        
         INFORMATION,
         CONTEXT
     }

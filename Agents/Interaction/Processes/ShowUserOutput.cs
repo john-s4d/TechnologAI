@@ -8,11 +8,12 @@ public class ShowUserOutput : Process
     {
         Id = "show_user_output";
         Description = "Display a message on the output log screen.";
+
     }   
     
     public new ProcessState Assess(InformationAdapter information)
     {   
-        return information.InputText != null ? ProcessState.EXECUTE : this.State;
+        return information.InputText != null ? ProcessState.EXECUTE : DefaultState;
     }
 
     public new void Execute(InformationAdapter information)

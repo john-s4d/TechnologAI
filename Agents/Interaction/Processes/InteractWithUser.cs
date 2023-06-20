@@ -11,7 +11,7 @@ public class InteractWithUser : Process
   
     public new ProcessState Assess(InformationAdapter information)
     {
-        return information.InputText != null ? ProcessState.EXECUTE : this.State;
+        return information.InputText != null ? ProcessState.EXECUTE : DefaultState;
     }
 
     public async static new Task<List<Information>> Spawn(InformationAdapter information)
