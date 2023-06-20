@@ -7,7 +7,8 @@ using System.Security.Claims;
 namespace Technologai
 {
     internal class MqttClient
-    {
+    {   
+
         private const int PORT = 8083;
 
         private Identity _identity;
