@@ -33,6 +33,7 @@ namespace Technologai
 
         internal async void Add(IProcess process, Boolean broadcast)
         {
+            
             if (!string.IsNullOrEmpty(process.Id) && !this.ContainsKey(process.Id)) // TODO: clustered embeddings for fuzzy lookup
             {
                 Add(process.Id, process);
@@ -51,7 +52,7 @@ namespace Technologai
 
         public void AddRange(IEnumerable<IProcess> processes, Boolean broadcast)
         {
-            foreach (Process process in processes)
+            foreach (IProcess process in processes)
             {
                 Add(process, broadcast);
             }

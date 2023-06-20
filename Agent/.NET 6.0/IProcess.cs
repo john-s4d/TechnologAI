@@ -2,14 +2,13 @@
 
 public interface IProcess
 {   
-    public string Id { get; set; }
-    //public string? Name { get; set; }
-    public string? Description { get; set; }
-    public string[]? InputKeys { get; set; }
-    public string[]? OutputKeys { get; set; }
-    public string? WorkerId { get; set; }    
-    public ProcessState State { get; set; }
-    public Task<ProcessState> Assess(InformationAdapter information);
-    public Task<object?> Execute(InformationAdapter information);
-    public Task<List<InformationAdapter>?> Spawn(InformationAdapter information);
+    string? Id { get; }
+    string? Description { get; }
+    string[]? InputKeys { get; } // TODO: Case Sensitivity
+    string[]? OutputKeys { get; } // TODO: Case Sensitivity
+    string? WorkerId { get; internal set; }
+    ProcessState DefaultState { get; }
+    Task<ProcessState> Assess(InformationAdapter information);
+    Task<object?> Execute(InformationAdapter information);
+    Task<List<InformationAdapter>?> Spawn(InformationAdapter information);
 }

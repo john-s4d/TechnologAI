@@ -3,28 +3,20 @@
     internal class DisplayLogMessage : Process
     {
         internal event Action<string>? LogMessage;
-        public new string Id { get; set; } = "display_log_message";
-        public new string Description => "Display a message on the output log screen.";
-        public new string SampleJsonIn => "{\"message\":\"string\",\"count\":\"string\"}";
 
-        public new Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public DisplayLogMessage()
         {
-            LogMessage?.Invoke((string)data["message"]);
-            return Task.FromResult(data);
+            Id = "display_log_message";
+            Description = "Display a message on the output log screen.";
         }
-
         public new ProcessState Assess(InformationAdapter information)
         {
-            //Assessment assessment = new Assessment();
-            //assessment.Result = AssessmentResult.EXECUTE;
-            //return Task.FromResult(assessment);
-            this.State = ProcessState.EXECUTE;
-            return this.State;
+            return string.IsNullOrEmpty(information.InputText) ? ProcessState.ASSESS : ProcessState.EXECUTE;
         }
 
-        public new Task<List<Information>> Spawn(InformationAdapter information)
+        public new void Execute(InformationAdapter information)
         {
-            throw new NotImplementedException();
+            LogMessage?.Invoke(information?.InputText ?? throw new ArgumentNullException(nameof(information.InputText)));
         }
     }
 }

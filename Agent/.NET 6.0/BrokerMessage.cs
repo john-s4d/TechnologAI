@@ -12,7 +12,7 @@ namespace Technologai
         public string? MemberId { get; set; }
         public AgentMessage? AgentMessage { get; set; }
         public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }        
-        public bool IsBroadcast { get { return MemberId?.Equals("0") ?? false; } }
+        //public bool IsBroadcast { get { return MemberId?.Equals("0") ?? false; } }
 
         private BrokerMessage() { }
 

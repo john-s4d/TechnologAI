@@ -54,9 +54,9 @@ namespace Technologai
         {
             await _agent.SendStatusMessage($"{Id} Assess> {ProcessId} | {InputText} | {OutputText}");
 
-            Process.State = await _process.Assess(this);
+            this.ProcessState = await _process.Assess(this);
 
-            return Process.State;
+            return this.ProcessState;
         }
 
         protected internal async Task Execute()

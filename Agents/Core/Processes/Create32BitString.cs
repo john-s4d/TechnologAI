@@ -6,10 +6,10 @@
         { 
             Id = "generate_32_bit_string";
             Description =  "Generate a randomized 32-bit string.";
-            State = ProcessState.EXECUTE;
+            DefaultState = ProcessState.EXECUTE;
         }
 
-        public new string? Execute(in InformationAdapter information)
+        public static new string Execute(InformationAdapter information)
         {   
             return Utils.GenerateNewIdString(32);
         }

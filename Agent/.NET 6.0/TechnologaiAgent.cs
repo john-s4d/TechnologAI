@@ -96,7 +96,7 @@ namespace Technologai
             {
                 //_active[information.ContextId] = information;
 
-                switch (information.Process.State)
+                switch (information.ProcessState)
                 {
                     // TODO: Debounce
 

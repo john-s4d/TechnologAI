@@ -6,7 +6,7 @@ public class GetUserInput : Process
     {
         Id = "get_user_input";
         Description = "Receive a text input from the user.";
-        State = ProcessState.EXECUTE;
+        DefaultState = ProcessState.EXECUTE;
     }
     
     public new async Task<string?> Execute(InformationAdapter information)

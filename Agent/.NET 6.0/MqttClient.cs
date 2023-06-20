@@ -1,6 +1,7 @@
 ﻿using IdentityModel;
 using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Protocol;
 using System.Security.Claims;
 
 namespace Technologai
@@ -64,7 +65,7 @@ namespace Technologai
             _client.Dispose();
         }
 
-        internal async Task PublishAsync(string topic, string payload, bool retain = false, int qos = 0)
+        internal async Task PublishAsync(string topic, string payload, bool retain = false, MqttQualityOfServiceLevel qos = MqttQualityOfServiceLevel.AtMostOnce)
         {
             if (!_client.IsConnected)
             {
@@ -77,7 +78,7 @@ namespace Technologai
                 .WithTopic(topic)
                 .WithPayload(payload)
                 .WithRetainFlag(retain)
-                .WithQualityOfServiceLevel((MQTTnet.Protocol.MqttQualityOfServiceLevel)qos)
+                .WithQualityOfServiceLevel(qos)
                 .Build();
 
                 await _client.PublishAsync(message, _cancellationTokenSource.Token);
