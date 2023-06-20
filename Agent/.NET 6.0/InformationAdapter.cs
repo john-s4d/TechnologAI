@@ -1,11 +1,4 @@
-﻿using System;
-using System.CodeDom;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
-using System.Windows.Markup;
-
-namespace Technologai
+﻿namespace Technologai
 {
     public class InformationAdapter : Information
     {
@@ -13,9 +6,9 @@ namespace Technologai
         private IProcess _process;
 
         public string WorkerId { get; set; }
-        public ContextAdapter Context => _agent.Context;
-        public TechnologaiAgent Agent => _agent;
-        public IProcess Process => _process;
+        //public ContextAdapter Context => _agent.Context;
+        //public TechnologaiAgent Agent => _agent;
+        //public IProcess Process => _process;
 
         private InformationAdapter(string id, string creatorId, string processId, InformationState state, string? input = null, string? output = null)
             : base(id, creatorId, processId, state, input, output) { }

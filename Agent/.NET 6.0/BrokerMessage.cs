@@ -1,18 +1,28 @@
 ﻿using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Packets;
 using System.Text.Json;
 
 namespace Technologai
 {
+    public enum AgentMessageType
+    {
+        HELLO,
+        PROCESS,
+        INFORMATION,
+        CONTEXT
+    }   
+
     public class BrokerMessage
     {
-        private static JsonSerializerOptions options = new JsonSerializerOptions();
+        private const string MESSAGE_TYPE = "messagetype";
+        private const string TOPIC_DELIMITER = "/";
 
         public string? AgencyId { get; set; }
         public string? MemberId { get; set; }
-        public AgentMessage? AgentMessage { get; set; }
         public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }        
-        //public bool IsBroadcast { get { return MemberId?.Equals("0") ?? false; } }
+        public AgentMessageType? MessageType { get; set; }
+        public object? MessageData { get; set; }
 
         private BrokerMessage() { }
 
@@ -21,28 +31,46 @@ namespace Technologai
             AgencyId = identity.AgencyId;
         }
 
-        static BrokerMessage()
-        {
-            options.Converters.Add(new AgentMessageConverter());
-        }
-
         internal static BrokerMessage FromMqttArgs(MqttApplicationMessageReceivedEventArgs args)
-        {
-            var topicParts = args.ApplicationMessage.Topic.Split('/');
+        {   
+            var topicParts = args.ApplicationMessage.Topic.Split(TOPIC_DELIMITER);
 
-            var payload = args.ApplicationMessage.ConvertPayloadToString();
-
-            return new BrokerMessage()
+            var brokerMessage = new BrokerMessage()
             {
                 AgencyId = topicParts[0],
-                MemberId = topicParts[1],
-                AgentMessage = JsonSerializer.Deserialize<AgentMessage>(payload, options)
+                MemberId = topicParts[1],                
             };
+
+            foreach (MqttUserProperty property in args.ApplicationMessage.UserProperties)
+            {
+                if (property.Name == MESSAGE_TYPE)
+                {
+                    var payload = args.ApplicationMessage.ConvertPayloadToString();
+
+                    switch (property.Value)
+                    {
+                        case "HELLO":
+                            brokerMessage.MessageType = AgentMessageType.HELLO;
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<HelloMessage>(payload);
+                            break;
+                        case "PROCESS":
+                            brokerMessage.MessageType = AgentMessageType.PROCESS;
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<IProcess>(payload);
+                            break;
+                        case "INFORMATION":
+                            brokerMessage.MessageType = AgentMessageType.INFORMATION;
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<Information>(payload);
+                            break;                       
+                    }
+                    break;
+                }             
+            }
+            return brokerMessage;
         }
 
-        internal string ConvertAgentMessageToString()
+        internal string ConvertMessageDataToString()
         {
-            return JsonSerializer.Serialize(AgentMessage, options);
+            throw new NotImplementedException();
         }
     }
 }

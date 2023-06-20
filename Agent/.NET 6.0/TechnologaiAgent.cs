@@ -42,9 +42,9 @@ namespace Technologai
         {
             var brokerMessage = BrokerMessage.FromMqttArgs(args);
 
-            if (brokerMessage.AgentMessage?.Type == AgentMessageType.INFORMATION)
+            if (brokerMessage.MessageType == AgentMessageType.INFORMATION)
             {
-                Information? information = brokerMessage.AgentMessage?.Data as Information;
+                Information? information = brokerMessage.MessageData as Information;
 
                 if (information != null)
                 {
@@ -52,9 +52,9 @@ namespace Technologai
                 }
             }
 
-            else if (brokerMessage.AgentMessage?.Type == AgentMessageType.PROCESS)
+            else if (brokerMessage.MessageType == AgentMessageType.PROCESS)
             {
-                IProcess? process = brokerMessage.AgentMessage?.Data as IProcess;
+                IProcess? process = brokerMessage.MessageData as IProcess;
 
                 if (process != null && process.WorkerId != Identity.Id)
                 {
@@ -127,7 +127,7 @@ namespace Technologai
 
         public async Task Publish(InformationAdapter information)
         {
-            // SendStatusMessage($"{information.ContextId} Publish> {information.ProcessId} | {information.Input} | {information.Output}");
+            SendStatusMessage($"{information.Id} Publish> {information.ProcessId} | {information.InputText} | {information.OutputText}");
 
             // TODO: short circuit.
             /*
@@ -142,19 +142,14 @@ namespace Technologai
                 information.State = InformationState.OPEN;
             }
 
-            AgentMessage agentMessage = new AgentMessage()
-            {
-                Data = information,
-                Type = AgentMessageType.INFORMATION
-            };
-
             var brokerMessage = new BrokerMessage(Identity)
             {
-                AgentMessage = agentMessage,
+                MessageType = AgentMessageType.INFORMATION,
+                MessageData = information,
                 MemberId = information.WorkerId
             };
 
-            await _mqtt.PublishAsync(brokerMessage.Topic, brokerMessage.ConvertAgentMessageToString());
+            await _mqtt.PublishAsync(brokerMessage.Topic, brokerMessage.ConvertMessageDataToString());
         }
 
         public async Task BroadcastProcesses()
@@ -176,19 +171,14 @@ namespace Technologai
 
             process.WorkerId = Identity.Id;
 
-            AgentMessage agentMessage = new AgentMessage()
-            {
-                Data = process,
-                Type = AgentMessageType.PROCESS
-            };
-
             var brokerMessage = new BrokerMessage(Identity)
             {
-                AgentMessage = agentMessage,
+                MessageType = AgentMessageType.PROCESS,
+                MessageData = process,                
                 MemberId = "0"
             };
 
-            string agentMessageJson = brokerMessage.ConvertAgentMessageToString();
+            string agentMessageJson = brokerMessage.ConvertMessageDataToString();
 
             await _mqtt.PublishAsync(brokerMessage.Topic, agentMessageJson);
         }
