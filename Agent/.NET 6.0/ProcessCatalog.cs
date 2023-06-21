@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Technologai
+﻿namespace Technologai
 {
-    public class ProcessCatalog : Dictionary<string, IProcess>
+    public class ProcessCatalog : Dictionary<string, Process>
     {
         private Identity _identity;
         private TechnologaiAgent _agent;
@@ -16,45 +9,22 @@ namespace Technologai
         {
             _identity = identity;
             _agent = agent;
-
-            /*
-            Add(new Process("add_process_to_agency_catalog",
-                            "Add a process to the agency's process catalog.",
-                            "{\"id\":\"string\",\"sampleJsonIn\":\"string\",\"sampleJsonOut\":\"string\",\"description\":\"string\",\"memberId\":\"string\"}",
-                            "{\"success\":\"boolean\"}"
-                    ));
-
-            Add(new Process("find_a_process_in_catalog",
-                            "Find and return processes from the agency's process catalog, based on a search string.",
-                            "{\"search\":\"string\"}",
-                            "{\"id\":\"string\",\"sampleJsonIn\":\"string\",\"sampleJsonOut\":\"string\",\"description\":\"string\",\"memberId\":\"string\"}"
-                    ));*/
         }
 
-        internal async void Add(IProcess process, Boolean broadcast)
-        {
-            
+        // Processes received from other agents. Should all have a MemberId. No DefaultState.
+        internal void Add(IProcess process)
+        {            
             if (!string.IsNullOrEmpty(process.Id) && !this.ContainsKey(process.Id)) // TODO: clustered embeddings for fuzzy lookup
             {
-                Add(process.Id, process);
-
-                if (broadcast && _agent.IsConnected)
-                {
-                    await _agent.Broadcast(process);
-                }
+                Add(process.Id, (Process)process);
             }
         }
 
-        public void Add(IProcess process)
+        public void Add(Process process)
         {
-            Add(process, true);
-        }
-
-        public void AddRange(IEnumerable<IProcess> processes, Boolean broadcast)
-        {
-            foreach (IProcess process in processes)
+            if (!string.IsNullOrEmpty(process.Id) && !this.ContainsKey(process.Id)) // TODO: clustered embeddings for fuzzy lookup
             {
-                Add(process, broadcast);
+                Add(process.Id, process);
             }
         }
     }

@@ -15,6 +15,7 @@ namespace Technologai
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
         public InformationState State { get; internal set; }
+        [JsonIgnore]
         public ProcessState ProcessState { get; internal set; }
 
         private string? _inputText;

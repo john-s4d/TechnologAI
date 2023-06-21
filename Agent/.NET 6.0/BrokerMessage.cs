@@ -11,17 +11,17 @@ namespace Technologai
         PROCESS,
         INFORMATION,
         CONTEXT
-    }   
+    }
 
     public class BrokerMessage
     {
-        private const string MESSAGE_TYPE = "messagetype";
+        internal const string MESSAGE_TYPE = "messagetype";
         private const string TOPIC_DELIMITER = "/";
 
         public string? AgencyId { get; set; }
         public string? MemberId { get; set; }
-        public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }        
-        public AgentMessageType? MessageType { get; set; }
+        public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }
+        public AgentMessageType MessageType { get; set; }
         public object? MessageData { get; set; }
 
         private BrokerMessage() { }
@@ -32,21 +32,21 @@ namespace Technologai
         }
 
         internal static BrokerMessage FromMqttArgs(MqttApplicationMessageReceivedEventArgs args)
-        {   
+        {
             var topicParts = args.ApplicationMessage.Topic.Split(TOPIC_DELIMITER);
 
             var brokerMessage = new BrokerMessage()
             {
                 AgencyId = topicParts[0],
-                MemberId = topicParts[1],                
+                MemberId = topicParts[1],
             };
+
+            var payload = args.ApplicationMessage.ConvertPayloadToString();
 
             foreach (MqttUserProperty property in args.ApplicationMessage.UserProperties)
             {
                 if (property.Name == MESSAGE_TYPE)
-                {
-                    var payload = args.ApplicationMessage.ConvertPayloadToString();
-
+                {   
                     switch (property.Value)
                     {
                         case "HELLO":
@@ -60,17 +60,27 @@ namespace Technologai
                         case "INFORMATION":
                             brokerMessage.MessageType = AgentMessageType.INFORMATION;
                             brokerMessage.MessageData = JsonSerializer.Deserialize<Information>(payload);
-                            break;                       
+                            break;
                     }
                     break;
-                }             
+                }
             }
             return brokerMessage;
         }
 
         internal string ConvertMessageDataToString()
         {
-            throw new NotImplementedException();
+            switch (MessageType)
+            {
+                case AgentMessageType.HELLO:
+                    return JsonSerializer.Serialize(MessageData as HelloMessage);
+                case AgentMessageType.PROCESS:
+                    return JsonSerializer.Serialize(MessageData as Process);
+                case AgentMessageType.INFORMATION:
+                    return JsonSerializer.Serialize(MessageData as Information);
+                default:
+                    throw new InvalidDataException($"Unknown message type: {MessageType}");
+            }
         }
     }
 }

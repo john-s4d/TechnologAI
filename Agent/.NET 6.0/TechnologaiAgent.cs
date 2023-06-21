@@ -1,9 +1,4 @@
-﻿using Microsoft.VisualBasic;
-using MQTTnet.Client;
-//using Newtonsoft.Json;
-using System.CodeDom;
-using System.Diagnostics;
-using System.Text.Json;
+﻿using MQTTnet.Client;
 
 namespace Technologai
 {
@@ -56,9 +51,9 @@ namespace Technologai
             {
                 IProcess? process = brokerMessage.MessageData as IProcess;
 
-                if (process != null && process.WorkerId != Identity.Id)
+                if (process != null && process.MemberId != Identity.Id)
                 {
-                    Processes.Add(process, false);
+                    Processes.Add(process);
                     await SendStatusMessage($"Received: {process.Id}");
                 }
             }
@@ -86,13 +81,13 @@ namespace Technologai
             }
 
             // Closed, and this agent is not the creator
-            if (information.State == InformationState.CLOSED && information.CreatorId != Identity.Id)
+            else if (information.State == InformationState.CLOSED && information.CreatorId != Identity.Id)
             {
-                // TODO: Review
+                // TODO: Review. Add to Context.
             }
 
-            // Open, and this agent is the worker
-            if (information.State == InformationState.OPEN && information.WorkerId == Identity.Id)
+            // Open, and this agent is assigned
+            else if (information.State == InformationState.OPEN && information.MemberId == Identity.Id)
             {
                 //_active[information.ContextId] = information;
 
@@ -146,10 +141,10 @@ namespace Technologai
             {
                 MessageType = AgentMessageType.INFORMATION,
                 MessageData = information,
-                MemberId = information.WorkerId
+                MemberId = information.MemberId
             };
 
-            await _mqtt.PublishAsync(brokerMessage.Topic, brokerMessage.ConvertMessageDataToString());
+            await _mqtt.PublishAsync(brokerMessage.Topic, brokerMessage.ConvertMessageDataToString(), brokerMessage.MessageType);
         }
 
         public async Task BroadcastProcesses()
@@ -158,18 +153,18 @@ namespace Technologai
 
             foreach (var process in Processes.Values)
             {
-                if (process.WorkerId == Identity.Id || process.WorkerId == null)
+                if (process.MemberId == Identity.Id || process.MemberId == null)
                 {
                     await Broadcast(process);
                 }
             }
         }
 
-        public async Task Broadcast(IProcess process)
+        public async Task Broadcast(Process process)
         {
             await SendStatusMessage($"Broadcasting: {process.Id}");
 
-            process.WorkerId = Identity.Id;
+            process.MemberId = Identity.Id;
 
             var brokerMessage = new BrokerMessage(Identity)
             {
@@ -178,9 +173,9 @@ namespace Technologai
                 MemberId = "0"
             };
 
-            string agentMessageJson = brokerMessage.ConvertMessageDataToString();
+            string messageJson = brokerMessage.ConvertMessageDataToString();
 
-            await _mqtt.PublishAsync(brokerMessage.Topic, agentMessageJson);
+            await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
         internal async Task SendStatusMessage(string message)
