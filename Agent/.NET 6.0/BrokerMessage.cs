@@ -55,7 +55,7 @@ namespace Technologai
                             break;
                         case "PROCESS":
                             brokerMessage.MessageType = AgentMessageType.PROCESS;
-                            brokerMessage.MessageData = JsonSerializer.Deserialize<IProcess>(payload);
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<Process>(payload);
                             break;
                         case "INFORMATION":
                             brokerMessage.MessageType = AgentMessageType.INFORMATION;

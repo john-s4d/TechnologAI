@@ -2,16 +2,11 @@
 
 public class GetUserInput : Process
 {
-    public GetUserInput() : base()
-    {
-       
-    }
-
-    public GetUserInput(ref ProcessState defaultState)
+    public GetUserInput()
     {
         Id = "get_user_input";
         Description = "Receive a text input from the user.";
-        defaultState = ProcessState.EXECUTE;
+        DefaultState = ProcessState.EXECUTE;
     }
     
     public new async Task<string?> Execute(InformationAdapter information)

@@ -64,7 +64,7 @@ namespace Technologai
             Context.Add(information);
 
             // Closed and this agent is the creator
-            if (information.State == InformationState.CLOSED && information.CreatorId == Identity.Id)
+            if (information.InformationState == InformationState.CLOSED && information.CreatorId == Identity.Id)
             {
                 //_active.Remove(information.ContextId);
 
@@ -81,13 +81,13 @@ namespace Technologai
             }
 
             // Closed, and this agent is not the creator
-            else if (information.State == InformationState.CLOSED && information.CreatorId != Identity.Id)
+            else if (information.InformationState == InformationState.CLOSED && information.CreatorId != Identity.Id)
             {
                 // TODO: Review. Add to Context.
             }
 
             // Open, and this agent is assigned
-            else if (information.State == InformationState.OPEN && information.MemberId == Identity.Id)
+            else if (information.InformationState == InformationState.OPEN && information.WorkerId == Identity.Id)
             {
                 //_active[information.ContextId] = information;
 
@@ -96,7 +96,15 @@ namespace Technologai
                     // TODO: Debounce
 
                     case ProcessState.ASSESS:
-                        await information.Assess();
+                        switch (await information.Assess())
+                        {
+                            case ProcessState.EXECUTE:
+                                await information.Execute();
+                                break;
+                            case ProcessState.SPAWN:
+                                await information.Spawn();
+                                break;
+                        }
                         break;
                     case ProcessState.EXECUTE:
                         await information.Execute();
@@ -120,7 +128,7 @@ namespace Technologai
             await Publish(information);
         }
 
-        public async Task Publish(InformationAdapter information)
+        public async Task Publish(Information information)
         {
             SendStatusMessage($"{information.Id} Publish> {information.ProcessId} | {information.InputText} | {information.OutputText}");
 
@@ -132,19 +140,21 @@ namespace Technologai
                 return Task.CompletedTask;
             }*/
 
-            if (information.State == InformationState.DRAFT)
+            if (information.InformationState == InformationState.DRAFT)
             {
-                information.State = InformationState.OPEN;
+                information.InformationState = InformationState.OPEN;
             }
 
             var brokerMessage = new BrokerMessage(Identity)
             {
                 MessageType = AgentMessageType.INFORMATION,
                 MessageData = information,
-                MemberId = information.MemberId
+                MemberId = information.WorkerId
             };
 
-            await _mqtt.PublishAsync(brokerMessage.Topic, brokerMessage.ConvertMessageDataToString(), brokerMessage.MessageType);
+            var messageJson = brokerMessage.ConvertMessageDataToString();
+
+            await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
         public async Task BroadcastProcesses()
@@ -169,7 +179,7 @@ namespace Technologai
             var brokerMessage = new BrokerMessage(Identity)
             {
                 MessageType = AgentMessageType.PROCESS,
-                MessageData = process,                
+                MessageData = process,
                 MemberId = "0"
             };
 

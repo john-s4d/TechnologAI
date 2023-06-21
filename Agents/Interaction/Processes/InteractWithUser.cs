@@ -5,15 +5,15 @@ public class InteractWithUser : Process
     public InteractWithUser()
     {
         Id = "interact_with_user";
-        Description = "Provide the user with information and receive a response from the user.";
+        Description = "Provide the user with information and receive a response from the user.";        
     }
   
-    public new ProcessState Assess(InformationAdapter information)
+    public override Task<ProcessState> Assess(InformationAdapter information)
     {
-        return information.InputText != null ? ProcessState.EXECUTE : DefaultState;
+        return Task.FromResult(information.InputText != null ? ProcessState.EXECUTE : ProcessState.ASSESS);
     }
 
-    public async static new Task<List<Information>> Spawn(InformationAdapter information)
+    public override async Task<List<Information>?> Spawn(InformationAdapter information)
     {
         List<Information> result = new List<Information>
         {

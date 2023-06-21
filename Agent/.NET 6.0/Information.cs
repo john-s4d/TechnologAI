@@ -5,18 +5,18 @@ namespace Technologai
 {
     public enum InformationState
     {
-        DRAFT,
-        OPEN,
-        CLOSED
+        DRAFT = 0,
+        OPEN = 1,
+        CLOSED = 2
     }
 
     public class Information : IComparable<Information>
     {
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
-        public InformationState State { get; internal set; }
-        [JsonIgnore]
-        public ProcessState ProcessState { get; internal set; }
+        public string WorkerId { get; set; }
+        public InformationState InformationState { get; set; }        
+        public ProcessState ProcessState { get; set; }
 
         private string? _inputText;
         private string? _outputText;
@@ -68,12 +68,14 @@ namespace Technologai
         // TODO History, Signatures, ReadOnly fields ?        
 
         [JsonConstructor]
-        public Information(string id, string creatorId, string processId, InformationState state, string? inputText = null, string? outputText = null)
+        public Information(string id, string creatorId, string workerId, string processId, InformationState informationState, ProcessState processState, string? inputText = null, string? outputText = null)
         {
             Id = id;
             CreatorId = creatorId;
+            WorkerId = workerId;
             ProcessId = processId;
-            State = state;
+            InformationState = informationState;
+            ProcessState = processState;
             InputText = inputText;
             OutputText = outputText;
         }
@@ -83,8 +85,10 @@ namespace Technologai
             return new Information(
                 InformationId.Create(creatorId),
                 creatorId,
+                creatorId,
                 processId,
                 InformationState.DRAFT,
+                ProcessState.ASSESS,
                 input,
                 null
                 );
