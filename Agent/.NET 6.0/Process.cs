@@ -1,4 +1,6 @@
-﻿namespace Technologai
+﻿using System.Text.Json.Serialization;
+
+namespace Technologai
 {
     public enum ProcessState
     {
@@ -10,12 +12,15 @@
 
     public class Process : IProcess
     {
+        public Process() { }
+
         public string? Id { get; set; }
         public string? Description { get; set; }
         public string[]? InputKeys { get; set; }
         public string[]? OutputKeys { get; set; }
-        public string? WorkerId { get; set; }
-        public ProcessState DefaultState { get; protected set; } = ProcessState.ASSESS;        
+        public string? MemberId { get; set; }
+        [JsonIgnore]
+        public ProcessState DefaultState { get; set; } = ProcessState.ASSESS;
 
         // NOTE: We don't expect these methods to set the object properties (input,output,process). This way they can be inspected by the calling code before the change is committed.
         public virtual Task<ProcessState> Assess(InformationAdapter information) => Task.FromResult(DefaultState);

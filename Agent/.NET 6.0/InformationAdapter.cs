@@ -3,9 +3,9 @@
     public class InformationAdapter : Information
     {
         private TechnologaiAgent _agent;
-        private IProcess _process;
+        private Process _process;
 
-        public string WorkerId { get; set; }
+        public string MemberId { get; set; }
         //public ContextAdapter Context => _agent.Context;
         //public TechnologaiAgent Agent => _agent;
         //public IProcess Process => _process;
@@ -26,18 +26,18 @@
                                                                                                                          )
             {
                 _agent = agent,
-                _process = agent.Processes[information.ProcessId]
+                _process = (Process)agent.Processes[information.ProcessId]
             };
             // TODO: Do we need to add this to the context?
         }
 
-        public async static Task<InformationAdapter> Create(TechnologaiAgent agent, IProcess process, string? input = null)
+        public async static Task<InformationAdapter> Create(TechnologaiAgent agent, Process process, string? input = null)
         {   
             var information = Create(agent, Create(agent.Identity.Id, process.Id, input));
 
             agent.Context.Add(information);
 
-            information.WorkerId = process.WorkerId ?? agent.Identity.Id;
+            information.MemberId = process.MemberId ?? agent.Identity.Id;
 
             await agent.SendStatusMessage($"{information.Id} Create> {process.Id} | {information.InputText}");
             return information;
@@ -69,7 +69,7 @@
             }
 
             State = InformationState.CLOSED;
-            WorkerId = CreatorId;
+            MemberId = CreatorId;
 
             await Publish();
         }
@@ -94,7 +94,7 @@
             //var information = Create(_agent, Create(agent.Identity.Id, process.Id, input));
             var information = await Create(_agent, _agent.Processes[processId], input);
             _agent.Context.Spawn(information.Id, this.Id);
-            information.WorkerId = _process.WorkerId ?? _agent.Identity.Id;
+            information.MemberId = _process.MemberId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {processId} | {information.Input}");
             return information;
         }
