@@ -4,14 +4,13 @@
     {
         private TechnologaiAgent _agent;
         private Process _process;
-
-        public string MemberId { get; set; }
+        
         //public ContextAdapter Context => _agent.Context;
         //public TechnologaiAgent Agent => _agent;
         //public IProcess Process => _process;
 
-        private InformationAdapter(string id, string creatorId, string processId, InformationState state, string? input = null, string? output = null)
-            : base(id, creatorId, processId, state, input, output) { }
+        private InformationAdapter(string id, string creatorId, string workerId, string processId, InformationState informationState, ProcessState processState, string? input = null, string? output = null)
+            : base(id, creatorId, workerId, processId, informationState, processState, input, output) { }
 
         
         public static InformationAdapter Create(TechnologaiAgent agent, Information information)
@@ -19,14 +18,15 @@
             return new InformationAdapter(
                 information.Id,
                 information.CreatorId,
+                information.WorkerId,
                 information.ProcessId,
-                information.State,
+                information.InformationState,
+                information.ProcessState,
                 information.InputText,
-                information.OutputText
-                                                                                                                         )
+                information.OutputText                                                                                                                         )
             {
                 _agent = agent,
-                _process = (Process)agent.Processes[information.ProcessId]
+                _process = agent.Processes[information.ProcessId]
             };
             // TODO: Do we need to add this to the context?
         }
@@ -37,7 +37,7 @@
 
             agent.Context.Add(information);
 
-            information.MemberId = process.MemberId ?? agent.Identity.Id;
+            information.WorkerId = process.MemberId ?? agent.Identity.Id;
 
             await agent.SendStatusMessage($"{information.Id} Create> {process.Id} | {information.InputText}");
             return information;
@@ -68,8 +68,8 @@
                 OutputData = (Dictionary<string, string>)output;
             }
 
-            State = InformationState.CLOSED;
-            MemberId = CreatorId;
+            InformationState = InformationState.CLOSED;
+            WorkerId = CreatorId;
 
             await Publish();
         }
@@ -84,7 +84,7 @@
             {
                 foreach (var item in items)
                 {
-                    await (item.Publish());
+                    await (Create(_agent, item).Publish());
                 }
             }
         }
@@ -94,7 +94,7 @@
             //var information = Create(_agent, Create(agent.Identity.Id, process.Id, input));
             var information = await Create(_agent, _agent.Processes[processId], input);
             _agent.Context.Spawn(information.Id, this.Id);
-            information.MemberId = _process.MemberId ?? _agent.Identity.Id;
+            information.WorkerId = _process.MemberId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {processId} | {information.Input}");
             return information;
         }
