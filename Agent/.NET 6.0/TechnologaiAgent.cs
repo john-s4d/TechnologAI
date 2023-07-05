@@ -14,7 +14,7 @@ namespace Technologai
 
         public bool IsConnected => _mqtt.IsConnected;
 
-        public ProcessCatalog Processes { get; private set; }
+        public NeuronCatalog Processes { get; private set; }
         internal Context Context { get; private set; }
 
         Dictionary<string, OnPublished> _publishCallbacks = new Dictionary<string, OnPublished>();
@@ -26,7 +26,7 @@ namespace Technologai
         public TechnologaiAgent(string authUri, string clientId, string clientSecret, string memberId)
         {
             Identity = new Identity(authUri, clientId, clientSecret, memberId);
-            Processes = new ProcessCatalog(Identity, this);
+            Processes = new NeuronCatalog(Identity, this);
             Context = new Context(Identity);
 
             _mqtt = new MqttClient(Identity);
