@@ -16,7 +16,7 @@ namespace Technologai
     /// <summary>
     /// Generate Image Stable Diffusion
     /// </summary>
-    public class GenerateImageStableDiifusion : Process
+    public class GenerateImageStableDiifusion : Neuron
     {
         public string Description { get; } = "Generate Image Stable Diffusion";
         public string SampleJsonIn { get; set; } = "{\"orginalImagePathWithExtension\":\"string\",\"diffusedImagePathWithExtension\":\"string\"}";

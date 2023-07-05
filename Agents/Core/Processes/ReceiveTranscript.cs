@@ -18,7 +18,7 @@ namespace Technologai
     /// <summary>
     /// Receive Transcript
     /// </summary>
-    public class ReceiveTranscript : Process
+    public class ReceiveTranscript : Neuron
     {
         public new string Description { get; set; } = "Receive transcript using deepgram api key";
         public new string SampleJsonIn { get; set; } = "{\"apiKey\":\"string\",\"audioUrl\":\"string\"}";

@@ -3,7 +3,7 @@
     /// <summary>
     /// Write a text file on the local filesystem.
     /// </summary>
-    internal class WriteFile : Process
+    internal class WriteFile : Neuron
     {
         public new string Description { get; } = "Write a text file on the local filesystem.";
         public  string SampleJsonIn { get; } = "{\"fileName\":\"string\", \"content\":\"string\", \"overrideIfExists\":\"bool\"}";// optional: overrideIfExists

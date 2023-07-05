@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace Technologai
 {
-    public class ContextAdapter //<T> : BidirectionalGraph<string?, T> where T : IEdge<string?>
+    public class Context //<T> : BidirectionalGraph<string?, T> where T : IEdge<string?>
     {
         private readonly Dictionary<string, Information> _library = new();
-        private readonly Dictionary<string, Process> _processes = new();
+        private readonly Dictionary<string, Neuron> _neurons = new();
         private readonly Dictionary<string, List<string>> _forwardContext = new();
         private readonly Dictionary<string, List<string>> _reverseContext = new();
         private readonly Dictionary<string, string> _lineage = new();
 
-        public ContextAdapter(Identity identity) { }
+        public Context(Identity identity) { }
 
         public void Spawn(string forwardId, string reverseId)
         {

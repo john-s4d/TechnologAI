@@ -1,6 +1,6 @@
 ﻿namespace Technologai
 {
-    public interface IProcess
+    public interface INeuron
     {
         string? Id { get; }
         string? Description { get; }

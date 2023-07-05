@@ -28,7 +28,7 @@ namespace Technologai
     /// <summary>
     /// Generate Image Dall E
     /// </summary>
-    public class GenerateImageDallE3 : Process
+    public class GenerateImageDallE3 : Neuron
     {
         public string Description { get; } = "Generate Image Dall E using open AI";
         public string SampleJsonIn { get; set; } = "{\"apiKey\":\"string\",\"apiUrl\":\"string\",\"inputText\":\"string\",\"noOfImages\":\"int\",\"imageSize\":\"string\",\"savePath\":\"string\"}";

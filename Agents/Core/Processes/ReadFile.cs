@@ -3,7 +3,7 @@
     /// <summary>
     /// Read a text file on the local filesystem.
     /// </summary>
-    internal class ReadFile : Process
+    internal class ReadFile : Neuron
     {
         public string Description { get; } = "Read a text file on the local filesystem.";
         public string SampleJsonIn { get; } = "{\"fileName\":\"string\"}";

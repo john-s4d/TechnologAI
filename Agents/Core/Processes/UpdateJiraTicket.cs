@@ -49,7 +49,7 @@ namespace Technologai
     /// <summary>
     /// Update Jira Ticket
     /// </summary>
-    public class UpdateJiraTicket : Process
+    public class UpdateJiraTicket : Neuron
     {
         public string Description { get; } = "Update Jira Ticket By Id";
         public string SampleJsonIn { get; set; } = "{\"domain\":\"string\",\"issueID\":\"string\",\"username\":\"string\",\"password\":\"string\",\"editObject\":\"RootModel\"}";

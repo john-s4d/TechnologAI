@@ -21,7 +21,7 @@ namespace Technologai
     /// <summary>
     /// Get Jira Ticket by Id
     /// </summary>
-    public class GetJiraTicketById : Process
+    public class GetJiraTicketById : Neuron
     {
         public string Description { get; } = "Get Jira Ticket By Id";
         public string SampleJsonIn { get; set; } = "{\"domain\":\"string\",\"issueID\":\"string\",\"username\":\"string\",\"password\":\"string\"}";

@@ -34,7 +34,7 @@ namespace Technologai.Agents
 
                 var interact_with_user = await _agent.Create("interact_with_user", "Hello");
 
-                _agent.PublishWithCallback(interact_with_user, information_OnPublishedCallback);
+                await _agent.Publish(interact_with_user, information_OnPublishedCallback);
 
                 do { } while (_isStarted);
 

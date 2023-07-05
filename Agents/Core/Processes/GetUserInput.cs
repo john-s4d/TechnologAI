@@ -3,7 +3,7 @@
     /// <summary>
     /// Take a response from the user.
     /// </summary>
-    public class GetUserInput : Process
+    public class GetUserInput : Neuron
     {
         public string Description { get; set; } = "Receive a response from the user.";
         public string SampleJsonIn { get; set; } = string.Empty;

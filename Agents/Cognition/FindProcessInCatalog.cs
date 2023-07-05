@@ -1,6 +1,6 @@
 ﻿namespace Technologai
 {
-    internal class FindProcessInCatalog : Process
+    internal class FindProcessInCatalog : Neuron
     {
         /*
         Add(new Process("find_a_process_in_catalog",

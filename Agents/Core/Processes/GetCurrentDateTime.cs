@@ -3,7 +3,7 @@
     /// <summary>
     /// Get current datetime.
     /// </summary>
-    internal class GetCurrentDateTime : Process
+    internal class GetCurrentDateTime : Neuron
     {
         public string Description { get; } = "Get current datetime.";
         public string SampleJsonIn { get; } = "{\"returnDateTimeFormat\":\"string\", \"getUtcTime\":\"bool\"}";
