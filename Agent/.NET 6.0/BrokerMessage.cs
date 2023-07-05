@@ -8,7 +8,7 @@ namespace Technologai
     public enum AgentMessageType
     {
         HELLO,
-        PROCESS,
+        NEURON,
         INFORMATION,
         CONTEXT
     }
@@ -54,8 +54,8 @@ namespace Technologai
                             brokerMessage.MessageData = JsonSerializer.Deserialize<HelloMessage>(payload);
                             break;
                         case "PROCESS":
-                            brokerMessage.MessageType = AgentMessageType.PROCESS;
-                            brokerMessage.MessageData = JsonSerializer.Deserialize<Process>(payload);
+                            brokerMessage.MessageType = AgentMessageType.NEURON;
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<Neuron>(payload);
                             break;
                         case "INFORMATION":
                             brokerMessage.MessageType = AgentMessageType.INFORMATION;
@@ -74,8 +74,8 @@ namespace Technologai
             {
                 case AgentMessageType.HELLO:
                     return JsonSerializer.Serialize(MessageData as HelloMessage);
-                case AgentMessageType.PROCESS:
-                    return JsonSerializer.Serialize(MessageData as Process);
+                case AgentMessageType.NEURON:
+                    return JsonSerializer.Serialize(MessageData as Neuron);
                 case AgentMessageType.INFORMATION:
                     return JsonSerializer.Serialize(MessageData as Information);
                 default:

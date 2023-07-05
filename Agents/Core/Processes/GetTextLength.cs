@@ -3,7 +3,7 @@
     /// <summary>
     /// Get text length.
     /// </summary>
-    internal class GetTextLength : Process
+    internal class GetTextLength : Neuron
     {
         public string Description { get; } = "Get text length.";
         public string SampleJsonIn { get; } = "{\"text\":\"string\"}";

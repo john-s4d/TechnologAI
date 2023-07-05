@@ -5,7 +5,7 @@ namespace Technologai
     /// <summary>
     /// Generate Audio Voice
     /// </summary>
-    public class GenerateAudioVoice : Process
+    public class GenerateAudioVoice : Neuron
     {
         /*
         //Generate Audio Voice

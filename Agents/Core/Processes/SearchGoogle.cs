@@ -5,7 +5,7 @@ namespace Technologai
     /// <summary>
     /// Search Google
     /// </summary>
-    public class SearchGoogle : Process
+    public class SearchGoogle : Neuron
     {
         public string Description { get; } = "Search Google using serach query";
         public string SampleJsonIn { get; set; } = "{\"apikey\":\"string\",\"searchEngineID\":\"string\",\"searchQuery\":\"string\"}";

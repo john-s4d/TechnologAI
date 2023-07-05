@@ -1,6 +1,6 @@
 ﻿namespace Technologai.Agents
 {
-    internal class ReadLocalFile : Process
+    internal class ReadLocalFile : Neuron
     {
         public new string Description { get; } = "Read a text file on the local filesystem.";
         public new string SampleJsonIn { get; } = "{\"filename\":\"string\"}";

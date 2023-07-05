@@ -1,22 +1,20 @@
-﻿namespace Technologai.Agents
+﻿using Technologai;
+
+internal class DisplayLogMessage : Neuron
 {
-    internal class DisplayLogMessage : Process
+    internal event Action<string>? LogMessage;
+
+    public DisplayLogMessage()
     {
-        internal event Action<string>? LogMessage;
+        Id = "display_log_message";
+        Description = "Display a message on the output log screen.";
+        //DefaultState = ProcessState.EXECUTE;
+        //ExecuteStyle = ProcessStyle.ONCE;
+    }
 
-        public DisplayLogMessage()
-        {
-            Id = "display_log_message";
-            Description = "Display a message on the output log screen.";
-        }
-        public new ProcessState Assess(InformationAdapter information)
-        {
-            return string.IsNullOrEmpty(information.InputText) ? ProcessState.ASSESS : ProcessState.EXECUTE;
-        }
-
-        public new void Execute(InformationAdapter information)
-        {
-            LogMessage?.Invoke(information?.InputText ?? throw new ArgumentNullException(nameof(information.InputText)));
-        }
+    public override Task<object?> Spike(InformationAdapter information)
+    {
+        LogMessage?.Invoke(information?.InputText ?? string.Empty);
+        return Task.FromResult((object?)null);
     }
 }

@@ -1,14 +1,14 @@
 ﻿using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
-using Technologai_Second_Phase.Models.GetEmbeddingsModel;
+
 
 namespace Technologai
 {
     /// <summary>
     /// GetEmbeddings
     /// </summary>
-    public class GetEmbeddings : Process
+    public class GetEmbeddings : Neuron
     {
         /*
           //Get Embeddings
@@ -34,7 +34,7 @@ namespace Technologai
             var inputText = ((string)data["inputText"]);
             var embeddingsModel = ((string)data["embeddingsModel"]);
 
-            var requestData = new RequestDataModel()
+            var requestData = new EmbeddingsRequestDataModel()
             {
                 InputText = inputText,
                 EmbeddingsModel = embeddingsModel,

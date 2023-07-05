@@ -19,7 +19,7 @@ namespace Technologai
     /// <summary>
     /// Get Jira Tickets
     /// </summary>
-    public class GetJiraTickets : Process
+    public class GetJiraTickets : Neuron
     {
         public string Description { get; } = "Get Jira Tickets";
         public string SampleJsonIn { get; set; } = "{\"domain\":\"string\",\"username\":\"string\",\"password\":\"string\"}";

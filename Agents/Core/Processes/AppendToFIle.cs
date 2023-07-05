@@ -1,29 +1,29 @@
-﻿namespace Technologai
+﻿using Technologai;
+
+internal class AppendToFile : Neuron
 {
-    internal class AppendToFile : Process
+    public AppendToFile()
     {
-        public AppendToFile()
-        {   
-            Id = "append_to_file";
-            Description = "Append text to file in the local filesystem.";
-            InputKeys = new string[] { "filename", "content" };            
-        }
+        Id = "append_to_file";
+        Description = "Append text to file in the local filesystem.";
+        InputKeys = new string[] { "filename", "content" };
+    }
 
-        public static new ProcessState Assess(InformationAdapter information)
-        {   
-            return (information.InputData?["filename"] != null &&
-                    information.InputData?["content"] != null) ?
-                        ProcessState.EXECUTE :
-                        ProcessState.ASSESS;
-        }
+    public override Task<bool> Assess(InformationAdapter information)
+    {
+        return Task.FromResult(
+                information.InputData.ContainsKey("filename") &&
+                information.InputData.ContainsKey("content")
+        );          
+    }
 
-        public static new async Task Execute(InformationAdapter information)
+    public override async Task<object?> Spike(InformationAdapter information)
+    {
+        using (var writer = new StreamWriter(information.InputData?["filename"]
+                   ?? throw new ArgumentNullException("filename"), true))
         {
-            using (var writer = new StreamWriter(information?.InputData?["filename"] 
-                       ?? throw new ArgumentNullException("filename"), true))
-            {
-                await writer.WriteAsync(information?.InputData?["content"]);
-            }
+            await writer.WriteAsync(information.InputData?["content"]);
         }
+        return null;
     }
 }
