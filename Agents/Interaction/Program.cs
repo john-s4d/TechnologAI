@@ -23,12 +23,12 @@ namespace Technologai.Agents
 
                 _agent.StatusMessage += _agent_statusMessage;
 
-                _agent.Processes.Add(new GetUserInput());
-                _agent.Processes.Add(new InteractWithUser());
+                _agent.Neurons.Add(new GetUserInput());
+                _agent.Neurons.Add(new InteractWithUser());
 
                 var showUserOutput = new ShowUserOutput();
                 showUserOutput.OutputMessage += showUserOutput_OutputMessage;
-                _agent.Processes.Add(showUserOutput);
+                _agent.Neurons.Add(showUserOutput);
 
                 await _agent.Start();
 

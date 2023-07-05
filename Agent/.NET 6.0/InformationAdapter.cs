@@ -45,7 +45,7 @@
                 information.OutputText)
             {
                 _agent = agent,
-                _neuron = agent.Processes[information.ProcessId]
+                _neuron = agent.Neurons[information.ProcessId]
             };
             // TODO: Do we need to add this to the context?
         }
@@ -110,7 +110,7 @@
 
         public async Task<InformationAdapter> Spawn(string processId, string? input = null)
         {
-            var information = await Create(_agent, _agent.Processes[processId], input);
+            var information = await Create(_agent, _agent.Neurons[processId], input);
             _agent.Context.Spawn(information.Id, this.Id);
             information.WorkerId = _neuron.MemberId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {processId} | {information.Input}");

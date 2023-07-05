@@ -18,7 +18,7 @@ namespace Technologai.Agents
             _agent = new TechnologaiAgent(authUri, clientId, clientSecret, memberId);
             _agent.StatusMessage += _agent_StatusMessage;
 
-            _agent.Processes.Add(new AppendToFile());
+            _agent.Neurons.Add(new AppendToFile());
 
             Console.WriteLine("Loading...");
 
