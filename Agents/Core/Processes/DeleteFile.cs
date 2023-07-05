@@ -3,7 +3,7 @@
     /// <summary>
     /// Delete a file from the local filesystem.
     /// </summary>
-    public class DeleteFile : Process
+    public class DeleteFile : Neuron
     {
         public string Description { get; } = "Delete a text file on the local filesystem";
         public string SampleJsonIn { get; } = "{\"filename\":\"string\"}";

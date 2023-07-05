@@ -20,7 +20,7 @@ namespace Technologai
     /// <summary>
     /// Post Jira Comments
     /// </summary>
-    public class PostJiraComment : Process 
+    public class PostJiraComment : Neuron
     {
         public string Description { get; } = "Post Jira Comments";
         public string SampleJsonIn { get; set; } = "{\"domain\":\"string\",\"issueID\":\"string\",\"username\":\"string\",\"password\":\"string\",\"comment\":\"string\"}";

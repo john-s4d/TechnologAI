@@ -1,15 +1,15 @@
-﻿namespace Technologai
+﻿namespace Technologai.Agents.Core.Processes
 {
     /// <summary>
     /// Get chunk text.
     /// </summary>
-    internal class ChunkText : Process
+    internal class ChunkText : Neuron
     {
         public string Description { get; } = "Get chunk text.";
         public string SampleJsonIn { get; } = "{\"text\":\"string\", \"chunkSize\":\"string\"}";
         public string SampleJsonOut { get; } = "{\"content\":\"string[]\"}";
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public async Task<Dictionary<string, object>> Spike(Dictionary<string, object> data)
         {
             var response = new Dictionary<string, object>();
             // text from the user input

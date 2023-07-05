@@ -7,7 +7,7 @@ namespace Technologai
     
 /// <summary>
 /// TranscriptAudioVoiceFile
-public class TrascriptAudioVoiceFile : Process
+public class TrascriptAudioVoiceFile : Neuron
     {
 
         /*

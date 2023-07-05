@@ -3,7 +3,7 @@
     /// <summary>
     /// List files from a local directory.
     /// </summary>
-    internal class ListFiles : Process
+    internal class ListFiles : Neuron
     {
         public string Description { get; } = "List file from the local directory.";
         public string SampleJsonIn { get; } = "{\"directory\":\"string\",\"includeSubDirectories\":\"bool\",\"fileExtension\":\"string\"}"; // optional: includeSubDirectories, fileExtension

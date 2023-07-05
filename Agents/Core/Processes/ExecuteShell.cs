@@ -3,7 +3,7 @@
     /// <summary>
     /// Execute Shell
     /// </summary>
-    public class ExecuteShell : Process
+    public class ExecuteShell : Neuron
     {
         public string Description { get; } = "Execute Shell in the local system.";
         public string SampleJsonIn { get; set; } = "{\"fileName\":\"string\", \"arguments\":\"string\"}";

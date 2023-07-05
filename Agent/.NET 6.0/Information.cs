@@ -15,24 +15,29 @@ namespace Technologai
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
         public string WorkerId { get; set; }
+        public string ProcessId { get; internal set; }
         public InformationState InformationState { get; set; }        
-        public ProcessState ProcessState { get; set; }
+        //public ProcessState ProcessState { get; set; }
 
+        public Data Input { get; set; } 
+        public Data Output { get; set; }
+
+        /*
         private string? _inputText;
         private string? _outputText;
 
         private Dictionary<string, string>? _inputData;
         private Dictionary<string, string>? _outputData;
-
+        */
         public string? InputText
         {
             get
             {
-                return _inputData != null ? JsonSerializer.Serialize(_inputData) : _inputText; // TODO: Cache
+                return Input.Structured != null ? JsonSerializer.Serialize(Input.Structured) : Convert.ToString(Input.Unstructured); // TODO: Cache
             }
             set
             {
-                _inputText = _inputText == null ? value : throw new InvalidOperationException("Input is already set");
+                Input.Unstructured = Input.Unstructured == null ? value : throw new InvalidOperationException("Input is already set");
             }
         }
 
@@ -40,42 +45,39 @@ namespace Technologai
         {
             get
             {
-                return _outputData != null ? JsonSerializer.Serialize(_outputData) : _outputText; // TODO: Cache
+                return Output.Structured != null ? JsonSerializer.Serialize(Output.Structured) : Convert.ToString(Output.Unstructured); // TODO: Cache
             }
             set
             {
-                _outputText = _outputText == null ? value : throw new InvalidOperationException("Input is already set");
+                Output.Unstructured = Output.Unstructured == null ? value : throw new InvalidOperationException("Input is already set");
             }
         }
 
         [JsonIgnore]
         public Dictionary<string, string>? InputData
         {
-            get => _inputData;
-            set => _inputData = value;
+            get => Input.Structured;
+            set => Input.Structured = value;
         }
 
         [JsonIgnore]
         public Dictionary<string, string>? OutputData
         {
-            get => _outputData; 
-            set => _outputData = value;
+            get => Output.Structured; 
+            set => Output.Structured = value;
         }
-
-        public string ProcessId { get; internal set; }
-
 
         // TODO History, Signatures, ReadOnly fields ?        
 
         [JsonConstructor]
-        public Information(string id, string creatorId, string workerId, string processId, InformationState informationState, ProcessState processState, string? inputText = null, string? outputText = null)
+        public Information(string id, string creatorId, string workerId, string neuronId, InformationState informationState, string? inputText = null, string? outputText = null)
         {
             Id = id;
             CreatorId = creatorId;
             WorkerId = workerId;
-            ProcessId = processId;
+            ProcessId = neuronId;
             InformationState = informationState;
-            ProcessState = processState;
+            //ProcessState = processState;
             InputText = inputText;
             OutputText = outputText;
         }
@@ -88,7 +90,6 @@ namespace Technologai
                 creatorId,
                 processId,
                 InformationState.DRAFT,
-                ProcessState.ASSESS,
                 input,
                 null
                 );

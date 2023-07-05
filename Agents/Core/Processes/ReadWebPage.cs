@@ -5,7 +5,7 @@ namespace Technologai
     // <summary>
     /// Read Web Page
     /// </summary>
-    public class ReadWebPage : Process
+    public class ReadWebPage : Neuron
     {
         public string Description { get; } = "Read Web Page to scrape html.";
         public string SampleJsonIn { get; set; } = "{\"url\":\"string\", \"x-path\":\"string\"}";

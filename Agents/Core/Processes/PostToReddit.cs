@@ -7,7 +7,7 @@ namespace Technologai
     /// <summary>
     /// Post To Reddit
     /// </summary>
-    public class PostToReddit : Process
+    public class PostToReddit : Neuron
     {
 
         /*

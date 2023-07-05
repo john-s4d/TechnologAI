@@ -1,16 +1,16 @@
 ﻿using Technologai;
 
-public class GetUserInput : Process
+public class GetUserInput : Neuron
 {
     public GetUserInput()
     {
         Id = "get_user_input";
         Description = "Receive a text input from the user.";
-        DefaultState = ProcessState.EXECUTE;
+        //DefaultState = ProcessState.EXECUTE;
     }
     
-    public new async Task<string?> Execute(InformationAdapter information)
-    {
+    public override async Task<object?> Spike(InformationAdapter information)
+    {        
         return await Task.Run(() =>
         {
             return Console.ReadLine();

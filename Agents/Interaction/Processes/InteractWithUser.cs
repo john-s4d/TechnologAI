@@ -1,26 +1,18 @@
 ﻿using Technologai;
 
-public class InteractWithUser : Process
+public class InteractWithUser : Neuron
 {
     public InteractWithUser()
     {
         Id = "interact_with_user";
-        Description = "Provide the user with information and receive a response from the user.";        
-    }
-  
-    public override Task<ProcessState> Assess(InformationAdapter information)
-    {
-        return Task.FromResult(information.InputText != null ? ProcessState.EXECUTE : ProcessState.ASSESS);
+        Description = "Provide the user with information and receive a response from the user.";
+        //DefaultState = ProcessState.SPAWN;
     }
 
-    public override async Task<List<Information>?> Spawn(InformationAdapter information)
+    public override async Task<object?> Spike(InformationAdapter information)
     {
-        List<Information> result = new List<Information>
-        {
-            await information.Spawn("show_user_output", information.InputText),
-            await information.Spawn("get_user_input")
-        };
-
-        return result;
+        await (await information.Spawn("show_user_output", information.InputText)).Publish();
+        await (await information.Spawn("get_user_input")).Publish();
+        return null;        
     }
 }
