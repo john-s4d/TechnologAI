@@ -3,16 +3,36 @@
     public class InformationAdapter : Information
     {
         private TechnologaiAgent _agent;
-        private Process _process;
-        
+        private Neuron _neuron;
+
+        //private int SpawnCount { get; set; } = 0;
+        //private int ExecuteCount { get; set; } = 0;
+
         //public ContextAdapter Context => _agent.Context;
         //public TechnologaiAgent Agent => _agent;
         //public IProcess Process => _process;
 
-        private InformationAdapter(string id, string creatorId, string workerId, string processId, InformationState informationState, ProcessState processState, string? input = null, string? output = null)
-            : base(id, creatorId, workerId, processId, informationState, processState, input, output) { }
+        private InformationAdapter(
+            string id,
+            string creatorId,
+            string workerId,
+            string processId,
+            InformationState informationState,
+            string? input = null,
+            string? output = null
+        )
+            : base(
+                  id,
+                  creatorId,
+                  workerId,
+                  processId,
+                  informationState,
+                  input,
+                  output
+            )
+        { }
 
-        
+
         public static InformationAdapter Create(TechnologaiAgent agent, Information information)
         {
             return new InformationAdapter(
@@ -21,92 +41,85 @@
                 information.WorkerId,
                 information.ProcessId,
                 information.InformationState,
-                information.ProcessState,
                 information.InputText,
-                information.OutputText                                                                                                                         )
+                information.OutputText)
             {
                 _agent = agent,
-                _process = agent.Processes[information.ProcessId]
+                _neuron = agent.Processes[information.ProcessId]
             };
             // TODO: Do we need to add this to the context?
         }
 
-        public async static Task<InformationAdapter> Create(TechnologaiAgent agent, Process process, string? input = null)
-        {   
-            var information = Create(agent, Create(agent.Identity.Id, process.Id, input));
+        public async static Task<InformationAdapter> Create(TechnologaiAgent agent, Neuron neuron, string? input = null)
+        {
+            var information = Create(agent, Create(agent.Identity.Id, neuron.Id, input));
 
             agent.Context.Add(information);
 
-            information.WorkerId = process.MemberId ?? agent.Identity.Id;
+            information.WorkerId = neuron.MemberId ?? agent.Identity.Id;
 
-            await agent.SendStatusMessage($"{information.Id} Create> {process.Id} | {information.InputText}");
+            await agent.SendStatusMessage($"{information.Id} Create> {neuron.Id} | {information.InputText}");
             return information;
         }
 
-        protected internal async Task<ProcessState> Assess()
+        protected internal async Task<bool> Assess()
         {
             await _agent.SendStatusMessage($"{Id} Assess> {ProcessId} | {InputText} | {OutputText}");
 
-            this.ProcessState = await _process.Assess(this);
-
-            return this.ProcessState;
+            return await _neuron.Assess(this);
         }
 
-        protected internal async Task Execute()
+        protected internal async Task Spike()
         {
-            await _agent.SendStatusMessage($"{Id} Execute> {ProcessId} | {InputText} | {OutputText}");
+            await _agent.SendStatusMessage($"{Id} Spike> {ProcessId} | {InputText} | {OutputText}");
 
-            var output = await _process.Execute(this);
+            var output = await _neuron.Spike(this);
 
             if (output is string)
             {
                 OutputText = (string)output;
             }
 
-            if (output is Dictionary<string,string>)
+            if (output is Dictionary<string, string>)
             {
                 OutputData = (Dictionary<string, string>)output;
             }
 
-            InformationState = InformationState.CLOSED;
+            InformationState = InformationState.CLOSED;            
             WorkerId = CreatorId;
-
-            await Publish();
+            await Publish();           
         }
 
+        /*
         protected internal async Task Spawn()
         {
             await _agent.SendStatusMessage($"{Id} Spawn> {ProcessId} | {InputText} | {OutputText}");
 
-            var items = await _process.Spawn(this); // TODO: clunky
+            var spawnedInformation = await _process.Spawn(this);
 
-            if (items != null)
+            if (spawnedInformation != null)
             {
-                foreach (var item in items)
+                foreach (var information in spawnedInformation)
                 {
-                    await (Create(_agent, item).Publish());
+                    await Create(_agent, information).Publish(); // TODO: PERF It's probably slow to create both information and informationadapter.
                 }
             }
-        }
+            
+            ProcessState = ProcessState.ASSESS;
+        }*/
 
         public async Task<InformationAdapter> Spawn(string processId, string? input = null)
         {
-            //var information = Create(_agent, Create(agent.Identity.Id, process.Id, input));
             var information = await Create(_agent, _agent.Processes[processId], input);
             _agent.Context.Spawn(information.Id, this.Id);
-            information.WorkerId = _process.MemberId ?? _agent.Identity.Id;
+            information.WorkerId = _neuron.MemberId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {processId} | {information.Input}");
             return information;
         }
 
-        public async Task Publish()
+        public async Task Publish(TechnologaiAgent.OnPublished? onPublished = null)
         {
-            await _agent.Publish(this);
-        }
-
-        public void PublishWithCallback(TechnologaiAgent.OnPublished onPublished)
-        {
-            _agent.PublishWithCallback(this, onPublished);
+            await _agent.Publish(this, onPublished);            
         }
 
         public object? this[string key]

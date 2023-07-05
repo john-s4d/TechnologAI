@@ -1,4 +1,6 @@
 ﻿using MQTTnet.Client;
+using System.Diagnostics;
+using System.Security.Cryptography;
 
 namespace Technologai
 {
@@ -13,7 +15,7 @@ namespace Technologai
         public bool IsConnected => _mqtt.IsConnected;
 
         public ProcessCatalog Processes { get; private set; }
-        internal ContextAdapter Context { get; private set; }
+        internal Context Context { get; private set; }
 
         Dictionary<string, OnPublished> _publishCallbacks = new Dictionary<string, OnPublished>();
 
@@ -25,7 +27,7 @@ namespace Technologai
         {
             Identity = new Identity(authUri, clientId, clientSecret, memberId);
             Processes = new ProcessCatalog(Identity, this);
-            Context = new ContextAdapter(Identity);
+            Context = new Context(Identity);
 
             _mqtt = new MqttClient(Identity);
             _mqtt.MessageReceived += _mqtt_MessageReceived;
@@ -37,7 +39,17 @@ namespace Technologai
         {
             var brokerMessage = BrokerMessage.FromMqttArgs(args);
 
-            if (brokerMessage.MessageType == AgentMessageType.INFORMATION)
+            if (brokerMessage.MessageType == AgentMessageType.HELLO)
+            {
+                HelloMessage? hello = brokerMessage.MessageData as HelloMessage;
+
+                if (hello != null && hello.MemberId != Identity.Id)
+                {
+                    await Receive(hello);
+                }
+            }
+
+            else if (brokerMessage.MessageType == AgentMessageType.INFORMATION)
             {
                 Information? information = brokerMessage.MessageData as Information;
 
@@ -47,16 +59,65 @@ namespace Technologai
                 }
             }
 
-            else if (brokerMessage.MessageType == AgentMessageType.PROCESS)
+            else if (brokerMessage.MessageType == AgentMessageType.NEURON)
             {
-                IProcess? process = brokerMessage.MessageData as IProcess;
+                INeuron? neuron = brokerMessage.MessageData as INeuron;
 
-                if (process != null && process.MemberId != Identity.Id)
+                if (neuron != null && neuron.MemberId != Identity.Id)
                 {
-                    Processes.Add(process);
-                    await SendStatusMessage($"Received: {process.Id}");
+                    // TODO: Receive(process);
+                    Processes.Add(neuron);
+                    await SendStatusMessage($"Received process: {neuron.Id}");
                 }
             }
+        }
+
+        private async Task BroadcastHello()
+        {
+            await SendStatusMessage($"Sending hello.");
+
+            var brokerMessage = new BrokerMessage(Identity)
+            {
+                MessageType = AgentMessageType.HELLO,
+                MessageData = new HelloMessage() { MemberId = Identity.Id },
+                MemberId = "0"
+            };
+
+            string messageJson = brokerMessage.ConvertMessageDataToString();
+
+            await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
+        }
+
+        private async Task Receive(HelloMessage hello)
+        {
+            await SendStatusMessage($"Received hello: {hello.MemberId}");
+
+            if (hello != null && !string.IsNullOrEmpty(hello.MemberId)) {
+                
+                foreach(var neuron in Processes.Values)
+                {
+                    if (neuron.MemberId == Identity.Id)
+                    {
+                        await Send(neuron, hello.MemberId);
+                    }                    
+                }
+            }
+        }
+
+        public async Task Send(Neuron neuron, string memberId)
+        {
+            await SendStatusMessage($"Sending: {neuron.Id} to {memberId}");            
+
+            var brokerMessage = new BrokerMessage(Identity)
+            {
+                MessageType = AgentMessageType.NEURON,
+                MessageData = neuron,
+                MemberId = memberId
+            };
+
+            string messageJson = brokerMessage.ConvertMessageDataToString();
+
+            await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
         private async Task Receive(InformationAdapter information)
@@ -78,19 +139,18 @@ namespace Technologai
                     return;
                 }
                 information = InformationAdapter.Create(this, parentInformation);
-            }
-
-            // Closed, and this agent is not the creator
-            else if (information.InformationState == InformationState.CLOSED && information.CreatorId != Identity.Id)
-            {
-                // TODO: Review. Add to Context.
+                
+                // -> Fall through to next if condition
             }
 
             // Open, and this agent is assigned
-            else if (information.InformationState == InformationState.OPEN && information.WorkerId == Identity.Id)
+            if (information.InformationState == InformationState.OPEN && information.WorkerId == Identity.Id)
             {
                 //_active[information.ContextId] = information;
+                
+                // TODO: FIX THIS
 
+                /*
                 switch (information.ProcessState)
                 {
                     // TODO: Debounce
@@ -113,6 +173,13 @@ namespace Technologai
                         await information.Spawn();
                         break;
                 }
+                */
+            }
+
+            // Closed, and this agent is not the creator
+            if (information.InformationState == InformationState.CLOSED && information.CreatorId != Identity.Id)
+            {
+                // TODO: Review. Add to Context.
             }
         }
 
@@ -121,16 +188,21 @@ namespace Technologai
             //_active[information.ContextId] = information;  
             return await InformationAdapter.Create(this, Processes[processId], input);
         }
-
+        /*
         public async void PublishWithCallback(InformationAdapter information, OnPublished onPublished)
         {
-            _publishCallbacks.Add(information.Id, onPublished);
+            
             await Publish(information);
-        }
+        }*/
 
-        public async Task Publish(Information information)
+        public async Task Publish(Information information, OnPublished? onPublished = null)
         {
             SendStatusMessage($"{information.Id} Publish> {information.ProcessId} | {information.InputText} | {information.OutputText}");
+
+            if (onPublished != null)
+            {
+                _publishCallbacks.Add(information.Id, onPublished);
+            }
 
             // TODO: short circuit.
             /*
@@ -155,42 +227,11 @@ namespace Technologai
             var messageJson = brokerMessage.ConvertMessageDataToString();
 
             await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
-        }
-
-        public async Task BroadcastProcesses()
-        {
-            // await SendStatusMessage($"Broadcasting Processes");
-
-            foreach (var process in Processes.Values)
-            {
-                if (process.MemberId == Identity.Id || process.MemberId == null)
-                {
-                    await Broadcast(process);
-                }
-            }
-        }
-
-        public async Task Broadcast(Process process)
-        {
-            await SendStatusMessage($"Broadcasting: {process.Id}");
-
-            process.MemberId = Identity.Id;
-
-            var brokerMessage = new BrokerMessage(Identity)
-            {
-                MessageType = AgentMessageType.PROCESS,
-                MessageData = process,
-                MemberId = "0"
-            };
-
-            string messageJson = brokerMessage.ConvertMessageDataToString();
-
-            await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
-        }
+        }       
 
         internal async Task SendStatusMessage(string message)
         {
-            if (_mqtt.IsConnected && Processes.ContainsKey("display_log_message"))
+            if (_mqtt.IsConnected && Processes.ContainsKey("display_log_message") && Processes["display_log_message"].MemberId != null && Processes["display_log_message"].MemberId != Identity.Id)
             {
                 var information = await Create("display_log_message", message);
                 await information.Publish();
@@ -225,7 +266,7 @@ namespace Technologai
             await _mqtt.SubscribeAsync(Identity.SubscribeMemberMask);
             await SendStatusMessage($"Member Subscribed> {Identity.SubscribeMemberMask}");
 
-            await BroadcastProcesses();
+            await BroadcastHello();
         }
 
         public async Task Stop()

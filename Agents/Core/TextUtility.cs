@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Technologai.External.TestApp
+namespace Core
 {
     internal class TextUtility
     {
         public static string[] SplitText(string text, int maxLength = 3900)
         {
             List<string> result = new List<string>();
-            int start = 0;            
+            int start = 0;
             while (start < text.Length)
             {
                 int length = Math.Min(maxLength, text.Length - start);

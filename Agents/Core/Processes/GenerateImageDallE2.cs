@@ -7,7 +7,7 @@ namespace Technologai
     /// <summary>
     /// Generate Image DaLL E
     /// </summary>
-    public class GenerateImageDallE2 : Process
+    public class GenerateImageDallE2 : Neuron
     {
 
         /*

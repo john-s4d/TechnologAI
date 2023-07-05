@@ -1,6 +1,6 @@
 ﻿using Technologai;
 
-public class ShowUserOutput : Process
+public class ShowUserOutput : Neuron
 {   
     internal event Action<string>? OutputMessage;
 
@@ -8,14 +8,10 @@ public class ShowUserOutput : Process
     {
         Id = "show_user_output";
         Description = "Display a message on the output log screen.";
+        //DefaultState = ProcessState.EXECUTE;
     }   
-    
-    public override Task<ProcessState> Assess(InformationAdapter information)
-    {   
-        return information.InputText != null ? Task.FromResult(ProcessState.EXECUTE) : Task.FromResult(ProcessState.ASSESS);
-    }
 
-    public override Task<object?> Execute(InformationAdapter information)
+    public override Task<object?> Spike(InformationAdapter information)
     {   
         OutputMessage?.Invoke(information.InputText ?? string.Empty);
         return Task.FromResult((object?)null);

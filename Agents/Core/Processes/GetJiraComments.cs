@@ -19,7 +19,7 @@ namespace Technologai
     /// <summary>
     /// GetJiraComments
     /// </summary>
-    public class GetJiraComments : Process
+    public class GetJiraComments : Neuron
     {
         public string Domain { get; set; }
         public string IssueID { get; set; }

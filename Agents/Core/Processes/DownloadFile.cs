@@ -1,6 +1,6 @@
 ﻿using Technologai;
 
-public class DownloadFile : Process
+public class DownloadFile : Neuron
 {
     public string? LocalPath { get; set; }
 

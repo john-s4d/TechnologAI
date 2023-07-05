@@ -8,4 +8,8 @@
     <RootNamespace>Technologai.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Agent\.NET 6.0\Technologai.csproj" />
+  </ItemGroup>
+
 </Project>

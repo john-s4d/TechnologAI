@@ -16,6 +16,7 @@
 
             _monitor = new Monitor(authUri, clientId, clientSecret, memberId);
 
+            _monitor.Processes.Add(new DisplayLogMessage());
             _monitor.StatusMessage += _monitor_StatusMessage;
 
             Console.WriteLine("Loading...");

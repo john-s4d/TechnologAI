@@ -24,7 +24,7 @@ namespace Technologai
     /// Post To Twitter
     /// </summary>
     /// 
-    public class PostToTwitter : Process
+    public class PostToTwitter : Neuron
     {
         public string Description { get; } = "Post To Twitter";
         public string SampleJsonIn { get; set; } = "{\"ConsumerKey\":\"string\",\"ConsumerKeySecret\":\"string\",\"AccessToken\":\"string\",\"AccessTokenSecret\":\"string\",\"textToPost\":\"string\"}";
