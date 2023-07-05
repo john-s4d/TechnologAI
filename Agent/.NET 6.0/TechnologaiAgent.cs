@@ -14,7 +14,7 @@ namespace Technologai
 
         public bool IsConnected => _mqtt.IsConnected;
 
-        public NeuronCatalog Processes { get; private set; }
+        public NeuronCatalog Neurons { get; private set; }
         internal Context Context { get; private set; }
 
         Dictionary<string, OnPublished> _publishCallbacks = new Dictionary<string, OnPublished>();
@@ -26,7 +26,7 @@ namespace Technologai
         public TechnologaiAgent(string authUri, string clientId, string clientSecret, string memberId)
         {
             Identity = new Identity(authUri, clientId, clientSecret, memberId);
-            Processes = new NeuronCatalog(Identity, this);
+            Neurons = new NeuronCatalog(Identity, this);
             Context = new Context(Identity);
 
             _mqtt = new MqttClient(Identity);
@@ -66,7 +66,7 @@ namespace Technologai
                 if (neuron != null && neuron.MemberId != Identity.Id)
                 {
                     // TODO: Receive(process);
-                    Processes.Add(neuron);
+                    Neurons.Add(neuron);
                     await SendStatusMessage($"Received process: {neuron.Id}");
                 }
             }
@@ -94,7 +94,7 @@ namespace Technologai
 
             if (hello != null && !string.IsNullOrEmpty(hello.MemberId)) {
                 
-                foreach(var neuron in Processes.Values)
+                foreach(var neuron in Neurons.Values)
                 {
                     if (neuron.MemberId == Identity.Id)
                     {
@@ -186,7 +186,7 @@ namespace Technologai
         public async Task<InformationAdapter> Create(string processId, string? input = null)
         {
             //_active[information.ContextId] = information;  
-            return await InformationAdapter.Create(this, Processes[processId], input);
+            return await InformationAdapter.Create(this, Neurons[processId], input);
         }
         /*
         public async void PublishWithCallback(InformationAdapter information, OnPublished onPublished)
@@ -231,7 +231,7 @@ namespace Technologai
 
         internal async Task SendStatusMessage(string message)
         {
-            if (_mqtt.IsConnected && Processes.ContainsKey("display_log_message") && Processes["display_log_message"].MemberId != null && Processes["display_log_message"].MemberId != Identity.Id)
+            if (_mqtt.IsConnected && Neurons.ContainsKey("display_log_message") && Neurons["display_log_message"].MemberId != null && Neurons["display_log_message"].MemberId != Identity.Id)
             {
                 var information = await Create("display_log_message", message);
                 await information.Publish();
