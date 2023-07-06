@@ -50,7 +50,7 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         sudo apt-get install -y git
-        git clone -b main https://ikailo-bot:${{ secrets.GIT_TOKEN }}@github.com/ikailo/Helm-Charts.git
+        git clone -b main https://qasim-aziz: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@github.com/ikailo/Helm-Charts.git
         cd Helm-Charts/technologai
         git config user.email "actions@github.com"
         git config user.name "GitHub Actions"
@@ -139,6 +139,8 @@ jobs:
 
         affinity: {}
         EOF        
+        git config --global user.email "envoyfacilitation@outlook.com" #"${{ secrets.EMAIL }}"
+        git config --global user.name "qasim-aziz" #"${{ secrets.USER_NAME }}"
         git add .
         git commit -m "from pipeline $IMAGE_TAG"
         git push origin main
