@@ -34,7 +34,7 @@ jobs:
         ECR_REPOSITORY: ikailo-tech
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Agents/Api/Dockerfile
+        docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Api/Dockerfile
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
   patch-deployment:
     needs: [build-job]
@@ -56,7 +56,6 @@ jobs:
         rm -f dev-values.yaml
         cat <<EOF >> dev-values.yaml  
         replicaCount: 1
-
 
         image:
           repository: $ECR_REGISTRY/$ECR_REPOSITORY
@@ -136,7 +135,7 @@ jobs:
         tolerations: []
 
         affinity: {}
-        EOF        
+        EOF
         git config --global user.email "envoyfacilitation@outlook.com" #"${{ secrets.EMAIL }}"
         git config --global user.name "qasim-aziz" #"${{ secrets.USER_NAME }}"
         git add .
