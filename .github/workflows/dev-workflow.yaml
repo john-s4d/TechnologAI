@@ -50,7 +50,7 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         sudo apt-get install -y git
-        git clone -b main https://qasim-aziz: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@github.com/ikailo/Helm-Charts.git
+        git clone -b main https://qasim-aziz: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@github.com/ikailo/Helm-Charts.git
         cd Helm-Charts/technologai
         git config user.email "actions@github.com"
         git config user.name "GitHub Actions"
