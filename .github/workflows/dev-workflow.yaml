@@ -52,8 +52,6 @@ jobs:
         sudo apt-get install -y git
         git clone -b main https://qasim-aziz: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@github.com/ikailo/Helm-Charts.git
         cd Helm-Charts/technologai
-        git config user.email "actions@github.com"
-        git config user.name "GitHub Actions"
         git config credential.helper store
         rm -f dev-values.yaml
         cat <<EOF >> dev-values.yaml  
