@@ -50,15 +50,12 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         sudo apt-get install -y git
-        git clone -b main https://ikailo-bot:${{ secrets.GIT_TOKEN }}@github.com/ikailo/Helm-Charts.git
+        git clone -b main https://qasim-aziz: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@github.com/ikailo/Helm-Charts.git
         cd Helm-Charts/technologai
-        git config user.email "actions@github.com"
-        git config user.name "GitHub Actions"
         git config credential.helper store
         rm -f dev-values.yaml
         cat <<EOF >> dev-values.yaml  
         replicaCount: 1
-
 
         image:
           repository: $ECR_REGISTRY/$ECR_REPOSITORY
@@ -138,7 +135,9 @@ jobs:
         tolerations: []
 
         affinity: {}
-        EOF        
+        EOF
+        git config --global user.email "envoyfacilitation@outlook.com" #"${{ secrets.EMAIL }}"
+        git config --global user.name "qasim-aziz" #"${{ secrets.USER_NAME }}"
         git add .
         git commit -m "from pipeline $IMAGE_TAG"
         git push origin main
