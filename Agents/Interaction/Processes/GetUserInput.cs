@@ -9,11 +9,11 @@ public class GetUserInput : Neuron
         //DefaultState = ProcessState.EXECUTE;
     }
     
-    public override async Task<object?> Spike(InformationAdapter information)
+    public override async Task<Data?> Spike(InformationAdapter information)
     {        
         return await Task.Run(() =>
         {
-            return Console.ReadLine();
+            return new Data(Console.ReadLine() ?? string.Empty);
         });
     }
 }

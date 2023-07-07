@@ -28,7 +28,7 @@ namespace Technologai
         public void Add(InformationAdapter information)
         {
             _library[information.Id] = information;
-            //_abilities[information.ProcessId] = information.Process;
+            //_neurons[information.NeuronId] = information.Neuron;
         }
 
         public void Add(Information information)
@@ -70,19 +70,6 @@ namespace Technologai
             }
             return result;
         }
-        /*
-        public Dictionary<string, Information> MapByAbility(List<string> contextIds)
-        {
-            Dictionary<string, Information> result = new();
-
-            foreach (string contextId in contextIds)
-            {
-                var information = _library[contextId];
-                result.Add(information.ProcessId, information);
-            }
-            return result;
-        }*/
-
 
         public List<Information> GetForward(string reverseId)
         {
@@ -103,15 +90,15 @@ namespace Technologai
         public string Summarize(string contextId)
         {
             var currentInfo = _library[contextId];
-            string summary = $"{currentInfo.InputText} {currentInfo.ProcessId} {currentInfo.OutputText}\n";
+            string summary = $"{currentInfo.InputText} {currentInfo.NeuronId} {currentInfo.OutputText}\n";
 
             foreach (Information information in GetReverse(contextId))
             {
-                summary += $"{information.InputText} {information.ProcessId} {information.OutputText}\n"; // TODO: Process Description
+                summary += $"{information.InputText} {information.NeuronId} {information.OutputText}\n"; // TODO: Neuron Description
             }
             foreach (Information information in GetForward(contextId))
             {
-                summary += $"{information.InputText} {information.ProcessId} {information.OutputText} \n"; // TODO: Process Description
+                summary += $"{information.InputText} {information.NeuronId} {information.OutputText} \n"; // TODO: Neuron Description
             }
             return summary;
         }

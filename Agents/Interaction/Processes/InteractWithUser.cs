@@ -6,13 +6,22 @@ public class InteractWithUser : Neuron
     {
         Id = "interact_with_user";
         Description = "Provide the user with information and receive a response from the user.";
-        //DefaultState = ProcessState.SPAWN;
     }
 
-    public override async Task<object?> Spike(InformationAdapter information)
+    public override async Task<bool> Assess(InformationAdapter information)
     {
-        await (await information.Spawn("show_user_output", information.InputText)).Publish();
-        await (await information.Spawn("get_user_input")).Publish();
+        return true;
+    }
+
+    public override async Task<Data?> Spike(InformationAdapter information)
+    {        
+        //information.Spawn().Publish()
+        await (await information.Spawn("show_user_output", information.InputText)).Publish(ShowUserOutputCallback);        
         return null;        
+    }
+
+    private async void ShowUserOutputCallback(InformationAdapter information)
+    {
+        await(await information.Spawn("get_user_input")).Publish();
     }
 }

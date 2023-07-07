@@ -2,9 +2,11 @@
 {
     public class Data
     {
-        public string? Unstructured { get; set;  }
+        public string? Unstructured { get; set; }
         public Dictionary<string, string>? Structured { get; set; }
         public float[][]? Embeddings { get; set; }
+
+        public Data() { }
 
         public Data(string unstructured)
         {
