@@ -197,7 +197,7 @@ namespace Technologai
 
         public async Task Publish(Information information, OnPublished? onPublished = null)
         {
-            SendStatusMessage($"{information.Id} Publish> {information.ProcessId} | {information.InputText} | {information.OutputText}");
+            SendStatusMessage($"{information.Id} Publish> {information.NeuronId} | {information.InputText} | {information.OutputText}");
 
             if (onPublished != null)
             {

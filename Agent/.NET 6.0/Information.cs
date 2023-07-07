@@ -15,12 +15,14 @@ namespace Technologai
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
         public string WorkerId { get; set; }
-        public string ProcessId { get; internal set; }
-        public InformationState InformationState { get; set; }        
+        public string NeuronId { get; internal set; }
+        public InformationState InformationState { get; set; }
         //public ProcessState ProcessState { get; set; }
 
-        public Data Input { get; set; } 
-        public Data Output { get; set; }
+        [JsonIgnore]
+        public Data Input { get; set; } = new Data();
+        [JsonIgnore]
+        public Data Output { get; set; } = new Data();
 
         /*
         private string? _inputText;
@@ -75,20 +77,20 @@ namespace Technologai
             Id = id;
             CreatorId = creatorId;
             WorkerId = workerId;
-            ProcessId = neuronId;
+            NeuronId = neuronId;
             InformationState = informationState;
             //ProcessState = processState;
             InputText = inputText;
             OutputText = outputText;
         }
 
-        public static Information Create(string creatorId, string processId, string? input = null)
+        public static Information Create(string creatorId, string neuronId, string? input = null)
         {
             return new Information(
                 InformationId.Create(creatorId),
                 creatorId,
                 creatorId,
-                processId,
+                neuronId,
                 InformationState.DRAFT,
                 input,
                 null

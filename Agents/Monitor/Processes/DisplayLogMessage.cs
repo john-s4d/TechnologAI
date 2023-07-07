@@ -12,9 +12,9 @@ internal class DisplayLogMessage : Neuron
         //ExecuteStyle = ProcessStyle.ONCE;
     }
 
-    public override Task<object?> Spike(InformationAdapter information)
+    public override Task<Data?> Spike(InformationAdapter information)
     {
         LogMessage?.Invoke(information?.InputText ?? string.Empty);
-        return Task.FromResult((object?)null);
+        return Task.FromResult((Data?)null);
     }
 }

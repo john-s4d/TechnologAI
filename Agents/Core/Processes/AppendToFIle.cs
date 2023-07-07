@@ -17,7 +17,7 @@ internal class AppendToFile : Neuron
         );          
     }
 
-    public override async Task<object?> Spike(InformationAdapter information)
+    public override async Task<Data?> Spike(InformationAdapter information)
     {
         using (var writer = new StreamWriter(information.InputData?["filename"]
                    ?? throw new ArgumentNullException("filename"), true))

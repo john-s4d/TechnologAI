@@ -11,9 +11,9 @@ public class ShowUserOutput : Neuron
         //DefaultState = ProcessState.EXECUTE;
     }   
 
-    public override Task<object?> Spike(InformationAdapter information)
+    public override Task<Data?> Spike(InformationAdapter information)
     {   
         OutputMessage?.Invoke(information.InputText ?? string.Empty);
-        return Task.FromResult((object?)null);
+        return Task.FromResult((Data?)null);
     }
 }

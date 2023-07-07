@@ -32,22 +32,20 @@
             )
         { }
 
-
         public static InformationAdapter Create(TechnologaiAgent agent, Information information)
         {
             return new InformationAdapter(
                 information.Id,
                 information.CreatorId,
                 information.WorkerId,
-                information.ProcessId,
+                information.NeuronId,
                 information.InformationState,
                 information.InputText,
                 information.OutputText)
             {
                 _agent = agent,
-                _neuron = agent.Neurons[information.ProcessId]
+                _neuron = agent.Neurons[information.NeuronId]
             };
-            // TODO: Do we need to add this to the context?
         }
 
         public async static Task<InformationAdapter> Create(TechnologaiAgent agent, Neuron neuron, string? input = null)
@@ -64,49 +62,22 @@
 
         protected internal async Task<bool> Assess()
         {
-            await _agent.SendStatusMessage($"{Id} Assess> {ProcessId} | {InputText} | {OutputText}");
+            await _agent.SendStatusMessage($"{Id} Assess> {NeuronId} | {InputText} | {OutputText}");
 
             return await _neuron.Assess(this);
         }
 
         protected internal async Task Spike()
         {
-            await _agent.SendStatusMessage($"{Id} Spike> {ProcessId} | {InputText} | {OutputText}");
+            await _agent.SendStatusMessage($"{Id} Spike> {NeuronId} | {InputText} | {OutputText}");
 
-            var output = await _neuron.Spike(this);
-
-            if (output is string)
-            {
-                OutputText = (string)output;
-            }
-
-            if (output is Dictionary<string, string>)
-            {
-                OutputData = (Dictionary<string, string>)output;
-            }
+            Output = await _neuron.Spike(this) ?? Output;
 
             InformationState = InformationState.CLOSED;            
             WorkerId = CreatorId;
+
             await Publish();           
-        }
-
-        /*
-        protected internal async Task Spawn()
-        {
-            await _agent.SendStatusMessage($"{Id} Spawn> {ProcessId} | {InputText} | {OutputText}");
-
-            var spawnedInformation = await _process.Spawn(this);
-
-            if (spawnedInformation != null)
-            {
-                foreach (var information in spawnedInformation)
-                {
-                    await Create(_agent, information).Publish(); // TODO: PERF It's probably slow to create both information and informationadapter.
-                }
-            }
-            
-            ProcessState = ProcessState.ASSESS;
-        }*/
+        }       
 
         public async Task<InformationAdapter> Spawn(string processId, string? input = null)
         {
