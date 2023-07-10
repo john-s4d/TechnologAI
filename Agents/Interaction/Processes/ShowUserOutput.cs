@@ -8,8 +8,9 @@ public class ShowUserOutput : Neuron
     {
         Id = "show_user_output";
         Description = "Display a message on the output log screen.";
-        //DefaultState = ProcessState.EXECUTE;
-    }   
+    }
+
+    public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
 
     public override Task<Data?> Spike(InformationAdapter information)
     {   

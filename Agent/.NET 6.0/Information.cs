@@ -16,8 +16,8 @@ namespace Technologai
         public string CreatorId { get; private set; }
         public string WorkerId { get; set; }
         public string NeuronId { get; internal set; }
-        public InformationState InformationState { get; set; }
-        //public ProcessState ProcessState { get; set; }
+        public InformationState InformationState { get; set; }        
+        public NeuronState NeuronState { get; set; }
 
         [JsonIgnore]
         public Data Input { get; set; } = new Data();
@@ -72,14 +72,14 @@ namespace Technologai
         // TODO History, Signatures, ReadOnly fields ?        
 
         [JsonConstructor]
-        public Information(string id, string creatorId, string workerId, string neuronId, InformationState informationState, string? inputText = null, string? outputText = null)
+        public Information(string id, string creatorId, string workerId, string neuronId, InformationState informationState, NeuronState neuronState, string? inputText = null, string? outputText = null)
         {
             Id = id;
             CreatorId = creatorId;
             WorkerId = workerId;
             NeuronId = neuronId;
             InformationState = informationState;
-            //ProcessState = processState;
+            NeuronState = neuronState;
             InputText = inputText;
             OutputText = outputText;
         }
@@ -92,6 +92,7 @@ namespace Technologai
                 creatorId,
                 neuronId,
                 InformationState.DRAFT,
+                NeuronState.RESTING,
                 input,
                 null
                 );
