@@ -8,7 +8,7 @@ namespace Technologai
     {
         public event EventHandler<string>? StatusMessage;
 
-        public delegate void OnPublished(InformationAdapter information);
+        public delegate void PublishCallback(InformationAdapter information);
 
         public string? Name { get; private set; }
 
@@ -17,7 +17,7 @@ namespace Technologai
         public NeuronCatalog Neurons { get; private set; }
         internal Context Context { get; private set; }
 
-        Dictionary<string, OnPublished> _publishCallbacks = new Dictionary<string, OnPublished>();
+        private Dictionary<string, PublishCallback> _publishCallbacks = new Dictionary<string, PublishCallback>();
 
         private MqttClient _mqtt;
 
@@ -92,21 +92,22 @@ namespace Technologai
         {
             await SendStatusMessage($"Received hello: {hello.MemberId}");
 
-            if (hello != null && !string.IsNullOrEmpty(hello.MemberId)) {
-                
-                foreach(var neuron in Neurons.Values)
+            if (hello != null && !string.IsNullOrEmpty(hello.MemberId))
+            {
+
+                foreach (var neuron in Neurons.Values)
                 {
                     if (neuron.MemberId == Identity.Id)
                     {
                         await Send(neuron, hello.MemberId);
-                    }                    
+                    }
                 }
             }
         }
 
         public async Task Send(Neuron neuron, string memberId)
         {
-            await SendStatusMessage($"Sending: {neuron.Id} to {memberId}");            
+            await SendStatusMessage($"Sending: {neuron.Id} to {memberId}");
 
             var brokerMessage = new BrokerMessage(Identity)
             {
@@ -132,14 +133,20 @@ namespace Technologai
                 // Activate the calling information
                 var parentInformation = Context.GetCreator(information.Id);
 
+                // Invoke the callback.
+                if (_publishCallbacks.ContainsKey(information.Id))
+                {
+                    _publishCallbacks[information.Id]?.Invoke(information);
+                }
+
                 if (parentInformation == null)
                 {
-                    // This is a root request. End here and send a callback.                        
-                    _publishCallbacks[information.Id]?.Invoke(information);
+                    // This is a root request. 
                     return;
                 }
+
                 information = InformationAdapter.Create(this, parentInformation);
-                
+
                 // -> Fall through to next if condition
             }
 
@@ -147,33 +154,13 @@ namespace Technologai
             if (information.InformationState == InformationState.OPEN && information.WorkerId == Identity.Id)
             {
                 //_active[information.ContextId] = information;
-                
-                // TODO: FIX THIS
 
-                /*
-                switch (information.ProcessState)
+                // TODO: Debounce
+
+                if (await information.Assess())
                 {
-                    // TODO: Debounce
-
-                    case ProcessState.ASSESS:
-                        switch (await information.Assess())
-                        {
-                            case ProcessState.EXECUTE:
-                                await information.Execute();
-                                break;
-                            case ProcessState.SPAWN:
-                                await information.Spawn();
-                                break;
-                        }
-                        break;
-                    case ProcessState.EXECUTE:
-                        await information.Execute();
-                        break;
-                    case ProcessState.SPAWN:
-                        await information.Spawn();
-                        break;
+                    await information.Spike();
                 }
-                */
             }
 
             // Closed, and this agent is not the creator
@@ -188,35 +175,53 @@ namespace Technologai
             //_active[information.ContextId] = information;  
             return await InformationAdapter.Create(this, Neurons[processId], input);
         }
-        /*
-        public async void PublishWithCallback(InformationAdapter information, OnPublished onPublished)
-        {
-            
-            await Publish(information);
-        }*/
 
-        public async Task Publish(Information information, OnPublished? onPublished = null)
+        internal async Task<Data?> PublishAndWait(InformationAdapter information)
         {
-            SendStatusMessage($"{information.Id} Publish> {information.NeuronId} | {information.InputText} | {information.OutputText}");
+            bool callbackComplete = false;
 
-            if (onPublished != null)
+            Data? result = null;
+
+            await Publish(information, (returnedInformation) =>
+                {
+                    result = returnedInformation.Output;
+                    callbackComplete = true;
+                }
+            );
+
+            while (!callbackComplete)
             {
-                _publishCallbacks.Add(information.Id, onPublished);
+                await Task.Delay(100); // TODO: Reduce delay to something more responsive
             }
 
-            // TODO: short circuit.
-            /*
-            if (Identity.Id == information.OwnerId)
+            return result;
+        }
+
+        public async Task Publish(Information information, PublishCallback? publishCallback = null)
+        {
+            _ = SendStatusMessage($"{information.Id} Publish> {information.NeuronId} | {information.InputText} | {information.OutputText}");
+
+            if (publishCallback != null)
             {
-                Receive(information);
-                return Task.CompletedTask;
-            }*/
+                _publishCallbacks.Add(information.Id, publishCallback);
+            }
 
             if (information.InformationState == InformationState.DRAFT)
             {
                 information.InformationState = InformationState.OPEN;
             }
 
+            // Short circuit
+            if (Identity.Id == information.WorkerId)
+            {
+                new Task(async () =>
+                {
+                    await Receive(InformationAdapter.Create(this, information));
+                }).Start();
+                return;
+            }
+
+            // Long route
             var brokerMessage = new BrokerMessage(Identity)
             {
                 MessageType = AgentMessageType.INFORMATION,
@@ -227,7 +232,7 @@ namespace Technologai
             var messageJson = brokerMessage.ConvertMessageDataToString();
 
             await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
-        }       
+        }
 
         internal async Task SendStatusMessage(string message)
         {

@@ -6,14 +6,16 @@ public class GetUserInput : Neuron
     {
         Id = "get_user_input";
         Description = "Receive a text input from the user.";
-        //DefaultState = ProcessState.EXECUTE;
     }
-    
+
+    public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+
     public override async Task<Data?> Spike(InformationAdapter information)
     {        
         return await Task.Run(() =>
         {
-            return new Data(Console.ReadLine() ?? string.Empty);
+            var output = new Data(Console.ReadLine() ?? string.Empty);
+            return output;
         });
     }
 }

@@ -18,6 +18,7 @@
             string workerId,
             string processId,
             InformationState informationState,
+            NeuronState neuronState,
             string? input = null,
             string? output = null
         )
@@ -27,6 +28,7 @@
                   workerId,
                   processId,
                   informationState,
+                  neuronState,
                   input,
                   output
             )
@@ -40,6 +42,7 @@
                 information.WorkerId,
                 information.NeuronId,
                 information.InformationState,
+                information.NeuronState,
                 information.InputText,
                 information.OutputText)
             {
@@ -60,23 +63,61 @@
             return information;
         }
 
+        private bool _assessmentQueued = false;
+
+        // Assessments are debounced. Only one assessment can be queued at a time.
+
         protected internal async Task<bool> Assess()
         {
-            await _agent.SendStatusMessage($"{Id} Assess> {NeuronId} | {InputText} | {OutputText}");
+            if (NeuronState != NeuronState.RESTING && !_assessmentQueued)
+            {
+                _assessmentQueued = true;
 
-            return await _neuron.Assess(this);
+                while (NeuronState != NeuronState.RESTING)
+                {
+                    await Task.Delay(100);
+                }
+                
+                _assessmentQueued = false;
+            }
+
+            if (NeuronState == NeuronState.RESTING)
+            {
+                NeuronState = NeuronState.ASSESSING;
+
+                await _agent.SendStatusMessage($"{Id} Assess> {NeuronId} | {InputText} | {OutputText}");
+
+                var result = await _neuron.Assess(this);
+
+                NeuronState = NeuronState.RESTING;                
+
+                return result;
+            }
+
+            return false;            
         }
+
+        // Only one spike can be in progress at a time. We don't queue up another one
 
         protected internal async Task Spike()
         {
-            await _agent.SendStatusMessage($"{Id} Spike> {NeuronId} | {InputText} | {OutputText}");
+            // TODO: This isn't fully threadsafe. Should lock.
 
-            Output = await _neuron.Spike(this) ?? Output;
+            if (NeuronState == NeuronState.RESTING) 
+            {
+                NeuronState = NeuronState.SPIKING;
+                
+                await _agent.SendStatusMessage($"{Id} Spike> {NeuronId} | {InputText} | {OutputText}");
 
-            InformationState = InformationState.CLOSED;            
-            WorkerId = CreatorId;
+                Output = await _neuron.Spike(this) ?? Output;
 
-            await Publish();           
+                InformationState = InformationState.CLOSED;
+                WorkerId = CreatorId;
+
+                NeuronState = NeuronState.RESTING; // Always return to resting.
+
+                await Publish();
+            }
         }       
 
         public async Task<InformationAdapter> Spawn(string processId, string? input = null)
@@ -88,9 +129,14 @@
             return information;
         }
 
-        public async Task Publish(TechnologaiAgent.OnPublished? onPublished = null)
+        public async Task Publish(TechnologaiAgent.PublishCallback? publishCallback = null)
         {
-            await _agent.Publish(this, onPublished);            
+            await _agent.Publish(this, publishCallback);            
+        }
+
+        public async Task<Data?> PublishAndWait()
+        {
+            return await _agent.PublishAndWait(this);
         }
 
         public object? this[string key]

@@ -7,9 +7,7 @@ internal class DisplayLogMessage : Neuron
     public DisplayLogMessage()
     {
         Id = "display_log_message";
-        Description = "Display a message on the output log screen.";
-        //DefaultState = ProcessState.EXECUTE;
-        //ExecuteStyle = ProcessStyle.ONCE;
+        Description = "Display a message on the output log screen.";        
     }
 
     public override Task<Data?> Spike(InformationAdapter information)
