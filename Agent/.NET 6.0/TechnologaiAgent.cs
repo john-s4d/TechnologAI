@@ -7,21 +7,17 @@ namespace Technologai
     public class TechnologaiAgent
     {
         public event EventHandler<string>? StatusMessage;
-
         public delegate void PublishCallback(InformationAdapter information);
 
         public string? Name { get; private set; }
-
+        public NeuronCatalog Neurons { get; private set; }        
+        public Identity Identity { get; }
         public bool IsConnected => _mqtt.IsConnected;
-
-        public NeuronCatalog Neurons { get; private set; }
         internal Context Context { get; private set; }
 
         private Dictionary<string, PublishCallback> _publishCallbacks = new Dictionary<string, PublishCallback>();
-
         private MqttClient _mqtt;
-
-        public Identity Identity { get; }
+        private List<string> _localAgents = new List<string>();
 
         public TechnologaiAgent(string authUri, string clientId, string clientSecret, string memberId)
         {
@@ -39,13 +35,24 @@ namespace Technologai
         {
             var brokerMessage = BrokerMessage.FromMqttArgs(args);
 
-            if (brokerMessage.MessageType == AgentMessageType.HELLO)
+            if (brokerMessage.MessageType == AgentMessageType.INTRODUCTION)
             {
-                HelloMessage? hello = brokerMessage.MessageData as HelloMessage;
+                IntroductionMessage? introduction = brokerMessage.MessageData as IntroductionMessage;
 
-                if (hello != null && hello.MemberId != Identity.Id)
+                if (introduction != null && introduction.MemberId != Identity.Id)
                 {
-                    await Receive(hello);
+                    await Receive(introduction);
+                }
+            }
+
+            else if (brokerMessage.MessageType == AgentMessageType.NEURON)
+            {
+                INeuron? neuron = brokerMessage.MessageData as INeuron;
+
+                if (neuron != null && neuron.MemberId != Identity.Id)
+                {
+                    Neurons.Add(neuron);
+                    await SendStatusMessage($"Received process: {neuron.Id}");
                 }
             }
 
@@ -58,29 +65,17 @@ namespace Technologai
                     await Receive(InformationAdapter.Create(this, information));
                 }
             }
-
-            else if (brokerMessage.MessageType == AgentMessageType.NEURON)
-            {
-                INeuron? neuron = brokerMessage.MessageData as INeuron;
-
-                if (neuron != null && neuron.MemberId != Identity.Id)
-                {
-                    // TODO: Receive(process);
-                    Neurons.Add(neuron);
-                    await SendStatusMessage($"Received process: {neuron.Id}");
-                }
-            }
         }
 
-        private async Task BroadcastHello()
+        private async Task SendIntroduction(string toMemberId = "0")
         {
-            await SendStatusMessage($"Sending hello.");
+            await SendStatusMessage($"Broadcasting introduction");
 
             var brokerMessage = new BrokerMessage(Identity)
             {
-                MessageType = AgentMessageType.HELLO,
-                MessageData = new HelloMessage() { MemberId = Identity.Id },
-                MemberId = "0"
+                MessageType = AgentMessageType.INTRODUCTION,
+                MessageData = new IntroductionMessage() { MemberId = Identity.Id },
+                MemberId = toMemberId
             };
 
             string messageJson = brokerMessage.ConvertMessageDataToString();
@@ -88,18 +83,22 @@ namespace Technologai
             await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
-        private async Task Receive(HelloMessage hello)
+        private async Task Receive(IntroductionMessage introduction)
         {
-            await SendStatusMessage($"Received hello: {hello.MemberId}");
+            await SendStatusMessage($"Received introduction from: {introduction.MemberId}");
 
-            if (hello != null && !string.IsNullOrEmpty(hello.MemberId))
+            if (introduction != null && !string.IsNullOrEmpty(introduction.MemberId))
             {
+                if (!_localAgents.Contains(introduction.MemberId))
+                {
+                    _localAgents.Add(introduction.MemberId);
+                }
 
                 foreach (var neuron in Neurons.Values)
                 {
                     if (neuron.MemberId == Identity.Id)
                     {
-                        await Send(neuron, hello.MemberId);
+                        await Send(neuron, introduction.MemberId);
                     }
                 }
             }
@@ -199,7 +198,7 @@ namespace Technologai
 
         public async Task Publish(Information information, PublishCallback? publishCallback = null)
         {
-            _ = SendStatusMessage($"{information.Id} Publish> {information.NeuronId} | {information.InputText} | {information.OutputText}");
+            //_ = SendStatusMessage($"{information.Id} Publish> {information.NeuronId} | {information.InputText} | {information.OutputText}");
 
             if (publishCallback != null)
             {
@@ -271,7 +270,7 @@ namespace Technologai
             await _mqtt.SubscribeAsync(Identity.SubscribeMemberMask);
             await SendStatusMessage($"Member Subscribed> {Identity.SubscribeMemberMask}");
 
-            await BroadcastHello();
+            await SendIntroduction();
         }
 
         public async Task Stop()

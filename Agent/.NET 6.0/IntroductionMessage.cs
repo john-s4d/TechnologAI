@@ -1,6 +1,6 @@
 ﻿namespace Technologai
 {
-    public class HelloMessage
+    public class IntroductionMessage
     {
         public string? MemberId { get; set; }
     }

@@ -59,7 +59,7 @@
 
             information.WorkerId = neuron.MemberId ?? agent.Identity.Id;
 
-            await agent.SendStatusMessage($"{information.Id} Create> {neuron.Id} | {information.InputText}");
+            //await agent.SendStatusMessage($"{information.Id} Create> {neuron.Id} | {information.InputText}");
             return information;
         }
 
@@ -85,7 +85,7 @@
             {
                 NeuronState = NeuronState.ASSESSING;
 
-                await _agent.SendStatusMessage($"{Id} Assess> {NeuronId} | {InputText} | {OutputText}");
+                //await _agent.SendStatusMessage($"{Id} Assess> {NeuronId} | {InputText} | {OutputText}");
 
                 var result = await _neuron.Assess(this);
 
@@ -107,7 +107,7 @@
             {
                 NeuronState = NeuronState.SPIKING;
                 
-                await _agent.SendStatusMessage($"{Id} Spike> {NeuronId} | {InputText} | {OutputText}");
+                //await _agent.SendStatusMessage($"{Id} Spike> {NeuronId} | {InputText} | {OutputText}");
 
                 Output = await _neuron.Spike(this) ?? Output;
 

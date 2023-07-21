@@ -24,13 +24,6 @@ namespace Technologai
         [JsonIgnore]
         public Data Output { get; set; } = new Data();
 
-        /*
-        private string? _inputText;
-        private string? _outputText;
-
-        private Dictionary<string, string>? _inputData;
-        private Dictionary<string, string>? _outputData;
-        */
         public string? InputText
         {
             get

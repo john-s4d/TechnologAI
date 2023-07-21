@@ -6,6 +6,6 @@
         string? Description { get; }
         string[]? InputKeys { get; } // TODO: Case Sensitivity
         string[]? OutputKeys { get; } // TODO: Case Sensitivity
-        string? MemberId { get; }
+        string? MemberId { get; internal set; }
     }
 }
