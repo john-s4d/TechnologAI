@@ -20,21 +20,17 @@ namespace Technologai.Agents
                 Console.WriteLine("Loading...");
 
                 _agent = new TechnologaiAgent(authUri, clientId, clientSecret, memberId);
-
                 _agent.StatusMessage += _agent_statusMessage;
 
+                // Add local neurons
                 _agent.Neurons.Add(new GetUserInput());
                 _agent.Neurons.Add(new InteractWithUser());
-
-                var showUserOutput = new ShowUserOutput();
-                showUserOutput.OutputMessage += showUserOutput_OutputMessage;
-                _agent.Neurons.Add(showUserOutput);
+                _agent.Neurons.Add(new ShowUserOutput(showUserOutput_outputMessage));
 
                 await _agent.Start();
 
                 var interact_with_user = await _agent.Create("interact_with_user", "Hello");
-
-                await _agent.Publish(interact_with_user, information_OnPublishedCallback);
+                await interact_with_user.Publish(information_OnPublishedCallback);
 
                 do { } while (_isStarted);
 
@@ -46,21 +42,23 @@ namespace Technologai.Agents
             }
         }
 
-        private static void information_OnPublishedCallback(InformationAdapter information)
+        private static async void information_OnPublishedCallback(InformationAdapter information)
         {
             Console.WriteLine($"{_agent?.Name} Received> {information.OutputText}");
 
             if (information.OutputText?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
             {
                 _isStarted = false;
+                Console.WriteLine($"{_agent?.Name} Shutting Down");
             }
-            else
+            else if (_agent != null)
             {
-                //_agent?.PublishWithCallback(_agent.Create("interact_with_user", "Hello Again"), information_OnPublishedCallback);
+                var interact_with_user = await _agent.Create("interact_with_user", "Hello Again");
+                await interact_with_user.Publish(information_OnPublishedCallback);
             }
         }
 
-        private static void showUserOutput_OutputMessage(string message)
+        private static void showUserOutput_outputMessage(string message)
         {
             Console.WriteLine($"{_agent?.Name}> {message}");
         }

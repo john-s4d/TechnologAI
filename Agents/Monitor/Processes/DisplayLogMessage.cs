@@ -10,6 +10,8 @@ internal class DisplayLogMessage : Neuron
         Description = "Display a message on the output log screen.";        
     }
 
+    public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+
     public override Task<Data?> Spike(InformationAdapter information)
     {
         LogMessage?.Invoke(information?.InputText ?? string.Empty);

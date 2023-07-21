@@ -13,7 +13,7 @@ public class InteractWithUser : Neuron
     public override async Task<Data?> Spike(InformationAdapter information)
     {
         var showUserOutput = await information.Spawn("show_user_output", information.InputText);
-        await showUserOutput.Publish();
+        await showUserOutput.PublishAndWait();
 
         var getUserInput = await information.Spawn("get_user_input");
         return await getUserInput.PublishAndWait();
