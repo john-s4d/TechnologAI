@@ -15,9 +15,9 @@ namespace Technologai
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
         public string WorkerId { get; set; }
-        public string NeuronId { get; internal set; }
+        public string TemplateId { get; internal set; }
         public InformationState InformationState { get; set; }        
-        public NeuronState NeuronState { get; set; }
+        public TemplateState TemplateState { get; set; }
 
         [JsonIgnore]
         public Data Input { get; set; } = new Data();
@@ -65,27 +65,27 @@ namespace Technologai
         // TODO History, Signatures, ReadOnly fields ?        
 
         [JsonConstructor]
-        public Information(string id, string creatorId, string workerId, string neuronId, InformationState informationState, NeuronState neuronState, string? inputText = null, string? outputText = null)
+        public Information(string id, string creatorId, string workerId, string templateId, InformationState informationState, TemplateState templateState, string? inputText = null, string? outputText = null)
         {
             Id = id;
             CreatorId = creatorId;
             WorkerId = workerId;
-            NeuronId = neuronId;
+            TemplateId = templateId;
             InformationState = informationState;
-            NeuronState = neuronState;
+            TemplateState = templateState;
             InputText = inputText;
             OutputText = outputText;
         }
 
-        public static Information Create(string creatorId, string neuronId, string? input = null)
+        public static Information Create(string creatorId, string templateId, string? input = null)
         {
             return new Information(
                 InformationId.Create(creatorId),
                 creatorId,
                 creatorId,
-                neuronId,
+                templateId,
                 InformationState.DRAFT,
-                NeuronState.RESTING,
+                TemplateState.RESTING,
                 input,
                 null
                 );

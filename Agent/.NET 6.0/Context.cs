@@ -11,7 +11,7 @@ namespace Technologai
     public class Context //<T> : BidirectionalGraph<string?, T> where T : IEdge<string?>
     {
         private readonly Dictionary<string, Information> _library = new();
-        private readonly Dictionary<string, Neuron> _neurons = new();
+        private readonly Dictionary<string, Template> _templates = new();
         private readonly Dictionary<string, List<string>> _forwardContext = new();
         private readonly Dictionary<string, List<string>> _reverseContext = new();
         private readonly Dictionary<string, string> _lineage = new();
@@ -28,7 +28,7 @@ namespace Technologai
         public void Add(InformationAdapter information)
         {
             _library[information.Id] = information;
-            //_neurons[information.NeuronId] = information.Neuron;
+            //_templates[information.TemplateId] = information.Template;
         }
 
         public void Add(Information information)
@@ -90,15 +90,15 @@ namespace Technologai
         public string Summarize(string contextId)
         {
             var currentInfo = _library[contextId];
-            string summary = $"{currentInfo.InputText} {currentInfo.NeuronId} {currentInfo.OutputText}\n";
+            string summary = $"{currentInfo.InputText} {currentInfo.TemplateId} {currentInfo.OutputText}\n";
 
             foreach (Information information in GetReverse(contextId))
             {
-                summary += $"{information.InputText} {information.NeuronId} {information.OutputText}\n"; // TODO: Neuron Description
+                summary += $"{information.InputText} {information.TemplateId} {information.OutputText}\n"; // TODO: Template Description
             }
             foreach (Information information in GetForward(contextId))
             {
-                summary += $"{information.InputText} {information.NeuronId} {information.OutputText} \n"; // TODO: Neuron Description
+                summary += $"{information.InputText} {information.TemplateId} {information.OutputText} \n"; // TODO: Template Description
             }
             return summary;
         }

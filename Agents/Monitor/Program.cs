@@ -16,7 +16,7 @@
 
             _monitor = new Monitor(authUri, clientId, clientSecret, memberId);
 
-            _monitor.Neurons.Add(new DisplayLogMessage());
+            _monitor.Catalog.Add(new DisplayLogMessage());
             _monitor.StatusMessage += _monitor_StatusMessage;
 
             Console.WriteLine("Loading...");

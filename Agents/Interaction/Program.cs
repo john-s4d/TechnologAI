@@ -4,7 +4,7 @@ namespace Technologai.Agents
 {
     internal class Program
     {
-        private static TechnologaiAgent? _agent;
+        private static Agent? _agent;
         private static AppConfig _config = new AppConfig();
         private static bool _isStarted = true;
 
@@ -19,13 +19,13 @@ namespace Technologai.Agents
             {
                 Console.WriteLine("Loading...");
 
-                _agent = new TechnologaiAgent(authUri, clientId, clientSecret, memberId);
+                _agent = new Agent(authUri, clientId, clientSecret, memberId);
                 _agent.StatusMessage += _agent_statusMessage;
 
-                // Add local neurons
-                _agent.Neurons.Add(new GetUserInput());
-                _agent.Neurons.Add(new InteractWithUser());
-                _agent.Neurons.Add(new ShowUserOutput(showUserOutput_outputMessage));
+                // Add local templates
+                _agent.Catalog.Add(new GetUserInput());
+                _agent.Catalog.Add(new InteractWithUser());
+                _agent.Catalog.Add(new ShowUserOutput(showUserOutput_outputMessage));
 
                 await _agent.Start();
 
