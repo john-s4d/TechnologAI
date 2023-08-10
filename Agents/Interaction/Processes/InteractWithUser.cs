@@ -1,6 +1,6 @@
 ﻿using Technologai;
 
-public class InteractWithUser : Neuron
+public class InteractWithUser : Template
 {
     public InteractWithUser()
     {
@@ -10,7 +10,7 @@ public class InteractWithUser : Neuron
 
     public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
 
-    public override async Task<Data?> Spike(InformationAdapter information)
+    public override async Task<Data?> Process(InformationAdapter information)
     {
         var showUserOutput = await information.Spawn("show_user_output", information.InputText);
         await showUserOutput.PublishAndWait();

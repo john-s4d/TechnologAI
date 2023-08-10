@@ -1,6 +1,6 @@
 ﻿using Technologai;
 
-internal class DisplayLogMessage : Neuron
+internal class DisplayLogMessage : Template
 {
     internal event Action<string>? LogMessage;
 
@@ -12,7 +12,7 @@ internal class DisplayLogMessage : Neuron
 
     public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
 
-    public override Task<Data?> Spike(InformationAdapter information)
+    public override Task<Data?> Process(InformationAdapter information)
     {
         LogMessage?.Invoke(information?.InputText ?? string.Empty);
         return Task.FromResult((Data?)null);

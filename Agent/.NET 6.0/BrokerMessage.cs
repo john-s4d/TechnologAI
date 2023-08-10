@@ -8,7 +8,7 @@ namespace Technologai
     public enum AgentMessageType
     {
         INTRODUCTION,
-        NEURON,
+        TEMPLATE,
         INFORMATION,
         CONTEXT
     }
@@ -53,9 +53,9 @@ namespace Technologai
                             brokerMessage.MessageType = AgentMessageType.INTRODUCTION;
                             brokerMessage.MessageData = JsonSerializer.Deserialize<IntroductionMessage>(payload);
                             break;
-                        case "NEURON":
-                            brokerMessage.MessageType = AgentMessageType.NEURON;
-                            brokerMessage.MessageData = JsonSerializer.Deserialize<Neuron>(payload);
+                        case "TEMPLATE":
+                            brokerMessage.MessageType = AgentMessageType.TEMPLATE;
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<Template>(payload);
                             break;
                         case "INFORMATION":
                             brokerMessage.MessageType = AgentMessageType.INFORMATION;
@@ -74,8 +74,8 @@ namespace Technologai
             {
                 case AgentMessageType.INTRODUCTION:
                     return JsonSerializer.Serialize(MessageData as IntroductionMessage);
-                case AgentMessageType.NEURON:
-                    return JsonSerializer.Serialize(MessageData as Neuron);
+                case AgentMessageType.TEMPLATE:
+                    return JsonSerializer.Serialize(MessageData as Template);
                 case AgentMessageType.INFORMATION:
                     return JsonSerializer.Serialize(MessageData as Information);
                 default:

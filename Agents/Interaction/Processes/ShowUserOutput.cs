@@ -1,6 +1,6 @@
 ﻿using Technologai;
 
-public class ShowUserOutput : Neuron
+public class ShowUserOutput : Template
 {   
     internal event Action<string>? OutputMessage;
 
@@ -13,7 +13,7 @@ public class ShowUserOutput : Neuron
 
     public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
 
-    public override Task<Data?> Spike(InformationAdapter information)
+    public override Task<Data?> Process(InformationAdapter information)
     {   
         OutputMessage?.Invoke(information.InputText ?? string.Empty);
         return Task.FromResult((Data?)null);

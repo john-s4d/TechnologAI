@@ -8,7 +8,7 @@ namespace Technologai
     /// <summary>
     /// GetEmbeddings
     /// </summary>
-    public class GetEmbeddings : Neuron
+    public class GetEmbeddings : Template
     {
         /*
           //Get Embeddings

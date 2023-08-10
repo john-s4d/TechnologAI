@@ -1,6 +1,6 @@
 ﻿using Technologai;
 
-public class GetUserInput : Neuron
+public class GetUserInput : Template
 {
     public GetUserInput()
     {
@@ -10,7 +10,7 @@ public class GetUserInput : Neuron
 
     public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
 
-    public override async Task<Data?> Spike(InformationAdapter information)
+    public override async Task<Data?> Process(InformationAdapter information)
     {        
         return await Task.Run(() =>
         {
