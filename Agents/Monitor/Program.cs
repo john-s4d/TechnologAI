@@ -2,8 +2,7 @@
 {
     internal class Program
     {
-        private static Monitor? _monitor
-            ;
+        private static Agent? _agent;
 
         private static AppConfig _config = new AppConfig();
 
@@ -14,44 +13,30 @@
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
 
-            _monitor = new Monitor(authUri, clientId, clientSecret, memberId);
+            _agent = new Agent(authUri, clientId, clientSecret, memberId);
+            _agent.StatusMessage += _monitor_StatusMessage;
 
-            _monitor.Catalog.Add(new DisplayLogMessage());
-            _monitor.StatusMessage += _monitor_StatusMessage;
+            DisplayLogMessage displayLogMessage = new DisplayLogMessage();
+            displayLogMessage.LogMessage += DisplayLogMessage_LogMessage;
+            _agent.Catalog.Add(displayLogMessage);            
 
             Console.WriteLine("Loading...");
 
-            await _monitor.Start();
+            await _agent.Start();
 
-            await Program.Run();
-            await _monitor.Stop();
+            do { await Task.Delay(10);  } while (true);
+
+            await _agent.Stop();
+        }
+
+        private static void DisplayLogMessage_LogMessage(object? sender, string message)
+        {
+            Console.WriteLine($"{message}");
         }
 
         private static void _monitor_StatusMessage(object? sender, string message)        {
 
-            Console.WriteLine($"{_monitor?.Name ?? "Monitor.Local"} | {message}");            
+            Console.WriteLine($"{(_agent?.Name ?? "Monitor.Local").PadRight(21)} | {message}");            
         }
-
-        private async static Task Run()
-        {
-            Console.WriteLine($"{_monitor?.Name} | Started");
-
-            do
-            {
-                //string value = await Task.Run(() =>
-                //{
-                //    return Console.ReadLine() ?? "";
-                //});
-
-                //if (value.Equals("quit", StringComparison.OrdinalIgnoreCase)) { break; }
-                                
-            }
-            while (true);
-
-        }
-
     }
-
-
-
 }

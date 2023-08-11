@@ -1,6 +1,6 @@
 ﻿namespace Technologai
 {
-    public class Catalog : Dictionary<string, Template>
+    public class Catalog : Dictionary<string, ITemplate>
     {
         private Identity _identity;
         private Agent _agent;
@@ -11,7 +11,7 @@
             _agent = agent;
         }
 
-        public void Add(Template template)
+        public void Add(ITemplate template)
         {
             if (!string.IsNullOrEmpty(template.Id)) // TODO: clustered embeddings for fuzzy lookup
             {

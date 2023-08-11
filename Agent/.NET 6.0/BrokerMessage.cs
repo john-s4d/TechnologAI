@@ -7,10 +7,10 @@ namespace Technologai
 {
     public enum AgentMessageType
     {
-        INTRODUCTION,
+        PULSE,
         TEMPLATE,
         INFORMATION,
-        CONTEXT
+        //CONTEXT
     }
 
     public class BrokerMessage
@@ -49,9 +49,9 @@ namespace Technologai
                 {   
                     switch (property.Value)
                     {
-                        case "INTRODUCTION":
-                            brokerMessage.MessageType = AgentMessageType.INTRODUCTION;
-                            brokerMessage.MessageData = JsonSerializer.Deserialize<IntroductionMessage>(payload);
+                        case "PULSE":
+                            brokerMessage.MessageType = AgentMessageType.PULSE;
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<Pulse>(payload);
                             break;
                         case "TEMPLATE":
                             brokerMessage.MessageType = AgentMessageType.TEMPLATE;
@@ -72,8 +72,8 @@ namespace Technologai
         {
             switch (MessageType)
             {
-                case AgentMessageType.INTRODUCTION:
-                    return JsonSerializer.Serialize(MessageData as IntroductionMessage);
+                case AgentMessageType.PULSE:
+                    return JsonSerializer.Serialize(MessageData as Pulse);
                 case AgentMessageType.TEMPLATE:
                     return JsonSerializer.Serialize(MessageData as Template);
                 case AgentMessageType.INFORMATION:

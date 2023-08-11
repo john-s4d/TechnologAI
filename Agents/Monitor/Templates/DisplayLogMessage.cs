@@ -1,12 +1,12 @@
 ﻿using Technologai;
 
 internal class DisplayLogMessage : Template
-{
-    internal event Action<string>? LogMessage;
+{   
+    public event EventHandler<string>? LogMessage;
 
     public DisplayLogMessage()
     {
-        Id = "display_log_message";
+        Id = "core_display_log_message";
         Description = "Display a message on the output log screen.";        
     }
 
@@ -14,7 +14,7 @@ internal class DisplayLogMessage : Template
 
     public override Task<Data?> Process(InformationAdapter information)
     {
-        LogMessage?.Invoke(information?.InputText ?? string.Empty);
+        LogMessage?.Invoke(information.CreatorId, information?.InputText ?? string.Empty);
         return Task.FromResult((Data?)null);
     }
 }

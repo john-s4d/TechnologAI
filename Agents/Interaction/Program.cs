@@ -27,12 +27,14 @@ namespace Technologai.Agents
                 _agent.Catalog.Add(new InteractWithUser());
                 _agent.Catalog.Add(new ShowUserOutput(showUserOutput_outputMessage));
 
-                await _agent.Start();
+                await _agent.Start();                
 
                 var interact_with_user = await _agent.Create("interact_with_user", "Hello");
                 await interact_with_user.Publish(information_OnPublishedCallback);
+                                
+                do { await Task.Delay(10); } while (_isStarted);
 
-                do { } while (_isStarted);
+                await _agent.Stop();
 
             }
             catch (Exception ex)
@@ -44,7 +46,7 @@ namespace Technologai.Agents
 
         private static async void information_OnPublishedCallback(InformationAdapter information)
         {
-            Console.WriteLine($"{_agent?.Name} Received> {information.OutputText}");
+            Console.WriteLine($"{information.OutputText}");
 
             if (information.OutputText?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
             {
@@ -60,7 +62,7 @@ namespace Technologai.Agents
 
         private static void showUserOutput_outputMessage(string message)
         {
-            Console.WriteLine($"{_agent?.Name}> {message}");
+            Console.Write($"{message}> ");
         }
 
         private static void _agent_statusMessage(object? sender, string message)
