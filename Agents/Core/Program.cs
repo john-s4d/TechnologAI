@@ -1,4 +1,6 @@
 ﻿
+using Technologai.Agents.Core.Templates;
+
 namespace Technologai.Agents
 {
     internal class Program
@@ -19,6 +21,7 @@ namespace Technologai.Agents
             _agent.StatusMessage += _agent_StatusMessage;
 
             _agent.Catalog.Add(new AppendToFile());
+            _agent.Catalog.Add(new Generate32BitString());            
 
             Console.WriteLine("Loading...");
 
@@ -34,11 +37,5 @@ namespace Technologai.Agents
 
             Console.WriteLine($"{_agent?.Name ?? "Core.Local"} | {message}");
         }
-    }
-        /*
-        var prompt = $"Your response MUST be a compliant machine-readable JSON document.\r\n\r\n" +
-        $"{JsonConvert.SerializeObject(choose_ability)}" +
-        $"\r\n\r\nGiven the list of abilities provided, specify which one you would like to use to respond to the input. " +
-        $"Your response should consist of a single JSON object with the name of the selected ability. For example: {information.Template.SampleJsonOut}";
-        */
+    }       
 }

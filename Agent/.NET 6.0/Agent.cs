@@ -17,6 +17,8 @@ namespace Technologai
 
         private Dictionary<string, DateTime> _knownAgents = new Dictionary<string, DateTime>();
 
+        const string DISPLAY_LOG_MESSAGE = "core_display_log_message";
+
         public Agent(string authUri, string clientId, string clientSecret, string memberId)
         {
             Identity = new Identity(authUri, clientId, clientSecret, memberId);
@@ -198,7 +200,10 @@ namespace Technologai
 
         public async Task Publish(Information information, PublishCallback? publishCallback = null)
         {
-            //_ = SendStatusMessage($"{information.Id} Publish> {information.templateId} | {information.InputText} | {information.OutputText}");
+            if (information.TemplateId != DISPLAY_LOG_MESSAGE)
+            {
+                _ = SendStatusMessage($"{information.Id} Publish> {information.TemplateId} | {information.InputText} | {information.OutputText}");
+            }
 
             if (publishCallback != null)
             {
@@ -234,8 +239,7 @@ namespace Technologai
         }
 
         internal async Task SendStatusMessage(string message)
-        {
-            const string DISPLAY_LOG_MESSAGE = "core_display_log_message";
+        {   
 
             if (_mqtt.IsConnected && Catalog.ContainsKey(DISPLAY_LOG_MESSAGE) && Catalog[DISPLAY_LOG_MESSAGE].MemberId != null && Catalog[DISPLAY_LOG_MESSAGE].MemberId != Identity.Id)
             {
