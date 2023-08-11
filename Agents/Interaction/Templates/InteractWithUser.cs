@@ -16,6 +16,14 @@ public class InteractWithUser : Template
         await showUserOutput.PublishAndWait();
 
         var getUserInput = await information.Spawn("get_user_input");
-        return await getUserInput.PublishAndWait();
+        var userInput = await getUserInput.PublishAndWait();
+
+        if (userInput?.Unstructured == "32bit")
+        {
+            var create32bit = await information.Spawn("generate_32_bit_string");
+            return await create32bit.PublishAndWait();
+        }
+
+        return userInput;
     }   
 }

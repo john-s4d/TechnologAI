@@ -29,7 +29,7 @@ namespace Technologai.Agents
 
                 await _agent.Start();                
 
-                var interact_with_user = await _agent.Create("interact_with_user", "Hello");
+                var interact_with_user = await _agent.Create("interact_with_user", "Input");
                 await interact_with_user.Publish(information_OnPublishedCallback);
                                 
                 do { await Task.Delay(10); } while (_isStarted);
@@ -55,7 +55,7 @@ namespace Technologai.Agents
             }
             else if (_agent != null)
             {
-                var interact_with_user = await _agent.Create("interact_with_user", "Hello Again");
+                var interact_with_user = await _agent.Create("interact_with_user", "Input");
                 await interact_with_user.Publish(information_OnPublishedCallback);
             }
         }

@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 
 
-namespace Technologai
+namespace Technologai.Cognition.Templates
 {
     /// <summary>
     /// GetEmbeddings
@@ -29,10 +29,10 @@ namespace Technologai
 
         public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
         {
-            var apiKey = ((string)data["apiKey"]);
-            var apiUrl = ((string)data["apiUrl"]);
-            var inputText = ((string)data["inputText"]);
-            var embeddingsModel = ((string)data["embeddingsModel"]);
+            var apiKey = (string)data["apiKey"];
+            var apiUrl = (string)data["apiUrl"];
+            var inputText = (string)data["inputText"];
+            var embeddingsModel = (string)data["embeddingsModel"];
 
             var requestData = new EmbeddingsRequestDataModel()
             {
