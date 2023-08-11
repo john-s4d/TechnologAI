@@ -24,7 +24,8 @@ namespace Technologai.Agents
 
             await _agent.Start();
 
-            await Program.Run();
+            do { await Task.Delay(10); } while (true);
+
             await _agent.Stop();
         }
 
@@ -33,26 +34,6 @@ namespace Technologai.Agents
 
             Console.WriteLine($"{_agent?.Name ?? "Core.Local"} | {message}");
         }
-
-        private async static Task Run()
-        {
-            Console.WriteLine($"{_agent?.Name} | Started");
-
-            do
-            {
-                /*
-                string value = await Task.Run(() =>
-                {
-                    return Console.ReadLine() ?? "";
-                });*/
-
-                //if (value.Equals("quit", StringComparison.OrdinalIgnoreCase)) { break; }
-
-            }
-            while (true);
-
-        }
-
     }
         /*
         var prompt = $"Your response MUST be a compliant machine-readable JSON document.\r\n\r\n" +

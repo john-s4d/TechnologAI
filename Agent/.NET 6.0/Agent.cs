@@ -1,6 +1,4 @@
 ﻿using MQTTnet.Client;
-using System.Diagnostics;
-using System.Security.Cryptography;
 
 namespace Technologai
 {
@@ -10,14 +8,14 @@ namespace Technologai
         public delegate void PublishCallback(InformationAdapter information);
 
         public string? Name { get; private set; }
-        public Catalog Catalog { get; private set; }        
+        public Catalog Catalog { get; private set; }
         public Identity Identity { get; }
-        public bool IsConnected => _mqtt.IsConnected;
         internal Context Context { get; private set; }
 
         private Dictionary<string, PublishCallback> _publishCallbacks = new Dictionary<string, PublishCallback>();
         private MqttClient _mqtt;
-        private List<string> _localAgents = new List<string>();
+
+        private Dictionary<string, DateTime> _knownAgents = new Dictionary<string, DateTime>();
 
         public Agent(string authUri, string clientId, string clientSecret, string memberId)
         {
@@ -35,13 +33,13 @@ namespace Technologai
         {
             var brokerMessage = BrokerMessage.FromMqttArgs(args);
 
-            if (brokerMessage.MessageType == AgentMessageType.INTRODUCTION)
+            if (brokerMessage.MessageType == AgentMessageType.PULSE)
             {
-                IntroductionMessage? introduction = brokerMessage.MessageData as IntroductionMessage;
+                Pulse? pulse = brokerMessage.MessageData as Pulse;
 
-                if (introduction != null && introduction.MemberId != Identity.Id)
+                if (pulse != null && pulse.MemberId != Identity.Id)
                 {
-                    await Receive(introduction);
+                    await Receive(pulse);
                 }
             }
 
@@ -51,8 +49,8 @@ namespace Technologai
 
                 if (template != null && template.MemberId != Identity.Id)
                 {
+                    await SendStatusMessage($"{template.MemberId} {template.Id} template receive");
                     Catalog.Add(template);
-                    await SendStatusMessage($"Received template: {template.Id}");
                 }
             }
 
@@ -67,15 +65,15 @@ namespace Technologai
             }
         }
 
-        private async Task SendIntroduction(string toMemberId = "0")
+        private async Task SendPulse(string memberId = "0")
         {
-            await SendStatusMessage($"Broadcasting introduction");
+            await SendStatusMessage($"{memberId} pulse send");
 
             var brokerMessage = new BrokerMessage(Identity)
             {
-                MessageType = AgentMessageType.INTRODUCTION,
-                MessageData = new IntroductionMessage() { MemberId = Identity.Id },
-                MemberId = toMemberId
+                MessageType = AgentMessageType.PULSE,
+                MessageData = new Pulse() { MemberId = Identity.Id },
+                MemberId = memberId
             };
 
             string messageJson = brokerMessage.ConvertMessageDataToString();
@@ -83,30 +81,32 @@ namespace Technologai
             await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
-        private async Task Receive(IntroductionMessage introduction)
+        private async Task Receive(Pulse pulse)
         {
-            await SendStatusMessage($"Received introduction from: {introduction.MemberId}");
+            await SendStatusMessage($"{pulse.MemberId} pulse receive");
 
-            if (introduction != null && !string.IsNullOrEmpty(introduction.MemberId))
+            if (pulse != null && !string.IsNullOrEmpty(pulse.MemberId))
             {
-                if (!_localAgents.Contains(introduction.MemberId))
+                if (!_knownAgents.ContainsKey(pulse.MemberId))
                 {
-                    _localAgents.Add(introduction.MemberId);
+                    await SendPulse(pulse.MemberId);
                 }
+
+                _knownAgents[pulse.MemberId] = DateTime.UtcNow;
 
                 foreach (var template in Catalog.Values)
                 {
                     if (template.MemberId == Identity.Id)
                     {
-                        await Send(template, introduction.MemberId);
+                        await Send(template, pulse.MemberId);
                     }
                 }
             }
         }
 
-        public async Task Send(Template template, string memberId)
+        public async Task Send(ITemplate template, string memberId)
         {
-            await SendStatusMessage($"Sending: {template.Id} to {memberId}");
+            await SendStatusMessage($"{memberId} {template.Id} template send");
 
             var brokerMessage = new BrokerMessage(Identity)
             {
@@ -172,7 +172,7 @@ namespace Technologai
         public async Task<InformationAdapter> Create(string templateId, string? input = null)
         {
             //_active[information.ContextId] = information;  
-            return await InformationAdapter.Create(this, Catalog[templateId], input);
+            return await InformationAdapter.Create(this, (Template)Catalog[templateId], input);
         }
 
         internal async Task<Data?> PublishAndWait(InformationAdapter information)
@@ -190,7 +190,7 @@ namespace Technologai
 
             while (!callbackComplete)
             {
-                await Task.Delay(100); // TODO: Reduce delay to something more responsive
+                await Task.Delay(10); 
             }
 
             return result;
@@ -235,9 +235,11 @@ namespace Technologai
 
         internal async Task SendStatusMessage(string message)
         {
-            if (_mqtt.IsConnected && Catalog.ContainsKey("display_log_message") && Catalog["display_log_message"].MemberId != null && Catalog["display_log_message"].MemberId != Identity.Id)
+            const string DISPLAY_LOG_MESSAGE = "core_display_log_message";
+
+            if (_mqtt.IsConnected && Catalog.ContainsKey(DISPLAY_LOG_MESSAGE) && Catalog[DISPLAY_LOG_MESSAGE].MemberId != null && Catalog[DISPLAY_LOG_MESSAGE].MemberId != Identity.Id)
             {
-                var information = await Create("display_log_message", message);
+                var information = await Create(DISPLAY_LOG_MESSAGE, $"{Name?.PadRight(21)} | {message}");
                 await information.Publish();
             }
             else
@@ -264,13 +266,15 @@ namespace Technologai
             await _mqtt.ConnectAsync();
             await SendStatusMessage($"Connected");
 
-            await _mqtt.SubscribeAsync(Identity.SubscribeAgencyMask);
-            await SendStatusMessage($"Agency Subscribed> {Identity.SubscribeAgencyMask}");
-
             await _mqtt.SubscribeAsync(Identity.SubscribeMemberMask);
-            await SendStatusMessage($"Member Subscribed> {Identity.SubscribeMemberMask}");
+            await SendStatusMessage($"Subscribed {Identity.SubscribeMemberMask}");
 
-            await SendIntroduction();
+            await _mqtt.SubscribeAsync(Identity.SubscribeAgencyMask);
+            await SendStatusMessage($"Subscribed {Identity.SubscribeAgencyMask}");
+
+            await SendPulse();
+
+            await Task.Delay(5000); // Wait here for a bit to sync up Templates
         }
 
         public async Task Stop()

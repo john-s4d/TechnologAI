@@ -1,15 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Technologai
+﻿namespace Technologai
 {
-    internal class Embedding
+    public class Embedding : List<float[]>
     {
         public string ModelId { get; set; }
-        public int Dimensions { get; set; }
-        public float[] Vector { get; set; }
+
+        public Embedding(string modelId)
+        {
+            ModelId = modelId;
+        }
+
+        public Embedding(string modelId, IEnumerable<float[]> vectors) 
+            : base(vectors)
+        {
+            ModelId = modelId;
+        }        
     }
 }

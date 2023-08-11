@@ -47,7 +47,7 @@
                 information.OutputText)
             {
                 _agent = agent,
-                _template = agent.Catalog[information.TemplateId]
+                _template = (Template)agent.Catalog[information.TemplateId]
             };
         }
 
@@ -122,7 +122,7 @@
 
         public async Task<InformationAdapter> Spawn(string templateId, string? input = null)
         {
-            var information = await Create(_agent, _agent.Catalog[templateId], input);
+            var information = await Create(_agent, (Template)_agent.Catalog[templateId], input);
             _agent.Context.Spawn(information.Id, this.Id);
             information.WorkerId = _template.MemberId ?? _agent.Identity.Id;
             //_agent.SendStatusMessage($"{information.Id} Spawn> {templateId} | {information.Input}");
