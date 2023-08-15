@@ -14,7 +14,7 @@ internal class DisplayLogMessage : Template
 
     public override Task<Data?> Process(InformationAdapter information)
     {
-        LogMessage?.Invoke(information.CreatorId, information.Input.Raw ?? string.Empty);
+        LogMessage?.Invoke(information.CreatorId, information?.Input?.Raw ?? string.Empty);
         return Task.FromResult((Data?)null);
     }
 }

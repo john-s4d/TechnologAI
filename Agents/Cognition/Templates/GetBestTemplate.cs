@@ -25,7 +25,17 @@
                 templateId = "respond_bar";
             }
 
-            return Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Id", templateId } }));
+            // TODO: SECURITY - Only do this in debug mode
+            if (information.Input?.Raw?.StartsWith("Template: ") ?? false)
+            {
+                string[] parts = information.Input?.Raw?.Split(" ") ?? new string[] { };
+
+                templateId = information.Input?.Raw?.Substring(10) ?? templateId;
+
+                // TODO: How to pass Data when testing specific templates?
+            }
+
+            return Task.FromResult((Data?)new Data(new Dictionary<string, Data> { { "Id", templateId } }));
         }
     }
 }

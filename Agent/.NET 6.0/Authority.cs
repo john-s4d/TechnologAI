@@ -11,6 +11,7 @@
         public Authority(string authUri)
         {
             // TODO: Connect to Discovery Endpoint and get the correct values
+
             if (authUri != "https://auth.technologai.com") { throw new NotImplementedException(); }
 
             this.AuthUri = authUri;            

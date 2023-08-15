@@ -15,7 +15,7 @@ public class ShowUserOutput : Template
 
     public override Task<Data?> Process(InformationAdapter information)
     {   
-        OutputMessage?.Invoke(information.Input.Raw ?? string.Empty);
+        OutputMessage?.Invoke(information?.Input?.Raw ?? string.Empty);
         return Task.FromResult((Data?)null);
     }
 }

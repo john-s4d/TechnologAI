@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace Technologai
 {
@@ -26,7 +25,8 @@ namespace Technologai
         // TODO History, Signatures, ReadOnly fields ?        
 
         [JsonConstructor]
-        public Information(string id, string creatorId, string workerId, string templateId, InformationState informationState, TemplateState templateState, Data? input = null, Data? output = null)
+        public Information(string id, string creatorId, string workerId, string templateId, InformationState informationState, 
+                            TemplateState templateState, Data? input = null, Data? output = null)
         {
             Id = id;
             CreatorId = creatorId;

@@ -70,9 +70,9 @@ namespace Technologai
         // Raw data is just a string
         public string? Raw { get; }
 
-        // Structured data is key/value pairs
-        [JsonIgnore]
-        public Dictionary<string, string>? Structured { get; }
+        // Structured data is key/value pairs        
+        public Dictionary<string, Data>? Structured { get; }
+
         /*
         // Embeddings data is model-specific vector sets
         public Dictionary<string, Embedding>? Embeddings { get; }
@@ -85,11 +85,11 @@ namespace Technologai
 
             if (dataFormat == DataFormat.STRUCTURED)
             {   
-                Structured = raw == null ? new Dictionary<string, string>() : JsonSerializer.Deserialize<Dictionary<string, string>>(raw);
+                Structured = raw == null ? new Dictionary<string, Data>() : JsonSerializer.Deserialize<Dictionary<string, Data>>(raw);
             }
         }
 
-        public Data(Dictionary<string, string> structured)
+        public Data(Dictionary<string, Data> structured)
         {
             Format = DataFormat.STRUCTURED;
             Structured = structured;
@@ -112,7 +112,7 @@ namespace Technologai
 
         public static implicit operator Data(string? raw) => new Data(raw);
 
-        public static implicit operator Data(Dictionary<string, string> structured) => new Data(structured);
+        public static implicit operator Data(Dictionary<string, Data> structured) => new Data(structured);
 
         //public static implicit operator Data(Embedding embedding) => new Data(embedding);
 
@@ -120,6 +120,6 @@ namespace Technologai
 
         //public static implicit operator Dictionary<string, Embedding>?(Data data) => data.Embeddings;
 
-        public static implicit operator Dictionary<string,string>?(Data data) => data.Structured;
+        public static implicit operator Dictionary<string,Data>?(Data data) => data.Structured;
     }
 }
