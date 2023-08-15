@@ -90,15 +90,15 @@ namespace Technologai
         public string Summarize(string contextId)
         {
             var currentInfo = _library[contextId];
-            string summary = $"{currentInfo.InputText} {currentInfo.TemplateId} {currentInfo.OutputText}\n";
+            string summary = $"{currentInfo.Input} {currentInfo.TemplateId} {currentInfo.Output}\n";
 
             foreach (Information information in GetReverse(contextId))
             {
-                summary += $"{information.InputText} {information.TemplateId} {information.OutputText}\n"; // TODO: Template Description
+                summary += $"{information.Input} {information.TemplateId} {information.Output}\n"; // TODO: Template Description
             }
             foreach (Information information in GetForward(contextId))
             {
-                summary += $"{information.InputText} {information.TemplateId} {information.OutputText} \n"; // TODO: Template Description
+                summary += $"{information.Input} {information.TemplateId} {information.Output} \n"; // TODO: Template Description
             }
             return summary;
         }

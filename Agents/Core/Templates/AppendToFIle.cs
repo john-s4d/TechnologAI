@@ -12,17 +12,17 @@ internal class AppendToFile : Template
     public override Task<bool> Assess(InformationAdapter information)
     {
         return Task.FromResult(
-                information.InputData.ContainsKey("filename") &&
-                information.InputData.ContainsKey("content")
+                (information.Input?.Structured?.ContainsKey("filename") ?? false) &&
+                (information.Input?.Structured?.ContainsKey("content") ?? false)
         );          
     }
 
     public override async Task<Data?> Process(InformationAdapter information)
     {
-        using (var writer = new StreamWriter(information.InputData?["filename"]
+        using (var writer = new StreamWriter(information.Input?.Structured?["filename"]
                    ?? throw new ArgumentNullException("filename"), true))
         {
-            await writer.WriteAsync(information.InputData?["content"]);
+            await writer.WriteAsync(information.Input?.Structured?["content"]);
         }
         return null;
     }

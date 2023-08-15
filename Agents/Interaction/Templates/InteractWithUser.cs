@@ -12,18 +12,21 @@ public class InteractWithUser : Template
 
     public override async Task<Data?> Process(InformationAdapter information)
     {
-        var showUserOutput = await information.Spawn("show_user_output", information.InputText);
+        var showUserOutput = await information.Spawn("show_user_output", information.Input);
         await showUserOutput.PublishAndWait();
 
         var getUserInput = await information.Spawn("get_user_input");
         var userInput = await getUserInput.PublishAndWait();
+        
+        var getBestTemplate = await information.Spawn("get_best_template", userInput?.Raw); // TODO: Span should take Data object instead of string parameter
+        var bestTemplate = await getBestTemplate.PublishAndWait();
 
-        if (userInput?.Unstructured == "32bit")
+        if (bestTemplate?.Structured?["Id"] == "echo_user_input")
         {
-            var create32bit = await information.Spawn("generate_32_bit_string");
-            return await create32bit.PublishAndWait();
+            return userInput;
         }
 
-        return userInput;
+        var chosenTemplate = await information.Spawn(bestTemplate?.Structured?["Id"] ?? "echo_user_input", userInput?.Raw);
+        return await chosenTemplate.PublishAndWait();        
     }   
 }

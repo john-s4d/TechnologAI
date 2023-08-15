@@ -1,4 +1,6 @@
-﻿namespace Technologai.Agents
+﻿using Technologai.Cognition;
+
+namespace Technologai.Agents
 {
     internal class Program
     {
@@ -20,6 +22,7 @@
             //_agent.Catalog.Add(new AddTemplateToCatalog());
             //_agent.Catalog.Add(new FindTemplateInCatalog());
             //_agent.Catalog.Add(new GetEmbeddings());
+            _agent.Catalog.Add(new GetBestTemplate());            
 
             Console.WriteLine("Loading...");
 

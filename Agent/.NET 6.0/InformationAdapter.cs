@@ -19,8 +19,8 @@
             string templateId,
             InformationState informationState,
             TemplateState templateState,
-            string? input = null,
-            string? output = null
+            Data? input = null,
+            Data? output = null
         )
             : base(
                   id,
@@ -28,7 +28,7 @@
                   workerId,
                   templateId,
                   informationState,
-                  templateState,
+                  templateState, 
                   input,
                   output
             )
@@ -42,16 +42,16 @@
                 information.WorkerId,
                 information.TemplateId,
                 information.InformationState,
-                information.TemplateState,
-                information.InputText,
-                information.OutputText)
+                information.TemplateState, 
+                information.Input, 
+                information.Output)
             {
                 _agent = agent,
                 _template = (Template)agent.Catalog[information.TemplateId]
             };
         }
 
-        public async static Task<InformationAdapter> Create(Agent agent, Template template, string? input = null)
+        public async static Task<InformationAdapter> Create(Agent agent, Template template, Data? input = null)
         {
             var information = Create(agent, Create(agent.Identity.Id, template.Id, input));
 
@@ -120,7 +120,7 @@
             }
         }       
 
-        public async Task<InformationAdapter> Spawn(string templateId, string? input = null)
+        public async Task<InformationAdapter> Spawn(string templateId, Data? input = null)
         {
             var information = await Create(_agent, (Template)_agent.Catalog[templateId], input);
             _agent.Context.Spawn(information.Id, this.Id);            
