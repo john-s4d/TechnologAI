@@ -13,7 +13,7 @@
 
         public void Add(ITemplate template)
         {
-            if (!string.IsNullOrEmpty(template.Id)) // TODO: clustered embeddings for fuzzy lookup
+            if (!string.IsNullOrEmpty(template.Id))
             {
                 if (template.MemberId == null)
                 {

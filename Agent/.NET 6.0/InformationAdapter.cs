@@ -5,13 +5,6 @@
         private Agent _agent;
         private Template _template;
 
-        //private int SpawnCount { get; set; } = 0;
-        //private int ExecuteCount { get; set; } = 0;
-
-        //public ContextAdapter Context => _agent.Context;
-        //public TechnologaiAgent Agent => _agent;
-        //public Template Template => _template;
-
         private InformationAdapter(
             string id,
             string creatorId,

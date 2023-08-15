@@ -1,43 +1,55 @@
-﻿namespace Technologai.Agents.Core.Templates
+﻿using Core.Templates;
+using System.Text.Json;
+
+namespace Technologai
 {
-    /// <summary>
-    /// Get chunk text.
-    /// </summary>
-    internal class ChunkText : Template
+    public class ChunkText : Template
     {
-        public string Description { get; } = "Get chunk text.";
-        public string SampleJsonIn { get; } = "{\"text\":\"string\", \"chunkSize\":\"string\"}";
-        public string SampleJsonOut { get; } = "{\"content\":\"string[]\"}";
+        private const int DEFAULT_SIZE = 4000;
 
-        public async Task<Dictionary<string, object>> Spike(Dictionary<string, object> data)
+        public ChunkText()
         {
-            var response = new Dictionary<string, object>();
-            // text from the user input
-            string text = ((string)data["text"]);
+            Id = "chunk_text";
+            Description = "Split Text Into Chunks";
+            InputKeys = new string[] { "text", "size" };
+            OutputKeys = new string[] { "chunks" };
+        }
 
-            // chunk size in integer
-            int chunkSize = int.Parse(((string)data["chunkSize"]));
-            var listOfChunk = new List<object>();
-            if (string.IsNullOrEmpty(text))
-                return new Dictionary<string, object> { { "error", $"Entered text in null or empty : '{text}' " } };
-            await Task.Run(() =>
+        public override Task<bool> Assess(InformationAdapter information)
+        {
+            switch (information.Input?.Format)
             {
-                try
-                {
-                    for (int i = 0; i < text.Length; i += chunkSize)
-                    {
-                        int length = Math.Min(chunkSize, text.Length - i);
-                        string chunk = text.Substring(i, length);
-                        listOfChunk.Add(chunk);
-                    }
-                    response.Add("content", listOfChunk);
-                }
-                catch (Exception ex)
-                {
-                    response.Add("error", $"error chunking the text '{text}': '{ex.Message}'");
-                }
-            });
-            return response;
+                case DataFormat.RAW:
+                    return Task.FromResult(information.Input?.Raw != null);
+                case DataFormat.STRUCTURED:
+                    return Task.FromResult(
+                        (information.Input?.Structured?.ContainsKey("text") ?? false) &&
+                        (information.Input?.Structured?.ContainsKey("size") ?? false)
+                    );
+            }
+
+            return Task.FromResult(false);
+        }
+
+        public override Task<Data?> Process(InformationAdapter information)
+        {
+            string? text = string.Empty;
+            int size = DEFAULT_SIZE;
+
+            switch (information.Input?.Format)
+            {
+                case DataFormat.RAW:
+                    text = information.Input?.Raw ?? string.Empty;
+                    break;
+                case DataFormat.STRUCTURED:
+                    text = information.Input.Structured?["text"] ?? string.Empty;
+                    size = int.TryParse(information.Input.Structured?["size"] ?? string.Empty, out size) ? size : DEFAULT_SIZE;
+                    break;
+            }
+
+            var result = TextUtility.SplitText(text ?? string.Empty, size);
+
+            return Task.FromResult((Data?)new Data(new Dictionary<string, Data> { { "chunks", JsonSerializer.Serialize(result) } }));
         }
     }
 }

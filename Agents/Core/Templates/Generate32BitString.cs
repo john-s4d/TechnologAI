@@ -1,6 +1,4 @@
-﻿using Technologai;
-
-namespace Technologai.Agents.Core.Templates
+﻿namespace Technologai.Agents.Core.Templates
 {
     public class Generate32BitString : Template
     {   
