@@ -16,56 +16,17 @@ namespace Technologai
         public string CreatorId { get; private set; }
         public string WorkerId { get; set; }
         public string TemplateId { get; internal set; }
-        public InformationState InformationState { get; set; }        
-        public TemplateState TemplateState { get; set; }
+        public InformationState InformationState { get; internal set; }        
+        public TemplateState TemplateState { get; internal set; }
+                
+        public Data? Input { get; internal set; }
 
-        [JsonIgnore]
-        public Data Input { get; set; } = new Data();
-        [JsonIgnore]
-        public Data Output { get; set; } = new Data();
-
-        public string? InputText
-        {
-            get
-            {
-                return Input.Structured != null ? JsonSerializer.Serialize(Input.Structured) : Convert.ToString(Input.Unstructured); // TODO: Cache
-            }
-            set
-            {
-                Input.Unstructured = Input.Unstructured == null ? value : throw new InvalidOperationException("Input is already set");
-            }
-        }
-
-        public string? OutputText
-        {
-            get
-            {
-                return Output.Structured != null ? JsonSerializer.Serialize(Output.Structured) : Convert.ToString(Output.Unstructured); // TODO: Cache
-            }
-            set
-            {
-                Output.Unstructured = Output.Unstructured == null ? value : throw new InvalidOperationException("Input is already set");
-            }
-        }
-
-        [JsonIgnore]
-        public Dictionary<string, string>? InputData
-        {
-            get => Input.Structured;
-            set => Input.Structured = value;
-        }
-
-        [JsonIgnore]
-        public Dictionary<string, string>? OutputData
-        {
-            get => Output.Structured; 
-            set => Output.Structured = value;
-        }
+        public Data? Output { get; internal set; }
 
         // TODO History, Signatures, ReadOnly fields ?        
 
         [JsonConstructor]
-        public Information(string id, string creatorId, string workerId, string templateId, InformationState informationState, TemplateState templateState, string? inputText = null, string? outputText = null)
+        public Information(string id, string creatorId, string workerId, string templateId, InformationState informationState, TemplateState templateState, Data? input = null, Data? output = null)
         {
             Id = id;
             CreatorId = creatorId;
@@ -73,11 +34,11 @@ namespace Technologai
             TemplateId = templateId;
             InformationState = informationState;
             TemplateState = templateState;
-            InputText = inputText;
-            OutputText = outputText;
+            Input = input;
+            Output = output;
         }
 
-        public static Information Create(string creatorId, string templateId, string? input = null)
+        public static Information Create(string creatorId, string templateId, Data? input = null)
         {
             return new Information(
                 InformationId.Create(creatorId),
@@ -85,10 +46,10 @@ namespace Technologai
                 creatorId,
                 templateId,
                 InformationState.DRAFT,
-                TemplateState.RESTING,
-                input,
+                TemplateState.RESTING, 
+                input, 
                 null
-                );
+            );
         }
 
         public int CompareTo(Information? other)

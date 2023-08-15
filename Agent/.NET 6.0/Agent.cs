@@ -171,7 +171,7 @@ namespace Technologai
             }
         }
 
-        public async Task<InformationAdapter> Create(string templateId, string? input = null)
+        public async Task<InformationAdapter> Create(string templateId, Data? input = null)
         {
             //_active[information.ContextId] = information;  
             return await InformationAdapter.Create(this, (Template)Catalog[templateId], input);
@@ -202,7 +202,7 @@ namespace Technologai
         {
             if (information.TemplateId != DISPLAY_LOG_MESSAGE)
             {
-                _ = SendStatusMessage($"{information.Id} Publish> {information.TemplateId} | {information.InputText} | {information.OutputText}");
+                _ = SendStatusMessage($"{information.Id} Publish> {information.TemplateId} | {information.Input} | {information.Output}");
             }
 
             if (publishCallback != null)

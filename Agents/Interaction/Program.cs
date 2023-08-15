@@ -46,9 +46,9 @@ namespace Technologai.Agents
 
         private static async void information_OnPublishedCallback(InformationAdapter information)
         {
-            Console.WriteLine($"{information.OutputText}");
+            Console.WriteLine($"{information.Output}");
 
-            if (information.OutputText?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
+            if (information.Output.Raw?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
             {
                 _isStarted = false;
                 Console.WriteLine($"{_agent?.Name} Shutting Down");

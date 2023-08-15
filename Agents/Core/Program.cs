@@ -21,7 +21,8 @@ namespace Technologai.Agents
             _agent.StatusMessage += _agent_StatusMessage;
 
             _agent.Catalog.Add(new AppendToFile());
-            _agent.Catalog.Add(new Generate32BitString());            
+            _agent.Catalog.Add(new Generate32BitString());
+            _agent.Catalog.Add(new RespondBar());
 
             Console.WriteLine("Loading...");
 
