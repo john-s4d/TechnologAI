@@ -23,9 +23,10 @@ namespace Technologai.Agents
                 _agent.StatusMessage += _agent_statusMessage;
 
                 // Add local templates
-                _agent.Catalog.Add(new GetUserInput());
+                _agent.Catalog.Add(new GetInputFromUser());
                 _agent.Catalog.Add(new InteractWithUser());
-                _agent.Catalog.Add(new ShowUserOutput(showUserOutput_outputMessage));
+                _agent.Catalog.Add(new Debug(_agent));
+                _agent.Catalog.Add(new ShowOutputToUser(showUserOutput_outputMessage));
 
                 await _agent.Start();                
 
@@ -48,7 +49,7 @@ namespace Technologai.Agents
         {
             Console.WriteLine($"{information.Output}");
 
-            if (information.Output.Raw?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
+            if (information.Output?.Raw?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
             {
                 _isStarted = false;
                 Console.WriteLine($"{_agent?.Name} Shutting Down");

@@ -19,7 +19,7 @@ namespace Technologai
             {
                 if (reader.TokenType == JsonTokenType.PropertyName)
                 {
-                    string propertyName = reader.GetString();
+                    string? propertyName = reader.GetString();
                     reader.Read();
 
                     if (propertyName == "Format")
@@ -59,7 +59,6 @@ namespace Technologai
     {
         RAW = 0,
         STRUCTURED = 1
-        //,EMBEDDINGS = 2
     }
 
     [JsonConverter(typeof(DataJsonConverter))]
@@ -71,55 +70,42 @@ namespace Technologai
         public string? Raw { get; }
 
         // Structured data is key/value pairs        
-        public Dictionary<string, Data>? Structured { get; }
+        public Dictionary<string, string>? Structured { get; }
 
-        /*
-        // Embeddings data is model-specific vector sets
-        public Dictionary<string, Embedding>? Embeddings { get; }
-        */
-                
-        public Data(string? raw, DataFormat dataFormat = DataFormat.RAW)            
+        public Data(string? raw, DataFormat dataFormat = DataFormat.RAW)
         {
             Raw = raw;
             Format = dataFormat;
 
             if (dataFormat == DataFormat.STRUCTURED)
-            {   
-                Structured = raw == null ? new Dictionary<string, Data>() : JsonSerializer.Deserialize<Dictionary<string, Data>>(raw);
+            {
+                try
+                {
+                    Structured = raw == null ? new Dictionary<string, string>() : JsonSerializer.Deserialize<Dictionary<string, string>>(raw);
+                }
+                catch (JsonException)
+                {
+                    // Fallback to Raw
+                    Format = DataFormat.RAW;                    
+                }
             }
         }
 
-        public Data(Dictionary<string, Data> structured)
+        public Data(Dictionary<string, string> structured)
         {
             Format = DataFormat.STRUCTURED;
             Structured = structured;
             Raw = JsonSerializer.Serialize(structured);
         }
-        /*
-        public Data(Embedding embedding)
-        {
-            DataFormat = DataFormat.EMBEDDINGS;
-
-            if (Embeddings == null)
-            {
-                Embeddings = new Dictionary<string, Embedding>();
-            }
-
-            Embeddings.Add(embedding.ModelId, embedding);
-        }*/
-
-        public override string? ToString() => Raw;        
+       
+        public override string? ToString() => Raw;
 
         public static implicit operator Data(string? raw) => new Data(raw);
 
-        public static implicit operator Data(Dictionary<string, Data> structured) => new Data(structured);
-
-        //public static implicit operator Data(Embedding embedding) => new Data(embedding);
+        public static implicit operator Data(Dictionary<string, string> structured) => new Data(structured);
 
         public static implicit operator string?(Data data) => data.Raw;
 
-        //public static implicit operator Dictionary<string, Embedding>?(Data data) => data.Embeddings;
-
-        public static implicit operator Dictionary<string,Data>?(Data data) => data.Structured;
+        public static implicit operator Dictionary<string, string>?(Data data) => data.Structured;
     }
 }

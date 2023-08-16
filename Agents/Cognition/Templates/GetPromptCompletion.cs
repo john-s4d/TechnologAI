@@ -12,11 +12,11 @@
         }
 
         public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
-
+        /*
         public override Task<Data?> Process(InformationAdapter information)
         {            
             //OpenAI
-        }
+        }*/
     }
 }
 

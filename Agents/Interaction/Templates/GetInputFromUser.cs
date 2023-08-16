@@ -1,10 +1,10 @@
 ﻿using Technologai;
 
-public class GetUserInput : Template
+public class GetInputFromUser : Template
 {
-    public GetUserInput()
+    public GetInputFromUser()
     {
-        Id = "get_user_input";
+        Id = "get_input_from_user";
         Description = "Receive a text input from the user.";
     }
 

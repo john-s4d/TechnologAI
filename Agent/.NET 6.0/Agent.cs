@@ -1,4 +1,6 @@
 ﻿using MQTTnet.Client;
+using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace Technologai
 {
@@ -131,14 +133,15 @@ namespace Technologai
             {
                 //_active.Remove(information.ContextId);
 
-                // Activate the calling information
-                var parentInformation = Context.GetCreator(information.Id);
-
                 // Invoke the callback.
                 if (_publishCallbacks.ContainsKey(information.Id))
                 {
                     _publishCallbacks[information.Id]?.Invoke(information);
+                    _publishCallbacks.Remove(information.Id);
                 }
+
+                // Activate the calling information
+                var parentInformation = Context.GetCreator(information.Id);
 
                 if (parentInformation == null)
                 {
@@ -192,7 +195,7 @@ namespace Technologai
 
             while (!callbackComplete)
             {
-                await Task.Delay(10); 
+                await Task.Delay(10);
             }
 
             return result;
@@ -202,7 +205,7 @@ namespace Technologai
         {
             if (information.TemplateId != DISPLAY_LOG_MESSAGE)
             {
-                _ = SendStatusMessage($"{information.Id} Publish> {information.TemplateId} | {information.Input} | {information.Output}");
+                _ = SendStatusMessage($"{information.Id} Publish> {information.TemplateId} | {information.InformationState} | {information.Input} | {information.Output}");
             }
 
             if (publishCallback != null)
@@ -238,8 +241,8 @@ namespace Technologai
             await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
-        internal async Task SendStatusMessage(string message)
-        {   
+        public async Task SendStatusMessage(string message)
+        {
 
             if (_mqtt.IsConnected && Catalog.ContainsKey(DISPLAY_LOG_MESSAGE) && Catalog[DISPLAY_LOG_MESSAGE].MemberId != null && Catalog[DISPLAY_LOG_MESSAGE].MemberId != Identity.Id)
             {
@@ -284,6 +287,28 @@ namespace Technologai
         public async Task Stop()
         {
             await _mqtt.DisconnectAsync();
+        }
+
+        private Timer _killTimer;
+
+        public async void Kill(double delayMs = 0)
+        {
+            if (delayMs == 0)
+            {
+                await KillTimerCallback();
+            }
+            else
+            {
+                _killTimer = new Timer(delayMs);
+                _killTimer.Elapsed += async (sender, e) => await KillTimerCallback();
+                _killTimer.Start();
+            }
+        }
+
+        private async Task KillTimerCallback()
+        {
+            await _mqtt.DisconnectAsync();
+            Environment.Exit(0);
         }
     }
 }

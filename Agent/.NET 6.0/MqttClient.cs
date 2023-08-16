@@ -29,7 +29,7 @@ namespace Technologai
             _identity = identity;
         }
 
-        internal async Task ConnectAsync()
+        internal async Task ConnectAsync(bool doDisconnect = false)
         {
             if (!_client.IsConnected && !_isConnecting)
             {
@@ -76,7 +76,7 @@ namespace Technologai
         {
             if (!_client.IsConnected)
             {
-                await ConnectAsync();
+                await ConnectAsync(true);
             }
 
             if (_client.IsConnected)

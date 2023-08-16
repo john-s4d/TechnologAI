@@ -24,6 +24,8 @@ namespace Technologai.Agents
             _agent.Catalog.Add(new Generate32BitString());
             _agent.Catalog.Add(new RespondBar());
             _agent.Catalog.Add(new ChunkText());
+            _agent.Catalog.Add(new InputToOutput());
+            _agent.Catalog.Add(new KillSwitch(_agent));
 
             Console.WriteLine("Loading...");
 

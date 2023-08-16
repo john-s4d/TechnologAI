@@ -2,18 +2,22 @@
 {
     internal class GetBestTemplate : Template
     {
-        public GetBestTemplate()
+        private string _defaultTemplateId;
+
+        public GetBestTemplate(string defaultTemplateId = "input_to_output")
         {
             Id = "get_best_template";
-            Description = "Get the best template to respond to the input.";
-            OutputKeys = new string[] { "Id" };            
+            Description = "Get the best template for handling the input.";
+            OutputKeys = new string[] { "Id" };
+
+            _defaultTemplateId = defaultTemplateId;
         }
 
         public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
 
         public override Task<Data?> Process(InformationAdapter information)
         {            
-            string templateId = "echo_user_input";
+            string templateId = _defaultTemplateId; 
 
             if (information.Input?.Raw == "32bit")
             {                
@@ -25,17 +29,9 @@
                 templateId = "respond_bar";
             }
 
-            // TODO: SECURITY - Only do this in debug mode
-            if (information.Input?.Raw?.StartsWith("Template: ") ?? false)
-            {
-                string[] parts = information.Input?.Raw?.Split(" ") ?? new string[] { };
+            // TODO: Ask an LLM to determine the best template to use
 
-                templateId = information.Input?.Raw?.Substring(10) ?? templateId;
-
-                // TODO: How to pass Data when testing specific templates?
-            }
-
-            return Task.FromResult((Data?)new Data(new Dictionary<string, Data> { { "Id", templateId } }));
+            return Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Id", templateId } }));
         }
     }
 }

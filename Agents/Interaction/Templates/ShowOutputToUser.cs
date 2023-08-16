@@ -1,12 +1,12 @@
 ﻿using Technologai;
 
-public class ShowUserOutput : Template
+public class ShowOutputToUser : Template
 {   
     internal event Action<string>? OutputMessage;
 
-    public ShowUserOutput(Action<string> outputMessageCallback)
+    public ShowOutputToUser(Action<string> outputMessageCallback)
     {
-        Id = "show_user_output";
+        Id = "show_output_to_user";
         Description = "Display a message on the output log screen.";
         OutputMessage += outputMessageCallback;
     }
