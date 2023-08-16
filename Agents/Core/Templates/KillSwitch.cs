@@ -1,0 +1,26 @@
+﻿namespace Technologai
+{
+    public class KillSwitch : Template
+    {
+        private readonly Agent _agent;
+
+        public KillSwitch(Agent agent)
+        {
+            Id = "kill_switch";
+            Description = "Immediately Shut Down All Agents.";
+            InputKeys = new string[] { "initiatorId", "reason" };
+
+            _agent = agent;
+        }
+
+        public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+        
+        public override Task<Data?> Process(InformationAdapter information)
+        {
+            // FIXME: Only kills Core agent. Need to kill all agents.
+            // TODO: Broadcast a message to all agents to shut down.
+            _agent.Kill(1000);
+            return Task.FromResult((Data?)null);
+        }       
+    }
+}
