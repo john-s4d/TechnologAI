@@ -1,18 +1,28 @@
 ﻿using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Packets;
 using System.Text.Json;
 
 namespace Technologai
 {
+    public enum AgentMessageType
+    {
+        PULSE,
+        TEMPLATE,
+        INFORMATION,
+        //CONTEXT
+    }
+
     public class BrokerMessage
     {
-        private static JsonSerializerOptions options = new JsonSerializerOptions();
+        internal const string MESSAGE_TYPE = "messagetype";
+        private const string TOPIC_DELIMITER = "/";
 
         public string? AgencyId { get; set; }
         public string? MemberId { get; set; }
-        public AgentMessage? AgentMessage { get; set; }
-        public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }        
-        public bool IsBroadcast { get { return MemberId?.Equals("0") ?? false; } }
+        public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }
+        public AgentMessageType MessageType { get; set; }
+        public object? MessageData { get; set; }
 
         private BrokerMessage() { }
 
@@ -21,26 +31,56 @@ namespace Technologai
             AgencyId = identity.AgencyId;
         }
 
-        static BrokerMessage()
-        {
-            options.Converters.Add(new AgentMessageConverter());
-        }
-
         internal static BrokerMessage FromMqttArgs(MqttApplicationMessageReceivedEventArgs args)
         {
-            var topicParts = args.ApplicationMessage.Topic.Split('/');
+            var topicParts = args.ApplicationMessage.Topic.Split(TOPIC_DELIMITER);
 
-            return new BrokerMessage()
+            var brokerMessage = new BrokerMessage()
             {
                 AgencyId = topicParts[0],
                 MemberId = topicParts[1],
-                AgentMessage = JsonSerializer.Deserialize<AgentMessage>(args.ApplicationMessage.ConvertPayloadToString(), options)
             };
+
+            var payload = args.ApplicationMessage.ConvertPayloadToString();
+
+            foreach (MqttUserProperty property in args.ApplicationMessage.UserProperties)
+            {
+                if (property.Name == MESSAGE_TYPE)
+                {   
+                    switch (property.Value)
+                    {
+                        case "PULSE":
+                            brokerMessage.MessageType = AgentMessageType.PULSE;
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<PulseMessage>(payload);
+                            break;
+                        case "TEMPLATE":
+                            brokerMessage.MessageType = AgentMessageType.TEMPLATE;
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<Template>(payload);
+                            break;
+                        case "INFORMATION":
+                            brokerMessage.MessageType = AgentMessageType.INFORMATION;
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<Information>(payload);
+                            break;
+                    }
+                    break;
+                }
+            }
+            return brokerMessage;
         }
 
-        internal string ConvertAgentMessageToString()
+        internal string ConvertMessageDataToString()
         {
-            return JsonSerializer.Serialize(AgentMessage, options);
+            switch (MessageType)
+            {
+                case AgentMessageType.PULSE:
+                    return JsonSerializer.Serialize(MessageData as PulseMessage);
+                case AgentMessageType.TEMPLATE:
+                    return JsonSerializer.Serialize(MessageData as Template);
+                case AgentMessageType.INFORMATION:
+                    return JsonSerializer.Serialize(MessageData as Information);
+                default:
+                    throw new InvalidDataException($"Unknown message type: {MessageType}");
+            }
         }
     }
 }

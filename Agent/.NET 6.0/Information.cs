@@ -1,75 +1,60 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-//using System.Numerics.Tensors;
-//using Tensornet;
+﻿using System.Text.Json.Serialization;
 
 namespace Technologai
 {
     public enum InformationState
     {
-        DRAFT,
-        OPEN,
-        CLOSED
+        DRAFT = 0,
+        OPEN = 1,
+        CLOSED = 2
     }
 
     public class Information : IComparable<Information>
     {
-
-
         public string Id { get; private set; }
         public string CreatorId { get; private set; }
-        public InformationState State { get; internal set; }
+        public string WorkerId { get; set; }
+        public string TemplateId { get; internal set; }
+        public InformationState InformationState { get; internal set; }        
+        public TemplateState TemplateState { get; internal set; }
+                
+        public Data? Input { get; internal set; }
 
-        // Returns either a string or json
-        public string? Input { get; internal set; }
-
-        public string? Output { get; internal set; }
-
-        [JsonIgnore]
-        public Dictionary<string, string>? InputParameters { get; internal set; }
-
-        [JsonIgnore]
-        public Dictionary<string, string>? OutputParameters { get; internal set; }
-
-        //[JsonIgnore]
-        //public Tensor<float>? OutputTensor { get; internal set; }
-
-        //[JsonIgnore]
-        //public Tensor<float>? InputTensor { get; internal set; }
-
-        public string ProcessId { get; internal set; }
-
-        private IConvertible? _input;
-        private IConvertible? _output;
+        public Data? Output { get; internal set; }
 
         // TODO History, Signatures, ReadOnly fields ?        
 
         [JsonConstructor]
-        public Information(string id, string creatorId, string processId, InformationState state, string? input = null, string? output = null)
+        public Information(string id, string creatorId, string workerId, string templateId, InformationState informationState, 
+                            TemplateState templateState, Data? input = null, Data? output = null)
         {
             Id = id;
             CreatorId = creatorId;
-            ProcessId = processId;
-            State = state;
+            WorkerId = workerId;
+            TemplateId = templateId;
+            InformationState = informationState;
+            TemplateState = templateState;
             Input = input;
             Output = output;
         }
 
-        public static Information Create(string creatorId, string processId, string? input = null)
+        public static Information Create(string creatorId, string templateId, Data? input = null)
         {
             return new Information(
-                Technologai.ContextId.Create(creatorId),
+                InformationId.Create(creatorId),
                 creatorId,
-                processId,
+                creatorId,
+                templateId,
                 InformationState.DRAFT,
-                input,
+                TemplateState.RESTING, 
+                input, 
                 null
-                );
+            );
         }
 
         public int CompareTo(Information? other)
         {
-            return object.ReferenceEquals(other, null) ? 1 : ((ContextId)Id).CompareTo((ContextId)other.Id);
+            return object.ReferenceEquals(other, null) ? 1 : ((InformationId)Id).CompareTo((InformationId)other.Id);
         }
     }
 }

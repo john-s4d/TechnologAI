@@ -1,12 +1,15 @@
 ﻿using IdentityModel;
 using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Formatter;
+using MQTTnet.Protocol;
 using System.Security.Claims;
 
 namespace Technologai
 {
     internal class MqttClient
     {
+
         private const int PORT = 8083;
 
         private Identity _identity;
@@ -15,7 +18,7 @@ namespace Technologai
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
         public bool IsConnected => _client.IsConnected;
-        
+
         private bool _isConnecting;
 
         internal event EventHandler<MqttApplicationMessageReceivedEventArgs>? MessageReceived;
@@ -26,7 +29,7 @@ namespace Technologai
             _identity = identity;
         }
 
-        internal async Task ConnectAsync()
+        internal async Task ConnectAsync(bool doDisconnect = false)
         {
             if (!_client.IsConnected && !_isConnecting)
             {
@@ -35,6 +38,7 @@ namespace Technologai
                 .WithWebSocketServer($"{new Uri(_identity.Authority.BrokerUri).Host}:{PORT}")
                 .WithTls()
                 .WithCredentials(_identity.Tokens[_identity.Authority.BrokerUri], "password")
+                .WithProtocolVersion(MqttProtocolVersion.V500)
                 .Build();
 
                 _client.ApplicationMessageReceivedAsync += _client_ApplicationMessageReceivedAsync;
@@ -54,7 +58,11 @@ namespace Technologai
         {
             if (!_client.IsConnected) { throw new InvalidOperationException("Not Connected"); }
 
-            await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic(subscribeMask).Build(), _cancellationTokenSource.Token);
+            var options = new MqttClientSubscribeOptionsBuilder()
+            .WithTopicFilter(subscribeMask)            
+            .Build();
+
+            await _client.SubscribeAsync(options, _cancellationTokenSource.Token);
         }
 
         internal async Task DisconnectAsync()
@@ -64,11 +72,12 @@ namespace Technologai
             _client.Dispose();
         }
 
-        internal async Task PublishAsync(string topic, string payload, bool retain = false, int qos = 0)
+        internal async Task PublishAsync(string topic, string payload, AgentMessageType messageType)
         {
             if (!_client.IsConnected)
             {
-                await ConnectAsync();
+                // TODO: During Debugging, MQTT disconnects after only a few seconds.  Need to figure out why and fix it.
+                await ConnectAsync(true);
             }
 
             if (_client.IsConnected)
@@ -76,8 +85,9 @@ namespace Technologai
                 var message = new MqttApplicationMessageBuilder()
                 .WithTopic(topic)
                 .WithPayload(payload)
-                .WithRetainFlag(retain)
-                .WithQualityOfServiceLevel((MQTTnet.Protocol.MqttQualityOfServiceLevel)qos)
+                .WithRetainFlag(false)
+                .WithUserProperty(BrokerMessage.MESSAGE_TYPE, messageType.ToString())
+                .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.AtMostOnce)
                 .Build();
 
                 await _client.PublishAsync(message, _cancellationTokenSource.Token);

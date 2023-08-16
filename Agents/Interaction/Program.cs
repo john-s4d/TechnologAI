@@ -4,7 +4,7 @@ namespace Technologai.Agents
 {
     internal class Program
     {
-        private static Interaction? _agent;
+        private static Agent? _agent;
         private static AppConfig _config = new AppConfig();
         private static bool _isStarted = true;
 
@@ -19,52 +19,56 @@ namespace Technologai.Agents
             {
                 Console.WriteLine("Loading...");
 
-                _agent = new Interaction(authUri, clientId, clientSecret, memberId);
-
+                _agent = new Agent(authUri, clientId, clientSecret, memberId);
                 _agent.StatusMessage += _agent_statusMessage;
 
-                await _agent.Start();
+                // Add local templates
+                _agent.Catalog.Add(new GetInputFromUser());
+                _agent.Catalog.Add(new InteractWithUser());
+                _agent.Catalog.Add(new Debug(_agent));
+                _agent.Catalog.Add(new ShowOutputToUser(showUserOutput_outputMessage));
 
-                _agent.Processes.Add(new GetUserInput());
-                _agent.Processes.Add(new InteractWithUser());
+                await _agent.Start();                
 
-                var showUserOutput = new ShowUserOutput();
-                showUserOutput.OutputMessage += showUserOutput_OutputMessage;
-                _agent.Processes.Add(showUserOutput);
+                var interact_with_user = await _agent.Create("interact_with_user", "Input");
+                await interact_with_user.Publish(information_OnPublishedCallback);
+                                
+                do { await Task.Delay(10); } while (_isStarted);
 
-                _agent.PublishWithCallback(_agent.Create("interact_with_user", "Hello"), information_OnPublishedCallback);
-
-                do { } while (_isStarted);
+                await _agent.Stop();
 
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
+                Console.ReadKey();
             }
         }
 
-        private static void information_OnPublishedCallback(InformationAdapter information)
+        private static async void information_OnPublishedCallback(InformationAdapter information)
         {
-            Console.WriteLine($"{_agent?.Name} Received> {information.Output}");
+            Console.WriteLine($"{information.Output}");
 
-            if (information.Output?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
+            if (information.Output?.Raw?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
             {
                 _isStarted = false;
+                Console.WriteLine($"{_agent?.Name} Shutting Down");
             }
-            else
+            else if (_agent != null)
             {
-                _agent?.PublishWithCallback(_agent.Create("interact_with_user", "Hello Again"), information_OnPublishedCallback);
+                var interact_with_user = await _agent.Create("interact_with_user", "Input");
+                await interact_with_user.Publish(information_OnPublishedCallback);
             }
         }
 
-        private static void showUserOutput_OutputMessage(string message)
+        private static void showUserOutput_outputMessage(string message)
         {
-            Console.WriteLine($"{_agent?.Name}> {message}");
+            Console.Write($"{message}> ");
         }
 
         private static void _agent_statusMessage(object? sender, string message)
         {
-            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} {message}");
+            Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} | {message}");
         }
     }
 }

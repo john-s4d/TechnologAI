@@ -4,7 +4,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net;
 using System.Security.Claims;
-using Newtonsoft.Json.Linq;
 
 namespace Technologai
 {
@@ -12,11 +11,7 @@ namespace Technologai
     {
         public string? Name { get; private set; }
         public string Id { get; private set; }        
-        public string? AgencyId
-        {
-            get { return _agencyId ?? throw new ArgumentNullException(nameof(AgencyId)); }
-            private set { _agencyId = value; }
-        }
+        public string? AgencyId { get; private set; }
         internal Authority Authority { get; private set; }
         internal string ClientId { get; private set; }
         internal string ClientSecret { get; private set; }        
@@ -25,8 +20,6 @@ namespace Technologai
         internal string PublishMask => $"{AgencyId}/+";
         internal string SubscribeMemberMask => $"{AgencyId}/{Id}";
         internal string SubscribeAgencyMask => $"{AgencyId}/0";        
-
-        private string? _agencyId;
 
         public Identity(string authUri, string clientId, string clientSecret, string memberId)
         {

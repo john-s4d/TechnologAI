@@ -1,10 +1,12 @@
 ﻿
+using Technologai.Agents.Core.Templates;
+
 namespace Technologai.Agents
 {
     internal class Program
     {
 
-        private static ChatGPT? _agent;        
+        private static Agent? _agent;        
 
         private static AppConfig _config = new AppConfig();
 
@@ -15,45 +17,29 @@ namespace Technologai.Agents
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
 
-            _agent = new ChatGPT(authUri, clientId, clientSecret, memberId);
-
+            _agent = new Agent(authUri, clientId, clientSecret, memberId);
             _agent.StatusMessage += _agent_StatusMessage;
+
+            _agent.Catalog.Add(new AppendToFile());
+            _agent.Catalog.Add(new Generate32BitString());
+            _agent.Catalog.Add(new RespondBar());
+            _agent.Catalog.Add(new ChunkText());
+            _agent.Catalog.Add(new InputToOutput());
+            _agent.Catalog.Add(new KillSwitch(_agent));
 
             Console.WriteLine("Loading...");
 
             await _agent.Start();
 
-            await Program.Run();
+            do { await Task.Delay(10); } while (true);
+
             await _agent.Stop();
         }
 
         private static void _agent_StatusMessage(object? sender, string message)
         {
 
-            Console.WriteLine($"{_agent?.Name ?? "Core.Local"} {message}");
+            Console.WriteLine($"{_agent?.Name ?? "Core.Local"} | {message}");
         }
-
-        private async static Task Run()
-        {
-            Console.WriteLine($"{_agent?.Name} Started");
-
-            do
-            {
-                /*
-                string value = await Task.Run(() =>
-                {
-                    return Console.ReadLine() ?? "";
-                });*/
-
-                //if (value.Equals("quit", StringComparison.OrdinalIgnoreCase)) { break; }
-
-            }
-            while (true);
-
-        }
-
-    }
-
-
-
+    }       
 }

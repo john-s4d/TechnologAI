@@ -1,102 +1,134 @@
-﻿using System.Diagnostics;
-
-namespace Technologai
+﻿namespace Technologai
 {
     public class InformationAdapter : Information
     {
-        private TechnologaiAgent _agent;
-        private IProcess _process;
+        private Agent _agent;
+        private Template _template;
 
-        // Agent
-        public string AgentId => _agent.Identity.Id;
-        public string WorkerId { get; set; }
+        private InformationAdapter(
+            string id,
+            string creatorId,
+            string workerId,
+            string templateId,
+            InformationState informationState,
+            TemplateState templateState,
+            Data? input = null,
+            Data? output = null
+        )
+            : base(
+                  id,
+                  creatorId,
+                  workerId,
+                  templateId,
+                  informationState,
+                  templateState, 
+                  input,
+                  output
+            )
+        { }
 
-        // Context
-        public ContextAdapter Context => _agent.Context;
-        public TechnologaiAgent Agent => _agent;
-
-        // Process
-        public IProcess Process => _process;
-        public ProcessState ProcessState => _process.State;
-
-        private InformationAdapter(string id, string creatorId, string processId, InformationState state, string? input = null, string? output = null)
-            : base(id, creatorId, processId, state, input, output) { }
-
-        public static InformationAdapter Create(TechnologaiAgent agent, Information information)
+        public static InformationAdapter Create(Agent agent, Information information)
         {
             return new InformationAdapter(
                 information.Id,
                 information.CreatorId,
-                information.ProcessId,
-                information.State,
-                information.Input,
-                information.Output
-                                                                                                                         )
+                information.WorkerId,
+                information.TemplateId,
+                information.InformationState,
+                information.TemplateState, 
+                information.Input, 
+                information.Output)
             {
                 _agent = agent,
-                _process = agent.Processes[information.ProcessId]
+                _template = (Template)agent.Catalog[information.TemplateId]
             };
         }
 
-
-        public static InformationAdapter Create(TechnologaiAgent agent, string processId, string? input = null)
+        public async static Task<InformationAdapter> Create(Agent agent, Template template, Data? input = null)
         {
-            return Create(agent, agent.Processes[processId], input).Result;
-        }
+            var information = Create(agent, Create(agent.Identity.Id, template.Id, input));
 
-        public async static Task<InformationAdapter> Create(TechnologaiAgent agent, IProcess process, string? input = null)
-        {
-            var information = InformationAdapter.Create(agent, process.Id, input);
             agent.Context.Add(information);
 
-            information.WorkerId = process.WorkerId ?? agent.Identity.Id;
+            information.WorkerId = template.MemberId ?? agent.Identity.Id;
 
-            await agent.SendStatusMessage($"{information.Id} Create> {process.Id} | {information.Input}");
+            //await agent.SendStatusMessage($"{information.Id} Create> {template.Id} | {information.InputText}");
             return information;
         }
 
-        protected internal async Task<ProcessState> Assess()
-        {
-            await _agent.SendStatusMessage($"{Id} Assess> {ProcessId} | {Input} | {Output}");
-            return _process.Assess(this);
-        }
+        private bool _assessmentQueued = false;
 
-        protected internal async Task Execute()
-        {
-            await _agent.SendStatusMessage($"{Id} Execute> {ProcessId} | {Input} | {Output}");
-            Output = _process.Execute(this);
-            State = InformationState.CLOSED;
-            WorkerId = CreatorId;
-            await Publish();
-        }
+        // Assessments are debounced. Only one assessment can be queued at a time.
 
-        protected internal async Task Spawn()
+        protected internal async Task<bool> Assess()
         {
-            await _agent.SendStatusMessage($"{Id} Spawn> {ProcessId} | {Input} | {Output}");
-
-            foreach (InformationAdapter item in _process.Spawn(this))
+            if (TemplateState != TemplateState.RESTING && !_assessmentQueued)
             {
-                await (item.Publish());
+                _assessmentQueued = true;
+
+                while (TemplateState != TemplateState.RESTING)
+                {
+                    await Task.Delay(100);
+                }
+                
+                _assessmentQueued = false;
             }
+
+            if (TemplateState == TemplateState.RESTING)
+            {
+                TemplateState = TemplateState.ASSESSING;
+
+                //await _agent.SendStatusMessage($"{Id} Assess> {TemplateId} | {InputText} | {OutputText}");
+
+                var result = await _template.Assess(this);
+
+                TemplateState = TemplateState.RESTING;                
+
+                return result;
+            }
+
+            return false;            
         }
 
-        public InformationAdapter GetSpawn(string processId, string? input = null)
+        // Only one spike can be in progress at a time. We don't queue up another one
+
+        protected internal async Task Process()
         {
-            var information = Create(_agent, processId, input);
-            _agent.Context.Spawn(information.Id, this.Id);
-            information.WorkerId = _process.WorkerId ?? _agent.Identity.Id;
-            //_agent.SendStatusMessage($"{information.Id} Spawn> {processId} | {information.Input}");
+            // TODO: This isn't fully threadsafe. Should lock.
+
+            if (TemplateState == TemplateState.RESTING) 
+            {
+                TemplateState = TemplateState.PROCESSING;
+                
+                //await _agent.SendStatusMessage($"{Id} Action> {TemplateId} | {InputText} | {OutputText}");
+
+                Output = await _template.Process(this) ?? Output;
+
+                InformationState = InformationState.CLOSED;
+                WorkerId = CreatorId;
+
+                TemplateState = TemplateState.RESTING; // Always return to resting.
+
+                await Publish();
+            }
+        }       
+
+        public async Task<InformationAdapter> Spawn(string templateId, Data? input = null)
+        {
+            var information = await Create(_agent, (Template)_agent.Catalog[templateId], input);
+            _agent.Context.Spawn(information.Id, this.Id);            
+            //_agent.SendStatusMessage($"{information.Id} Spawn> {templateId} | {information.Input}");
             return information;
         }
 
-        public async Task Publish()
+        public async Task Publish(Agent.PublishCallback? publishCallback = null)
         {
-            await _agent.Publish(this);
+            await _agent.Publish(this, publishCallback);            
         }
 
-        public void PublishWithCallback(TechnologaiAgent.OnPublished onPublished)
+        public async Task<Data?> PublishAndWait()
         {
-            _agent.PublishWithCallback(this, onPublished);
+            return await _agent.PublishAndWait(this);
         }
 
         public object? this[string key]
@@ -107,19 +139,5 @@ namespace Technologai
             }
             set { }
         }
-
-        /*
-        public T? DeserializeInput<T>()
-        {
-            return JsonConvert.DeserializeObject<T>(Input ?? string.Empty);
-        }
-
-        public T? DeserializeOutput<T>()
-        {
-            return JsonConvert.DeserializeObject<T>(Output ?? string.Empty);
-        }*/
-
-        //public static implicit operator Information(InformationAdapter value) => value._information;
-
     }
 }
