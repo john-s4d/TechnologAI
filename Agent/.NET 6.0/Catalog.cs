@@ -3,12 +3,10 @@
     public class Catalog : Dictionary<string, ITemplate>
     {
         private Identity _identity;
-        private Agent _agent;
 
-        public Catalog(Identity identity, Agent agent)
+        public Catalog(Identity identity)
         {
             _identity = identity;
-            _agent = agent;
         }
 
         public void Add(ITemplate template)

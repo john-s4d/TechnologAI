@@ -51,7 +51,7 @@ namespace Technologai
                     {
                         case "PULSE":
                             brokerMessage.MessageType = AgentMessageType.PULSE;
-                            brokerMessage.MessageData = JsonSerializer.Deserialize<Pulse>(payload);
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<PulseMessage>(payload);
                             break;
                         case "TEMPLATE":
                             brokerMessage.MessageType = AgentMessageType.TEMPLATE;
@@ -73,7 +73,7 @@ namespace Technologai
             switch (MessageType)
             {
                 case AgentMessageType.PULSE:
-                    return JsonSerializer.Serialize(MessageData as Pulse);
+                    return JsonSerializer.Serialize(MessageData as PulseMessage);
                 case AgentMessageType.TEMPLATE:
                     return JsonSerializer.Serialize(MessageData as Template);
                 case AgentMessageType.INFORMATION:

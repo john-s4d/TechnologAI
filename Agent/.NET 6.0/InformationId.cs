@@ -4,9 +4,11 @@ using System.Text.Json.Serialization;
 
 namespace Technologai
 {
+    // TODO: Review. Ensure the result has enough data for tracking or informational purposes
+
     public class InformationId : IComparable<InformationId>
     {
-        // hash compute of an id allows to verify which party created this contextId. If that's ever needed.
+        // hash compute of an id allows to verify which agent created this contextId. If that's ever needed.
                 
         private readonly string _id;
         private readonly byte[] _unixTimestampBytes = new byte[8];
@@ -15,7 +17,7 @@ namespace Technologai
         internal InformationId(ulong unixTimestamp, byte[] idHash)
         {
             _unixTimestampBytes = BitConverter.GetBytes(unixTimestamp);
-            _hashComputeBytes = MD5.HashData(idHash.Concat(_unixTimestampBytes).ToArray()).Take(8).ToArray(); // just half of the hash to fit into 8 bytes
+            _hashComputeBytes = MD5.HashData(idHash.Concat(_unixTimestampBytes).ToArray()).Take(8).ToArray(); // just half of the hash to fit into 8 bytes. Is this ok?
             _id = Base64UrlEncoder.Encode(_unixTimestampBytes.Concat(_hashComputeBytes).ToArray());
         }
 

@@ -2,7 +2,9 @@
 
 namespace Technologai
 {
-    public class Context //<T> : BidirectionalGraph<string?, T> where T : IEdge<string?>
+    // TODO: Rework all of this.
+
+    public class Context
     {
         private readonly Dictionary<string, Information> _library = new();
         private readonly Dictionary<string, Template> _templates = new();
@@ -22,7 +24,6 @@ namespace Technologai
         public void Add(InformationAdapter information)
         {
             _library[information.Id] = information;
-            //_templates[information.TemplateId] = information.Template;
         }
 
         public void Add(Information information)

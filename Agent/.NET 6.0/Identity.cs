@@ -4,7 +4,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net;
 using System.Security.Claims;
-using Newtonsoft.Json.Linq;
 
 namespace Technologai
 {

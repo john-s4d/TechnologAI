@@ -24,7 +24,7 @@ namespace Technologai
         public Agent(string authUri, string clientId, string clientSecret, string memberId)
         {
             Identity = new Identity(authUri, clientId, clientSecret, memberId);
-            Catalog = new Catalog(Identity, this);
+            Catalog = new Catalog(Identity);
             Context = new Context(Identity);
 
             _mqtt = new MqttClient(Identity);
@@ -39,7 +39,7 @@ namespace Technologai
 
             if (brokerMessage.MessageType == AgentMessageType.PULSE)
             {
-                Pulse? pulse = brokerMessage.MessageData as Pulse;
+                PulseMessage? pulse = brokerMessage.MessageData as PulseMessage;
 
                 if (pulse != null && pulse.MemberId != Identity.Id)
                 {
@@ -76,7 +76,7 @@ namespace Technologai
             var brokerMessage = new BrokerMessage(Identity)
             {
                 MessageType = AgentMessageType.PULSE,
-                MessageData = new Pulse() { MemberId = Identity.Id },
+                MessageData = new PulseMessage() { MemberId = Identity.Id },
                 MemberId = memberId
             };
 
@@ -85,7 +85,7 @@ namespace Technologai
             await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
-        private async Task Receive(Pulse pulse)
+        private async Task Receive(PulseMessage pulse)
         {
             await SendStatusMessage($"{pulse.MemberId} pulse receive");
 
@@ -140,7 +140,7 @@ namespace Technologai
                     _publishCallbacks.Remove(information.Id);
                 }
 
-                // Activate the calling information
+                // Activate the parent information
                 var parentInformation = Context.GetCreator(information.Id);
 
                 if (parentInformation == null)
@@ -192,6 +192,8 @@ namespace Technologai
                     callbackComplete = true;
                 }
             );
+
+            // TODO: This can wait indefinitly if the information is never closed or template doesn't exist. Add timeout / decay.
 
             while (!callbackComplete)
             {
