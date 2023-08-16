@@ -17,40 +17,40 @@ public class Debug : Template
 
 #if DEBUG
 
-            if (_agent != null && (information.Input?.Raw?.StartsWith("DEBUG:") ?? false))
+        int firstSpace = information.Input?.Raw?.IndexOf(' ') ?? -1;
+
+        if (firstSpace > 6)
         {
-            int firstSpace = information.Input?.Raw?.IndexOf(' ') ?? -1;
+            var templateId = information.Input?.Raw?.Substring(6, firstSpace - 6);
+            var userData = information.Input?.Raw?.Substring(firstSpace + 1);
 
-            if (firstSpace > 6)
+            if (string.IsNullOrEmpty(templateId) || !_agent.Catalog.ContainsKey(templateId) || string.IsNullOrEmpty(userData))
             {
-
-                var templateId = information.Input?.Raw?.Substring(6, firstSpace - 6);
-                var userData = information.Input?.Raw?.Substring(firstSpace + 1);
-
-                if (string.IsNullOrEmpty(templateId) || !_agent.Catalog.ContainsKey(templateId) || string.IsNullOrEmpty(userData))
-                {
-                    return null;
-                }
-
-                ITemplate template = _agent.Catalog[templateId];
-
-                Data data;
-
-                if (template.InputKeys != null && template.InputKeys.Length > 0)
-                {
-                    data = new Data(userData, DataFormat.STRUCTURED);
-                }
-                else
-                {
-                    data = new Data(userData, DataFormat.RAW);
-                }
-
-                var debugTemplate = await information.Spawn(templateId, data);
-                await debugTemplate.Publish(PublishCallback);
-
                 return null;
-
             }
+
+            ITemplate template = _agent.Catalog[templateId];
+
+            Data data;
+
+            if (template.InputKeys != null && template.InputKeys.Length > 0)
+            {
+                data = new Data(userData, DataFormat.STRUCTURED);
+            }
+            else
+            {
+                data = new Data(userData, DataFormat.RAW);
+            }
+
+            var debugTemplate = await information.Spawn(templateId, data);
+            await debugTemplate.Publish(PublishCallback);
+
+            return null;
+        }
+        else
+        {
+            // TODO: Allow parameterless debug with no data
+            return null;
         }
 
 #endif

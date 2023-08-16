@@ -1,6 +1,6 @@
 ﻿namespace Technologai
 {
-    public class Pulse
+    public class PulseMessage
     {
         public string? MemberId { get; set; }
     }

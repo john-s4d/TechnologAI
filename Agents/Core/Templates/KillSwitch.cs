@@ -2,6 +2,7 @@
 {
     public class KillSwitch : Template
     {
+        private const int KILL_DELAY = 1000;
         private readonly Agent _agent;
 
         public KillSwitch(Agent agent)
@@ -18,8 +19,8 @@
         public override Task<Data?> Process(InformationAdapter information)
         {
             // FIXME: Only kills Core agent. Need to kill all agents.
-            // TODO: Broadcast a message to all agents to shut down.
-            _agent.Kill(1000);
+            // TODO: Broadcast a message to all agents to shut down.            
+            _agent.Kill(KILL_DELAY);
             return Task.FromResult((Data?)null);
         }       
     }

@@ -76,6 +76,7 @@ namespace Technologai
         {
             if (!_client.IsConnected)
             {
+                // TODO: During Debugging, MQTT disconnects after only a few seconds.  Need to figure out why and fix it.
                 await ConnectAsync(true);
             }
 
