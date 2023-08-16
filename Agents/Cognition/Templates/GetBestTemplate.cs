@@ -29,7 +29,7 @@
                 templateId = "respond_bar";
             }
 
-            // TODO: Ask an LLM to determine the best template to use
+            // TODO: Ask an LLM to determine the best template to use from the available templates
 
             return Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Id", templateId } }));
         }
