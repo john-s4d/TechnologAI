@@ -5,7 +5,7 @@ using Timer = System.Timers.Timer;
 namespace Technologai
 {
     public class Agent
-    {
+    { 
         public event EventHandler<string>? StatusMessage;
         public delegate void PublishCallback(InformationAdapter information);
 
