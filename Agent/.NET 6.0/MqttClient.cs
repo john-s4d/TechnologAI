@@ -23,10 +23,10 @@ namespace Technologai
 
         internal event EventHandler<MqttApplicationMessageReceivedEventArgs>? MessageReceived;
 
-
-        public MqttClient(Identity identity)
+        public MqttClient(Identity identity, EventHandler<MqttApplicationMessageReceivedEventArgs> _mqtt_MessageReceived)
         {
             _identity = identity;
+            MessageReceived += _mqtt_MessageReceived;
         }
 
         internal async Task ConnectAsync(bool doDisconnect = false)

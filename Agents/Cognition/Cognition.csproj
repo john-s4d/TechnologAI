@@ -17,4 +17,8 @@
     <ProjectReference Include="..\..\Agent\.NET 6.0\Technologai.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="InferenceModels\" />
+  </ItemGroup>
+
 </Project>

@@ -24,17 +24,15 @@ public class InteractWithUser : Template
         {
             var debugTemplate = await information.Spawn("debug", userInput);
             await debugTemplate.Publish(PublishCallback);
-            return new Data("Debug published");
+            return null;
         }
 #endif
 
-        var getBestTemplate = await information.Spawn("get_best_template", userInput);
-        var bestTemplate = await getBestTemplate.PublishAndWait();
+        var bestTemplate = await information.Spawn("get_best_template", userInput).Result.PublishAndWait();        
 
-        var chosenTemplate = await information.Spawn(bestTemplate?.Structured?["Id"] ?? "input_to_output", userInput);
-        await chosenTemplate.Publish(PublishCallback);
+        await information.Spawn(bestTemplate?.Structured?["Id"] ?? "input_to_output", userInput).Result.Publish(PublishCallback);        
 
-        return new Data("Working...");
+        return new Data();
 
     }
 

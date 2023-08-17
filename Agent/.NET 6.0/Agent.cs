@@ -9,26 +9,26 @@ namespace Technologai
         public event EventHandler<string>? StatusMessage;
         public delegate void PublishCallback(InformationAdapter information);
 
-        public string? Name { get; private set; }
-        public Catalog Catalog { get; private set; }
-        public Identity Identity { get; }
-        internal Context Context { get; private set; }
-
-        private Dictionary<string, PublishCallback> _publishCallbacks = new Dictionary<string, PublishCallback>();
-        private MqttClient _mqtt;
-
-        private Dictionary<string, DateTime> _knownAgents = new Dictionary<string, DateTime>();
-
         const string DISPLAY_LOG_MESSAGE = "core_display_log_message";
+
+        public string? Name => Identity?.Name;
+        public Identity Identity { get; private set; }
+        public Catalog Catalog { get; private set; }
+        public Context Context { get; private set; }
+
+        private Dictionary<string, PublishCallback> _publishCallbacks = new();
+        private Dictionary<string, DateTime> _knownAgents = new();        
+        private MqttClient _mqtt;
+        private Timer? _killTimer;
 
         public Agent(string authUri, string clientId, string clientSecret, string memberId)
         {
             Identity = new Identity(authUri, clientId, clientSecret, memberId);
+
             Catalog = new Catalog(Identity);
             Context = new Context(Identity);
 
-            _mqtt = new MqttClient(Identity);
-            _mqtt.MessageReceived += _mqtt_MessageReceived;
+            _mqtt = new MqttClient(Identity, _mqtt_MessageReceived);            
         }
 
         // ** TRANSPORT **
@@ -174,7 +174,7 @@ namespace Technologai
             }
         }
 
-        public async Task<InformationAdapter> Create(string templateId, Data? input = null)
+        public async Task<InformationAdapter> CreateInformation(string templateId, Data? input = null)
         {
             //_active[information.ContextId] = information;  
             return await InformationAdapter.Create(this, (Template)Catalog[templateId], input);
@@ -248,7 +248,7 @@ namespace Technologai
 
             if (_mqtt.IsConnected && Catalog.ContainsKey(DISPLAY_LOG_MESSAGE) && Catalog[DISPLAY_LOG_MESSAGE].MemberId != null && Catalog[DISPLAY_LOG_MESSAGE].MemberId != Identity.Id)
             {
-                var information = await Create(DISPLAY_LOG_MESSAGE, $"{Name?.PadRight(21)} | {message}");
+                var information = await CreateInformation(DISPLAY_LOG_MESSAGE, $"{Name?.PadRight(21)} | {message}");
                 await information.Publish();
             }
             else
@@ -268,7 +268,7 @@ namespace Technologai
 
             await Identity.Authenticate(Identity.Authority.BrokerUri);
 
-            this.Name = Identity.Name;
+            //this.Name = Identity.Name;
 
             await SendStatusMessage($"Authenticated");
 
@@ -290,8 +290,6 @@ namespace Technologai
         {
             await _mqtt.DisconnectAsync();
         }
-
-        private Timer _killTimer;
 
         public async void Kill(double delayMs = 0)
         {

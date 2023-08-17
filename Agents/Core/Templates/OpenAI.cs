@@ -52,6 +52,7 @@ namespace Technologai.External.TestApp
                 return $"{completionResult.Error.Code}: {completionResult.Error.Message}";
             }
         }
+
         /*
         internal async Task<string> GetSolution()
         {
@@ -89,9 +90,8 @@ namespace Technologai.External.TestApp
 
             }
             return result;
-        }*/
+        }
 
-        /*
         internal async Task Summarize()
         {            
             string filePath = "<filepath>";
@@ -130,9 +130,9 @@ namespace Technologai.External.TestApp
                     File.AppendAllText("<filepath>", prompt + "\n");
                 }
             }
-        }*/
+        }
 
-        internal async Task DoTelusCodeAnalysis()
+        internal async Task DoCodeAnalysis()
         {
             string path = "<filepath>";
 
@@ -185,6 +185,7 @@ namespace Technologai.External.TestApp
                 }
                 result.Write($"<filepath>{filename}.csv");
             }
+        */
         }
     }
-}
+

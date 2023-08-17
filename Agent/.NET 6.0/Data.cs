@@ -72,7 +72,7 @@ namespace Technologai
         // Structured data is key/value pairs        
         public Dictionary<string, string>? Structured { get; }
 
-        public Data(string? raw, DataFormat dataFormat = DataFormat.RAW)
+        public Data(string? raw = null, DataFormat dataFormat = DataFormat.RAW)
         {
             Raw = raw;
             Format = dataFormat;
@@ -100,12 +100,12 @@ namespace Technologai
        
         public override string? ToString() => Raw;
 
-        public static implicit operator Data(string? raw) => new Data(raw);
+        public static implicit operator Data?(string? raw) => new Data(raw);
 
-        public static implicit operator Data(Dictionary<string, string> structured) => new Data(structured);
+        public static implicit operator Data?(Dictionary<string, string> structured) => new Data(structured);
 
-        public static implicit operator string?(Data data) => data.Raw;
+        public static implicit operator string?(Data? data) => data?.Raw;
 
-        public static implicit operator Dictionary<string, string>?(Data data) => data.Structured;
+        public static implicit operator Dictionary<string, string>?(Data? data) => data?.Structured;
     }
 }

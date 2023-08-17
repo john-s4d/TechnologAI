@@ -15,9 +15,9 @@
 
         public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
 
-        public override Task<Data?> Process(InformationAdapter information)
+        public async override Task<Data?> Process(InformationAdapter information)
         {            
-            string templateId = _defaultTemplateId; 
+            string? templateId = _defaultTemplateId; 
 
             if (information.Input?.Raw == "32bit")
             {                
@@ -29,9 +29,13 @@
                 templateId = "respond_bar";
             }
 
-            // TODO: Ask an LLM to determine the best template to use from the available templates
+            // Ask an LLM to determine the best template to use from the available templates
 
-            return Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Id", templateId } }));
+            string prompt = $"{information.Input}";
+
+            templateId = await information.Spawn("get_prompt_completion", prompt).Result.PublishAndWait();            
+
+            return new Data(new Dictionary<string, string> { { "Id", templateId ?? _defaultTemplateId } });
         }
     }
 }
@@ -43,3 +47,9 @@ $"\r\n\r\nGiven the list of abilities provided, specify which one you would like
 $"Your response should consist of a single JSON object with the name of the selected ability. For example: {information.Template.SampleJsonOut}";
 */
 
+/*
+var prompt = $"Your response MUST be a compliant machine-readable JSON document.\r\n\r\n" +
+$"{JsonConvert.SerializeObject(choose_ability)}" +
+$"\r\n\r\nGiven the list of abilities provided, specify which one you would like to use to respond to the input. " +
+$"Your response should consist of a single JSON object with the name of the selected ability. For example: {information.Template.SampleJsonOut}";
+*/

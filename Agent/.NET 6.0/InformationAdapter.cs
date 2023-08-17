@@ -113,7 +113,8 @@
             }
         }       
 
-        public async Task<InformationAdapter> Spawn(string templateId, Data? input = null)
+        //TODO: Spawn and Publish Immediately
+        public async Task<InformationAdapter> Spawn(string? templateId, Data? input = null)
         {
             var information = await Create(_agent, (Template)_agent.Catalog[templateId], input);
             _agent.Context.Spawn(information.Id, this.Id);            

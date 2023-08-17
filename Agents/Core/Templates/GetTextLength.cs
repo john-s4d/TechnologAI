@@ -1,22 +1,18 @@
 ﻿namespace Technologai
 {
-    /// <summary>
-    /// Get text length.
-    /// </summary>
     internal class GetTextLength : Template
     {
-        public string Description { get; } = "Get text length.";
-        public string SampleJsonIn { get; } = "{\"text\":\"string\"}";
-        public string SampleJsonOut { get; } = "{\"length\":\"string\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public GetTextLength()
         {
-            var length = await Task.Run(() =>
-            {
-                return ((string)data["text"]).Length;
-            });
+            Id = "get_text_length";
+            Description = "Get the number of characters in the raw input.";
+        }
 
-            return new Dictionary<string, object>() { { "length", length } };
+        public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+
+        public override Task<Data?> Process(InformationAdapter information)
+        {
+            return Task.FromResult((Data?)new Data(information.Input?.Raw?.Length.ToString()));
         }
     }
 }
