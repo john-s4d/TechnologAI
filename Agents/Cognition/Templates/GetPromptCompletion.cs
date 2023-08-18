@@ -6,7 +6,7 @@
         public GetPromptCompletion(Agent agent)
         {
             Id = "get_prompt_completion";
-            Description = "Get a prompt completion from an LLM Model";
+            Description = "Get a prompt completion from an LLM Model.";
             InputKeys = new string[] { "model", "prompt" };
         }
 

@@ -6,11 +6,11 @@
 
         public GetBestTemplate(string defaultTemplateId = "input_to_output")
         {
-            Id = "get_best_template";
-            Description = "Get the best template for handling the input.";
-            OutputKeys = new string[] { "Id" };
-
             _defaultTemplateId = defaultTemplateId;
+
+            Id = "get_best_template";
+            Description = "Get the Id for the best template to handle the input.";
+            OutputKeys = new string[] { "Id" };
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
