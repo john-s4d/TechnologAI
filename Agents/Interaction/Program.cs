@@ -5,7 +5,7 @@ namespace Technologai.Agents
 {
     internal class Program
     {
-        private static Agent? _agent;
+        private static Agent _agent;
         private static AppConfig _config = new AppConfig();
         private static bool _isStarted = true;
 
@@ -29,9 +29,9 @@ namespace Technologai.Agents
                 _agent.Catalog.Add(new Debug(_agent));
                 _agent.Catalog.Add(new ShowMessageToUser(ShowMessageToUser_callback));
 
-                await _agent.Start();                
+                await _agent.Start();
 
-                _ = _agent.PublishAsync(interactWithUser_callback, "interact_with_user", "Input");
+                await _agent.PublishAsync(interactWithUser_callback, "interact_with_user", "Ready for Input");
                                 
                 do { await Task.Delay(10); } while (_isStarted);
 
@@ -45,7 +45,7 @@ namespace Technologai.Agents
             }
         }
 
-        private static void interactWithUser_callback(Information information)
+        private async static Task interactWithUser_callback(Information information)
         {
             if (information.Output?.Raw?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
             {
@@ -55,13 +55,13 @@ namespace Technologai.Agents
             }
             else
             {
-                _agent?.PublishAsync(interactWithUser_callback, "interact_with_user", information.Output);
+                await _agent.PublishAsync(interactWithUser_callback, "interact_with_user", information.Output) ;
             }
         }
 
         private static void ShowMessageToUser_callback(string? message)
         {
-            Console.Write($"{(string.IsNullOrEmpty(message) ? string.Empty : $"{message}>")}");
+            Console.Write($"{(string.IsNullOrEmpty(message) ? string.Empty : $"{message}")}");
         }
 
         private static void LogMessage_callback(object? sender, string message)

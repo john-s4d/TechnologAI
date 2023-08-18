@@ -12,7 +12,7 @@ public class Debug : Template
 
     public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-    public override Task<Data?> Process(Information information)
+    public async override Task<Data?> Process(Information information)
     {
 
 #if DEBUG
@@ -28,10 +28,10 @@ public class Debug : Template
 
             if (string.IsNullOrEmpty(templateId) || !_agent.Catalog.ContainsKey(templateId) || string.IsNullOrEmpty(userData))
             {
-                return Task.FromResult((Data?)null);
+                return null;
             }
 
-            ITemplate template = _agent.Catalog[templateId];
+            Template template = _agent.Catalog[templateId];
 
             Data data;
 
@@ -44,22 +44,15 @@ public class Debug : Template
                 data = new Data(userData, DataFormat.RAW);
             }
 
-            information.Publish(DebugCallback, templateId, data);
-
-            return Task.FromResult((Data?)null);
+            return await information.Publish(templateId, data);
         }
         else
         {
             // TODO: Allow parameterless debug with no data
-            return Task.FromResult((Data?)null);
+            return new Data("Not Supported");
         }
 
 #endif
-        return Task.FromResult(new Data("Debug not enabled."));        
-    }
-
-    private void DebugCallback(Information information)
-    {
-        information.Publish(null, "show_output_to_user", information.Output);        
+        return new Data("Debug not enabled");
     }
 }

@@ -1,16 +1,21 @@
-﻿using Microsoft.VisualBasic;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using static Technologai.Agent;
 
 namespace Technologai
 {
-    public class Information : IInformation
+    public enum InformationState
+    {
+        DRAFT = 0,
+        OPEN = 1,
+        CLOSED = 2
+    }
+
+    public class Information : IComparable<Information>
     {
         private bool _assessmentQueued = false;
 
         [JsonIgnore]
         public Agent? Agent { get; set; }
-
         public string Id { get; }
         public string CreatorId { get; }
         public string? WorkerId { get; set; }
@@ -41,12 +46,6 @@ namespace Technologai
         { 
             Agent = agent;
             WorkerId = Agent.Catalog[TemplateId].MemberId;
-        }
-
-        public Information(Agent agent, Information information)
-            : this(information.Id, information.CreatorId, information.WorkerId, information.TemplateId, InformationState.OPEN, TemplateState.RESTING, information.Input, null)
-        {
-            Agent = agent;
         }
 
         protected internal async Task<bool> Assess()
@@ -98,16 +97,16 @@ namespace Technologai
                 Output = await Agent.Catalog[TemplateId].Process(this);
 
                 InformationState = InformationState.CLOSED;
-
-                WorkerId = CreatorId;
-
+                
                 TemplateState = TemplateState.RESTING;
 
+                WorkerId = CreatorId;
+                
                 await Agent.PublishAsync(null, this);
             }
         }
-
-        public async Task Publish(PublishCallback? publishCallback, string templateId, Data? input = null)
+        
+        public async Task PublishAsync(PublishCallback? publishCallback, string templateId, Data? input = null)
         {
             if (Agent == null) { return; }
 
@@ -115,7 +114,7 @@ namespace Technologai
             Agent.Context.Add(information);
             Agent.Context.Spawn(information.Id, Id);
             await Agent.PublishAsync(publishCallback, information);            
-        }
+        }        
 
         public async Task<Data?> Publish(string templateId, Data? input = null)
         {
@@ -127,14 +126,9 @@ namespace Technologai
             return await Agent.Publish(information);
         }
 
-        public int CompareTo(IInformation? other)
-        {
-            return object.ReferenceEquals(other, null) ? 1 : ((Id)Id).CompareTo((Id)other.Id);
-        }
-
         public int CompareTo(Information? other)
         {
-            return CompareTo((IInformation?)other);
-        }
+            return object.ReferenceEquals(other, null) ? 1 : ((Id)Id).CompareTo((Id)other.Id);
+        }       
     }
 }

@@ -1,6 +1,5 @@
 ﻿using MQTTnet.Client;
 using System.Collections.Concurrent;
-using System.Timers;
 using Timer = System.Timers.Timer;
 
 namespace Technologai
@@ -8,7 +7,7 @@ namespace Technologai
     public class Agent
     {
         public event EventHandler<string>? LogMessage;
-        public delegate void PublishCallback(Information information);
+        public delegate Task PublishCallback(Information information);
 
         const string LOG_MESSAGE_ID = "monitor.display_message";
 
@@ -56,7 +55,7 @@ namespace Technologai
 
                 if (template != null && template.MemberId != Id)
                 {
-                    WriteLog($"{template.MemberId} {template.Id} template receive");
+                    await WriteLog($"{template.MemberId} {template.Id} template receive");
 
                     Catalog.Add(template);
                 }
@@ -76,7 +75,7 @@ namespace Technologai
 
         private async Task Send(Pulse pulse, string toMemberId = "0")
         {
-            WriteLog($"{toMemberId} {pulse.MemberId} pulse send");
+            await WriteLog($"{toMemberId} {pulse.MemberId} pulse send");
 
             var brokerMessage = new BrokerMessage(Identity)
             {
@@ -90,9 +89,9 @@ namespace Technologai
             await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
-        public async Task Send(ITemplate template, string toMemberId)
+        public async Task Send(Template template, string toMemberId)
         {
-            WriteLog($"{toMemberId} {template.Id} template send");
+            await WriteLog($"{toMemberId} {template.Id} template send");
 
             var brokerMessage = new BrokerMessage(Identity)
             {
@@ -108,7 +107,7 @@ namespace Technologai
 
         private async Task Receive(Pulse pulse)
         {
-            WriteLog($"{pulse.MemberId} pulse receive");
+            await WriteLog($"{pulse.MemberId} pulse receive");
 
             if (pulse != null && !string.IsNullOrEmpty(pulse.MemberId))
             {
@@ -136,12 +135,12 @@ namespace Technologai
             // Closed and this agent is the creator
             if (information.InformationState == InformationState.CLOSED && information.CreatorId == Id)
             {
-
                 // Invoke the callback.
                 if (_publishCallbacks.ContainsKey(information.Id))
                 {
-                    _publishCallbacks[information.Id].Invoke(information);
-                    _publishCallbacks.TryRemove(information.Id, out var callback);
+                    await _publishCallbacks[information.Id].Invoke(information);
+
+                    bool result = _publishCallbacks.TryRemove(new KeyValuePair<string, PublishCallback>(information.Id, _publishCallbacks[information.Id]));                    
                 }
 
                 // Activate the publisher's information
@@ -153,9 +152,9 @@ namespace Technologai
                     return;
                 }
 
-                information = new Information(this, publisherInformation);
+                information = publisherInformation;
 
-                // -> Fall through to next if condition
+                // -> Fall through to next if condition               
             }
 
             // Open, and this agent is assigned
@@ -184,8 +183,11 @@ namespace Technologai
 
             await PublishAsync((returnedInformation) =>
                 {
+                    Context.Add(returnedInformation);
+                    information = returnedInformation;
                     result = returnedInformation.Output;
                     callbackComplete = true;
+                    return Task.CompletedTask;
                 }, information
             );
 
@@ -208,7 +210,7 @@ namespace Technologai
         {
             if (information.TemplateId != LOG_MESSAGE_ID)
             {
-                WriteLog($"{information.Id} Publish> {information.TemplateId} | {information.InformationState} | {information.Input} | {information.Output}");
+                await WriteLog($"{information.Id} Publish> {information.TemplateId} | {information.InformationState} | {information.Input} | {information.Output}");
             }
 
             if (publishCallback != null)
@@ -225,16 +227,16 @@ namespace Technologai
             {
                 information.WorkerId = Catalog.ContainsKey(information.TemplateId) ? Catalog[information.TemplateId].MemberId : Id;
             }
-
+            
             // Short circuit
             if (information.WorkerId == Id)
             {
                 new Task(async () =>
                 {
-                    await Receive(new Information(this, information));
+                    await Receive(information);
                 }).Start();
                 return;
-            }
+            }            
 
             // Long route
             var brokerMessage = new BrokerMessage(Identity)
@@ -249,11 +251,11 @@ namespace Technologai
             await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
-        public void WriteLog(string message)
+        public async Task WriteLog(string message)
         {
             if (_mqtt.IsConnected && Catalog.ContainsKey(LOG_MESSAGE_ID) && Catalog[LOG_MESSAGE_ID].MemberId != null && Catalog[LOG_MESSAGE_ID].MemberId != Id)
             {
-                _ = PublishAsync(null, LOG_MESSAGE_ID, $"{Name?.PadRight(21)} | {message}");
+                await PublishAsync(null, LOG_MESSAGE_ID, $"{Name?.PadRight(21)} | {message}");
             }
             else
             {
@@ -266,7 +268,7 @@ namespace Technologai
         public async Task Start()
         {
             // TODO: Fix in AI-17
-            WriteLog($"Warming up...");
+            await WriteLog($"Warming up...");
 
             await new HttpClient().GetAsync($"{Identity.Authority.AuthUri}/.well-known/jwks.json");
             await new HttpClient().GetAsync($"{Identity.Authority.AuthUri}/.well-known/openid-configuration");
@@ -275,19 +277,19 @@ namespace Technologai
 
             //this.Name = Identity.Name;
 
-            WriteLog($"Authenticated");
+            await WriteLog($"Authenticated");
 
             await _mqtt.ConnectAsync();
 
-            WriteLog($"Connected");
+            await WriteLog($"Connected");
 
             await _mqtt.SubscribeAsync(Identity.SubscribeMemberMask);
 
-            WriteLog($"Subscribed {Identity.SubscribeMemberMask}");
+            await WriteLog($"Subscribed {Identity.SubscribeMemberMask}");
 
             await _mqtt.SubscribeAsync(Identity.SubscribeAgencyMask);
 
-            WriteLog($"Subscribed {Identity.SubscribeAgencyMask}");
+            await WriteLog($"Subscribed {Identity.SubscribeAgencyMask}");
 
             await Send(new Pulse(Id));
 
@@ -318,5 +320,7 @@ namespace Technologai
             await _mqtt.DisconnectAsync();
             Environment.Exit(0);
         }
+
+
     }
 }

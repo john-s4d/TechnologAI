@@ -14,8 +14,7 @@ public class GetInputFromUser : Template
     {        
         return await Task.Run(() =>
         {
-            var output = new Data(Console.ReadLine() ?? string.Empty);
-            return output;
+            return new Data(Console.ReadLine() ?? string.Empty);            
         });
     }
 }
