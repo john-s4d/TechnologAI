@@ -31,7 +31,7 @@
 
             if (templateId == null)
             {
-                // Ask an LLM to determine the best template to use from the available templates
+                // TODO: Ask an LLM to determine the best template to use from the available templates
 
                 string prompt = $"{information.Input}";
 
@@ -42,13 +42,6 @@
         }
     }
 }
-
-/*
-var prompt = $"Your response MUST be a compliant machine-readable JSON document.\r\n\r\n" +
-$"{JsonConvert.SerializeObject(choose_ability)}" +
-$"\r\n\r\nGiven the list of abilities provided, specify which one you would like to use to respond to the input. " +
-$"Your response should consist of a single JSON object with the name of the selected ability. For example: {information.Template.SampleJsonOut}";
-*/
 
 /*
 var prompt = $"Your response MUST be a compliant machine-readable JSON document.\r\n\r\n" +
