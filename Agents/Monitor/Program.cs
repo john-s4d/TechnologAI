@@ -14,29 +14,30 @@
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
 
             _agent = new Agent(authUri, clientId, clientSecret, memberId);
-            _agent.StatusMessage += _monitor_StatusMessage;
+            _agent.LogMessage += AgentLogMessage_callback;
 
-            DisplayLogMessage displayLogMessage = new DisplayLogMessage();
-            displayLogMessage.LogMessage += DisplayLogMessage_LogMessage;
-            _agent.Catalog.Add(displayLogMessage);            
+            DisplayMessage displayMessage = new();
+            displayMessage.Message += DisplayMessage_callback;
+            _agent.Catalog.Add(displayMessage);
 
             Console.WriteLine("Loading...");
 
             await _agent.Start();
 
-            do { await Task.Delay(10);  } while (true);
+            do { await Task.Delay(10); } while (true);
 
             await _agent.Stop();
         }
 
-        private static void DisplayLogMessage_LogMessage(object? sender, string message)
+        private static void DisplayMessage_callback(object? sender, string message)
         {
             Console.WriteLine($"{message}");
         }
 
-        private static void _monitor_StatusMessage(object? sender, string message)        {
+        private static void AgentLogMessage_callback(object? sender, string message)
+        {
 
-            Console.WriteLine($"{(_agent?.Name ?? "Monitor.Local").PadRight(21)} | {message}");            
+            Console.WriteLine($"{(_agent?.Name ?? "Monitor.Local").PadRight(21)} | {message}");
         }
     }
 }

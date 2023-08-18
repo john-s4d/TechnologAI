@@ -5,8 +5,8 @@ public class DownloadFile : Template
     public string? LocalPath { get; set; }
 
     public new string Description { get; } = "Read a text file on the local filesystem.";
-    public new string SampleJsonIn { get; } = "{\"filename\":\"string\"}";
-    public new string SampleJsonOut { get; } = "{\"contents\":\"string\"}";
+    //public new string SampleJsonIn { get; } = "{\"filename\":\"string\"}";
+    //public new string SampleJsonOut { get; } = "{\"contents\":\"string\"}";
 
     public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
     {
@@ -25,10 +25,5 @@ public class DownloadFile : Template
         {
             return new Dictionary<string, object> { { "error", $"Error reading file '{filename}': {ex.Message}" } };
         }
-    }
-
-    public Task<List<Information>> Spawn(InformationAdapter information)
-    {
-        throw new NotImplementedException();
     }
 }

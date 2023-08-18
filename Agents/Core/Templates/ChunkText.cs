@@ -15,7 +15,7 @@ namespace Technologai
             OutputKeys = new string[] { "chunks" };
         }
 
-        public override Task<bool> Assess(InformationAdapter information)
+        public override Task<bool> Assess(Information information)
         {
             switch (information.Input?.Format)
             {
@@ -31,7 +31,7 @@ namespace Technologai
             return Task.FromResult(false);
         }
 
-        public override Task<Data?> Process(InformationAdapter information)
+        public override Task<Data?> Process(Information information)
         {
             string? text = string.Empty;
             int size = DEFAULT_SIZE;

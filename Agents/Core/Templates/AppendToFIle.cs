@@ -9,7 +9,7 @@ internal class AppendToFile : Template
         InputKeys = new string[] { "filename", "content" };
     }
 
-    public override Task<bool> Assess(InformationAdapter information)
+    public override Task<bool> Assess(Information information)
     {
         return Task.FromResult(
                 (information.Input?.Structured?.ContainsKey("filename") ?? false) &&
@@ -17,7 +17,7 @@ internal class AppendToFile : Template
         );          
     }
 
-    public override async Task<Data?> Process(InformationAdapter information)
+    public override async Task<Data?> Process(Information information)
     {
         using (var writer = new StreamWriter(information.Input?.Structured?["filename"]
                    ?? throw new ArgumentNullException("filename"), true))

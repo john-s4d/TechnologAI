@@ -18,7 +18,7 @@ namespace Technologai.Agents
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
 
             _agent = new Agent(authUri, clientId, clientSecret, memberId);
-            _agent.StatusMessage += _agent_StatusMessage;
+            _agent.LogMessage += LogMessage_callback;
 
             _agent.Catalog.Add(new AppendToFile());
             _agent.Catalog.Add(new Generate32BitString());
@@ -37,9 +37,8 @@ namespace Technologai.Agents
             await _agent.Stop();
         }
 
-        private static void _agent_StatusMessage(object? sender, string message)
+        private static void LogMessage_callback(object? sender, string message)
         {
-
             Console.WriteLine($"{_agent?.Name ?? "Core.Local"} | {message}");
         }
     }       

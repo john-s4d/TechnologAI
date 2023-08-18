@@ -8,9 +8,9 @@ internal class InputToOutput : Template
         Description = "Make the output the same as the input.";
     }
 
-    public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+    public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-    public override Task<Data?> Process(InformationAdapter information)
+    public override Task<Data?> Process(Information information)
     {   
         return Task.FromResult(information.Input);
     }

@@ -8,37 +8,25 @@ public class InteractWithUser : Template
         Description = "Provide the user with information and receive a response from the user.";
     }
 
-    public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
-
-    public override async Task<Data?> Process(InformationAdapter information)
+    public override Task<bool> Assess(Information information) => Task.FromResult(true);
+     
+    public override async Task<Data?> Process(Information information)
     {
-        var showUserOutput = await information.Spawn("show_output_to_user", information.Input);
-        await showUserOutput.PublishAndWait();
+        information.Publish("show_message_to_user", information.Input);
 
-        var getUserInput = await information.Spawn("get_input_from_user");
-        var userInput = await getUserInput.PublishAndWait();
+        var userInput = await information.Publish("get_input_from_user");
 
 #if DEBUG
 
         if (userInput?.Raw?.StartsWith("DEBUG:") ?? false)
         {
-            var debugTemplate = await information.Spawn("debug", userInput);
-            await debugTemplate.Publish(PublishCallback);
-            return null;
+            return await information.Publish("debug", userInput);            
         }
 #endif
 
-        var bestTemplate = await information.Spawn("get_best_template", userInput).Result.PublishAndWait();        
+        var bestTemplate = await information.Publish("get_best_template", userInput);
 
-        await information.Spawn(bestTemplate?.Structured?["Id"] ?? "input_to_output", userInput).Result.Publish(PublishCallback);        
+        return await information.Publish(bestTemplate?.Structured?["Id"] ?? "input_to_output", userInput);
 
-        return new Data();
-
-    }
-
-    private void PublishCallback(InformationAdapter information)
-    {
-        var showUserOutput = information.Spawn("show_output_to_user", information.Output).Result;
-        _ = showUserOutput.Publish();
-    }
+    }   
 }

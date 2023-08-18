@@ -6,16 +6,18 @@ public class Debug : Template
     public Debug(Agent agent)
     {
         Id = "debug";
-        Description = "Debug ";
+        Description = "Debug";
         _agent = agent;
     }
 
-    public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+    public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-    public override async Task<Data?> Process(InformationAdapter information)
+    public override Task<Data?> Process(Information information)
     {
 
 #if DEBUG
+
+        // Parse the input for the template id and user data
 
         int firstSpace = information.Input?.Raw?.IndexOf(' ') ?? -1;
 
@@ -26,7 +28,7 @@ public class Debug : Template
 
             if (string.IsNullOrEmpty(templateId) || !_agent.Catalog.ContainsKey(templateId) || string.IsNullOrEmpty(userData))
             {
-                return null;
+                return Task.FromResult((Data?)null);
             }
 
             ITemplate template = _agent.Catalog[templateId];
@@ -42,25 +44,22 @@ public class Debug : Template
                 data = new Data(userData, DataFormat.RAW);
             }
 
-            var debugTemplate = await information.Spawn(templateId, data);
-            await debugTemplate.Publish(PublishCallback);
+            information.Publish(DebugCallback, templateId, data);
 
-            return null;
+            return Task.FromResult((Data?)null);
         }
         else
         {
             // TODO: Allow parameterless debug with no data
-            return null;
+            return Task.FromResult((Data?)null);
         }
 
 #endif
-
-        return new Data("Debug not enabled.");
+        return Task.FromResult(new Data("Debug not enabled."));        
     }
 
-    private void PublishCallback(InformationAdapter information)
+    private void DebugCallback(Information information)
     {
-        var showUserOutput = information.Spawn("show_output_to_user", information.Output).Result;
-        _ = showUserOutput.Publish();
+        information.Publish(null, "show_output_to_user", information.Output);        
     }
 }

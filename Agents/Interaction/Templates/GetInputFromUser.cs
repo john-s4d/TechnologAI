@@ -8,9 +8,9 @@ public class GetInputFromUser : Template
         Description = "Receive a text input from the user.";
     }
 
-    public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+    public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-    public override async Task<Data?> Process(InformationAdapter information)
+    public override async Task<Data?> Process(Information information)
     {        
         return await Task.Run(() =>
         {

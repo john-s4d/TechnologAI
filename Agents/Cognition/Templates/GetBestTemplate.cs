@@ -13,11 +13,11 @@
             _defaultTemplateId = defaultTemplateId;
         }
 
-        public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-        public async override Task<Data?> Process(InformationAdapter information)
+        public async override Task<Data?> Process(Information information)
         {            
-            string? templateId = _defaultTemplateId; 
+            string? templateId = null; 
 
             if (information.Input?.Raw == "32bit")
             {                
@@ -29,11 +29,14 @@
                 templateId = "respond_bar";
             }
 
-            // Ask an LLM to determine the best template to use from the available templates
+            if (templateId == null)
+            {
+                // Ask an LLM to determine the best template to use from the available templates
 
-            string prompt = $"{information.Input}";
+                string prompt = $"{information.Input}";
 
-            templateId = await information.Spawn("get_prompt_completion", prompt).Result.PublishAndWait();            
+                templateId = await information.Publish("get_prompt_completion", prompt);
+            }                    
 
             return new Data(new Dictionary<string, string> { { "Id", templateId ?? _defaultTemplateId } });
         }

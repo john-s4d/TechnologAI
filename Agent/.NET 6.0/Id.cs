@@ -6,7 +6,7 @@ namespace Technologai
 {
     // TODO: Review. Ensure the result has enough data for tracking or informational purposes
 
-    public class InformationId : IComparable<InformationId>
+    public class Id : IComparable<Id>
     {
         // hash compute of an id allows to verify which agent created this contextId. If that's ever needed.
                 
@@ -14,7 +14,7 @@ namespace Technologai
         private readonly byte[] _unixTimestampBytes = new byte[8];
         private readonly byte[] _hashComputeBytes = new byte[8];
 
-        internal InformationId(ulong unixTimestamp, byte[] idHash)
+        internal Id(long unixTimestamp, byte[] idHash)
         {
             _unixTimestampBytes = BitConverter.GetBytes(unixTimestamp);
             _hashComputeBytes = MD5.HashData(idHash.Concat(_unixTimestampBytes).ToArray()).Take(8).ToArray(); // just half of the hash to fit into 8 bytes. Is this ok?
@@ -22,31 +22,32 @@ namespace Technologai
         }
 
         [JsonConstructor]
-        public InformationId(string contextId)
+        public Id(string informationId)
         {
-            _id = contextId;
-            var contextBytes = Base64UrlEncoder.DecodeBytes(_id);
+            _id = informationId;
 
-            Array.Copy(contextBytes, _unixTimestampBytes, 8);
-            Array.Copy(contextBytes, 8, _hashComputeBytes, 0, 8);
+            var informationBytes = Base64UrlEncoder.DecodeBytes(_id);
+
+            Array.Copy(informationBytes, _unixTimestampBytes, 8);
+            Array.Copy(informationBytes, 8, _hashComputeBytes, 0, 8);
         }
 
-        internal static InformationId Create(string creatorIdBase64)        {
+        public static Id Create(string creatorIdBase64)        {
 
-            return new InformationId(GetTimestampTicksBytes(), GetBase64Bytes(creatorIdBase64, 8));
+            return new Id(GetTimestampTicks(), GetBase64Bytes(creatorIdBase64, 8));
         }
 
-        public static ulong GetTimestampTicksBytes()
+        public static long GetTimestampTicks()
         {
-            return (ulong)(DateTimeOffset.UnixEpoch - DateTimeOffset.UtcNow).Ticks;
+            return (DateTimeOffset.UtcNow - DateTimeOffset.UnixEpoch).Ticks;
         }
 
-        public static byte[] GetBase64Bytes(string creatorIdBase64, int count)
+        public static byte[] GetBase64Bytes(string base64, int count)
         {
-            return Base64UrlEncoder.DecodeBytes(creatorIdBase64).Take(count).ToArray();
+            return Base64UrlEncoder.DecodeBytes(base64).Take(count).ToArray();
         }
 
-        public int CompareTo(InformationId? other)
+        public int CompareTo(Id? other)
         {
             if (object.ReferenceEquals(other, null))
             {
@@ -66,9 +67,9 @@ namespace Technologai
             return result;
         }
 
-        public static implicit operator InformationId(string value) => new InformationId(value);
+        public static implicit operator Id(string value) => new Id(value);
 
-        public static implicit operator string(InformationId value) => value.ToString();       
+        public static implicit operator string(Id value) => value.ToString();       
 
         public override string ToString()
         {

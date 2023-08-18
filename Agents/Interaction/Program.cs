@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic;
+using System.Runtime.CompilerServices;
 
 namespace Technologai.Agents
 {
@@ -20,18 +21,17 @@ namespace Technologai.Agents
                 Console.WriteLine("Loading...");
 
                 _agent = new Agent(authUri, clientId, clientSecret, memberId);
-                _agent.StatusMessage += _agent_statusMessage;
+                _agent.LogMessage += LogMessage_callback;
 
                 // Add local templates
                 _agent.Catalog.Add(new GetInputFromUser());
                 _agent.Catalog.Add(new InteractWithUser());
                 _agent.Catalog.Add(new Debug(_agent));
-                _agent.Catalog.Add(new ShowOutputToUser(showUserOutput_outputMessage));
+                _agent.Catalog.Add(new ShowMessageToUser(ShowMessageToUser_callback));
 
                 await _agent.Start();                
 
-                var interact_with_user = await _agent.CreateInformation("interact_with_user", "Input");
-                await interact_with_user.Publish(information_OnPublishedCallback);
+                _ = _agent.PublishAsync(interactWithUser_callback, "interact_with_user", "Input");
                                 
                 do { await Task.Delay(10); } while (_isStarted);
 
@@ -45,28 +45,26 @@ namespace Technologai.Agents
             }
         }
 
-        private static async void information_OnPublishedCallback(InformationAdapter information)
+        private static void interactWithUser_callback(Information information)
         {
-            Console.WriteLine($"{information.Output}");
-
             if (information.Output?.Raw?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
             {
                 _isStarted = false;
+
                 Console.WriteLine($"{_agent?.Name} Shutting Down");
             }
-            else if (_agent != null)
+            else
             {
-                var interact_with_user = await _agent.CreateInformation("interact_with_user");
-                await interact_with_user.Publish(information_OnPublishedCallback);
+                _agent?.PublishAsync(interactWithUser_callback, "interact_with_user", information.Output);
             }
         }
 
-        private static void showUserOutput_outputMessage(string? message)
+        private static void ShowMessageToUser_callback(string? message)
         {
             Console.Write($"{(string.IsNullOrEmpty(message) ? string.Empty : $"{message}>")}");
         }
 
-        private static void _agent_statusMessage(object? sender, string message)
+        private static void LogMessage_callback(object? sender, string message)
         {
             Console.WriteLine($"{_agent?.Name ?? "Interaction.Local"} | {message}");
         }

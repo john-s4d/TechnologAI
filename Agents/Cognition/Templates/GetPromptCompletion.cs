@@ -10,23 +10,26 @@
             InputKeys = new string[] { "model", "prompt" };
         }
 
-        public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-        public override Task<Data?> Process(InformationAdapter information)
+        public override Task<Data?> Process(Information information)
         {            
             if (information.Input == null)
             {
                 return Task.FromResult((Data?)null);
             }
+
             else if (information.Input.Format == DataFormat.STRUCTURED)
             {
                 var model = information.Input.Structured?["model"] ?? DEFAULT_MODEL;
-                var prompt = information.Input.Structured?["prompt"] ?? string.Empty;                
-                return Task.FromResult(new Data(LLM.GetPromptCompletion(model, prompt)));
+                var prompt = information.Input.Structured?["prompt"] ?? string.Empty;
+                //return Task.FromResult(new Data(LLM.GetPromptCompletion(model, prompt)));
+                return Task.FromResult((Data?)null);
             }
             else
             {
-                return Task.FromResult(new Data(LLM.GetPromptCompletion(DEFAULT_MODEL, information.Input.Raw)));
+                //return Task.FromResult(new Data(LLM.GetPromptCompletion(DEFAULT_MODEL, information.Input.Raw)));
+                return Task.FromResult((Data?)null);
             }
         }
     }

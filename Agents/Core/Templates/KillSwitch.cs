@@ -14,9 +14,9 @@
             _agent = agent;
         }
 
-        public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
         
-        public override Task<Data?> Process(InformationAdapter information)
+        public override Task<Data?> Process(Information information)
         {
             // FIXME: Only kills Core agent. Need to kill all agents.
             // TODO: Broadcast a message to all agents to shut down.            
