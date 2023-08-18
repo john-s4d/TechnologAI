@@ -4,8 +4,6 @@ using System.Text.Json.Serialization;
 
 namespace Technologai
 {
-    // TODO: Review. Ensure the result has enough data for tracking or informational purposes
-
     public class Id : IComparable<Id>
     {
         // hash compute of an id allows to verify which agent created this contextId. If that's ever needed.
