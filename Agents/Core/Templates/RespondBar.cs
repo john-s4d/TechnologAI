@@ -1,4 +1,4 @@
-﻿namespace Technologai.Agents.Core.Templates
+﻿namespace Technologai
 {
     public class RespondBar : Template
     {   

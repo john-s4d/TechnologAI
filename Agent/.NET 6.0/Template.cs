@@ -6,22 +6,7 @@
         ASSESSING = 1,
         PROCESSING = 2        
     }
-
-    /*
-    public interface ITemplate
-    {
-        public string? Id { get; set; }        
-        public Data? Description { get; set; }
-        public string[]? InputKeys { get; set; }
-        public string[]? OutputKeys { get; set; }
-        public string? MemberId { get; set; }
-
-        public abstract Task<bool> Assess(Information information);
-        public abstract Task<Data?> Process(Information information);
-    }
-    */
-
-    public class Template //: ITemplate
+    public class Template 
     {
         public string? Id { get; set; }
         public Data? Description { get; set; }

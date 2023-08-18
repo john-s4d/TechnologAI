@@ -1,4 +1,4 @@
-﻿namespace Technologai.Cognition
+﻿namespace Technologai
 {
     internal class GetBestTemplate : Template
     {

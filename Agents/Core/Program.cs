@@ -1,7 +1,4 @@
-﻿
-using Technologai.Agents.Core.Templates;
-
-namespace Technologai.Agents
+﻿namespace Technologai.Agents
 {
     internal class Program
     {

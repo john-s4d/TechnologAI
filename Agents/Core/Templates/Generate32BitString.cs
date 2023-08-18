@@ -1,4 +1,7 @@
-﻿namespace Technologai
+﻿using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
+
+namespace Technologai
 {
     public class Generate32BitString : Template
     {   
@@ -11,7 +14,9 @@
 
         public override Task<Data?> Process(Information information)
         {
-            return Task.FromResult((Data?)new Data(Utils.GenerateNewIdString(32)));
+            return Task.FromResult((Data?)
+                Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(32))
+                );
         }
     }
 }

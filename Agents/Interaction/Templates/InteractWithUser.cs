@@ -21,7 +21,7 @@ public class InteractWithUser : Template
 
         if (userInput?.Raw?.StartsWith("DEBUG:") ?? false)
         {
-            return await information.Publish("debug", userInput);            
+            return await information.Publish("debug", userInput);
         }
 #endif
 

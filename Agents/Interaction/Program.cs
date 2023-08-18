@@ -1,7 +1,4 @@
-﻿using Microsoft.VisualBasic;
-using System.Runtime.CompilerServices;
-
-namespace Technologai.Agents
+﻿namespace Technologai.Agents
 {
     internal class Program
     {
