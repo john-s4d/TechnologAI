@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Technologai.Agents.Models
+﻿namespace Technologai.Agents.Core.DataModels
 {
     public class RequestReceiveTranscriptModel
     {

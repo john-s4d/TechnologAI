@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Technologai.Agents
+namespace Technologai.Agents.Core
 {
 
     class HuggingFace

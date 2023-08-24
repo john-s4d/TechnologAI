@@ -39,37 +39,17 @@ namespace Technologai
         {
             var brokerMessage = BrokerMessage.FromMqttArgs(args);
 
-            if (brokerMessage.MessageType == AgentMessageType.PULSE)
+            switch (brokerMessage.MessageType)
             {
-                Pulse? pulse = brokerMessage.MessageData as Pulse;
-
-                if (pulse != null && pulse.MemberId != Id)
-                {
-                    await Receive(pulse);
-                }
-            }
-
-            else if (brokerMessage.MessageType == AgentMessageType.TEMPLATE)
-            {
-                Template? template = brokerMessage.MessageData as Template;
-
-                if (template != null && template.MemberId != Id)
-                {
-                    await WriteLog($"{template.MemberId} {template.Id} template receive");
-
-                    Catalog.Add(template);
-                }
-            }
-
-            else if (brokerMessage.MessageType == AgentMessageType.INFORMATION)
-            {
-                Information? information = brokerMessage.MessageData as Information;
-
-                if (information != null)
-                {
-                    information.Agent = this;
-                    await Receive(information);
-                }
+                case AgentMessageType.PULSE:
+                    await Receive(brokerMessage.MessageData as Pulse);
+                    break;
+                case AgentMessageType.TEMPLATE:
+                    await Receive(brokerMessage.MessageData as Template);
+                    break;
+                case AgentMessageType.INFORMATION:
+                    await Receive(brokerMessage.MessageData as Information);
+                    break;
             }
         }
 
@@ -105,11 +85,11 @@ namespace Technologai
             await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
-        private async Task Receive(Pulse pulse)
+        private async Task Receive(Pulse? pulse)
         {
-            await WriteLog($"{pulse.MemberId} pulse receive");
+            await WriteLog($"{pulse?.MemberId} pulse receive");
 
-            if (pulse != null && !string.IsNullOrEmpty(pulse.MemberId))
+            if (pulse != null && !string.IsNullOrEmpty(pulse.MemberId) && pulse.MemberId != Id)
             {
                 if (!_knownAgents.ContainsKey(pulse.MemberId))
                 {
@@ -128,19 +108,31 @@ namespace Technologai
             }
         }
 
-        private async Task Receive(Information information)
+        private async Task Receive(Template? template)
         {
-            Context.Add(information);
+            if (template != null && template.MemberId != Id)
+            {
+                await WriteLog($"{template.MemberId} {template.Id} template receive");
+
+                Catalog.Add(template);
+            }
+        }
+
+        private async Task Receive(Information? information)
+        {
+            if (information == null) { return; }
+
+            information.Agent = this;
+
+            Context.Add(information); // TODO: only update if newer or completed
 
             // Closed and this agent is the creator
             if (information.InformationState == InformationState.CLOSED && information.CreatorId == Id)
             {
                 // Invoke the callback.
-                if (_publishCallbacks.ContainsKey(information.Id))
+                if (_publishCallbacks.Remove(information.Id, out PublishCallback? callback))
                 {
-                    await _publishCallbacks[information.Id].Invoke(information);
-
-                    bool result = _publishCallbacks.TryRemove(new KeyValuePair<string, PublishCallback>(information.Id, _publishCallbacks[information.Id]));                    
+                      await callback.Invoke(information);
                 }
 
                 // Activate the publisher's information
@@ -184,7 +176,6 @@ namespace Technologai
             await PublishAsync((returnedInformation) =>
                 {
                     Context.Add(returnedInformation);
-                    information = returnedInformation;
                     result = returnedInformation.Output;
                     callbackComplete = true;
                     return Task.CompletedTask;
@@ -227,7 +218,7 @@ namespace Technologai
             {
                 information.WorkerId = Catalog.ContainsKey(information.TemplateId) ? Catalog[information.TemplateId].MemberId : Id;
             }
-            
+
             // Short circuit
             if (information.WorkerId == Id)
             {
@@ -236,7 +227,7 @@ namespace Technologai
                     await Receive(information);
                 }).Start();
                 return;
-            }            
+            }
 
             // Long route
             var brokerMessage = new BrokerMessage(Identity)
@@ -320,7 +311,5 @@ namespace Technologai
             await _mqtt.DisconnectAsync();
             Environment.Exit(0);
         }
-
-
     }
 }

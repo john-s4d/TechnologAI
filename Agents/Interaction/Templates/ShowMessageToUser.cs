@@ -1,21 +1,22 @@
-﻿using Technologai;
-
-public class ShowMessageToUser : Template
-{   
-    internal event Action<string>? Message;
-
-    public ShowMessageToUser(Action<string> messageCallback)
+﻿namespace Technologai
+{
+    public class ShowMessageToUser : Template
     {
-        Id = "show_message_to_user";
-        Description = "Show a message to the user.";
-        Message += messageCallback;
-    }
+        internal event Action<string>? Message;
 
-    public override Task<bool> Assess(Information information) => Task.FromResult(true);
+        public ShowMessageToUser(Action<string> messageCallback)
+        {
+            Id = "show_message_to_user";
+            Description = "Show a message to the user.";
+            Message += messageCallback;
+        }
 
-    public override Task<Data?> Process(Information information)
-    {   
-        Message?.Invoke(information?.Input?.Raw ?? string.Empty);
-        return Task.FromResult((Data?)null);
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override Task<Data?> Process(Information information)
+        {
+            Message?.Invoke(information?.Input?.Raw ?? string.Empty);
+            return Task.FromResult((Data?)null);
+        }
     }
 }

@@ -1,5 +1,4 @@
-﻿using Core.Templates;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Technologai
 {

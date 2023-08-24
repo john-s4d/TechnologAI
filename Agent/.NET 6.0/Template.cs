@@ -13,9 +13,7 @@
         public string[]? InputKeys { get; set; }
         public string[]? OutputKeys { get; set; }
         public string? MemberId { get; set; }
-
         public virtual Task<bool> Assess(Information information) => Task.FromResult(false);
         public virtual Task<Data?> Process(Information information) => Task.FromResult((Data?)null);
-
     }
 }

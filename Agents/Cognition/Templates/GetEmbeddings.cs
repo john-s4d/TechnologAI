@@ -1,9 +1,10 @@
-﻿using Newtonsoft.Json;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Technologai.Agents.Cognition.DataModels;
 
-
-namespace Technologai.Cognition.Templates
+namespace Technologai
 {
     /// <summary>
     /// GetEmbeddings
@@ -36,10 +37,10 @@ namespace Technologai.Cognition.Templates
 
             var requestData = new EmbeddingsRequestDataModel()
             {
-                InputText = inputText,
-                EmbeddingsModel = embeddingsModel,
+                Input = inputText,
+                Model = embeddingsModel,
             };
-            var jsonData = JsonConvert.SerializeObject(requestData);
+            var jsonData = JsonSerializer.Serialize(requestData);
 
             // Get Embeddings
             try
@@ -54,7 +55,7 @@ namespace Technologai.Cognition.Templates
                 {
                     string responseContent = await response.Content.ReadAsStringAsync();
                     // Parse the response to extract the image URL
-                    var responseData = JsonConvert.DeserializeObject(responseContent);
+                    var responseData = JsonSerializer.Deserialize<EmbeddingsRequestDataModel>(responseContent);
 
                     if (responseData != null)
                     {

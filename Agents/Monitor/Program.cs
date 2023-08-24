@@ -1,4 +1,4 @@
-﻿namespace Technologai.Agents
+﻿namespace Technologai.Agents.Monitor
 {
     internal class Program
     {

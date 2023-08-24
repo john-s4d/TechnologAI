@@ -5,7 +5,7 @@ namespace Technologai
     /// <summary>
     /// Download file from web url
     /// </summary>
-    public class DownloadFile : Template
+    public class DownloadFile2 : Template
     {
         public string Description { get; } = "Downloaded a file to the local filesystem.";
         public string SampleJsonIn { get; } = "{\"weburl\":\"string\",\"filepath\":\"string\" }";

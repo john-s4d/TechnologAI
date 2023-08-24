@@ -6,7 +6,7 @@ using SymblAISharp.Conversation;
 using SymblAISharp.Conversation.FormattedTranscript;
 using SymblAISharp.Conversation.Conversation;
 
-namespace TestApp
+namespace Technologai.Agents.Core
 {
     internal class SymblAI
     {

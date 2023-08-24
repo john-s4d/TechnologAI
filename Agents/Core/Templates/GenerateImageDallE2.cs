@@ -1,6 +1,5 @@
-﻿using static Technologai.Agents.GenerateImageDallE.GenerateImageDallE;
-using Technologai.Agents.Models;
-using Technologai.Agents.GenerateImageDallE;
+﻿using Technologai.Agents.Core.DataModels;
+using static Technologai.Agents.Core.GenerateImageDallE;
 
 namespace Technologai
 {

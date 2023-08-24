@@ -1,4 +1,4 @@
-﻿namespace Technologai.Agents
+﻿namespace Technologai
 {
     internal class ReadLocalFile : Template
     {

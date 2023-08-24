@@ -1,14 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OpenAI.GPT3.ObjectModels.RequestModels;
-using OpenAI.GPT3.ObjectModels;
-using OpenAI.GPT3.Extensions;
-using OpenAI.GPT3.Interfaces;
+using OpenAI.Extensions;
+using OpenAI.Interfaces;
+using OpenAI.ObjectModels;
+using OpenAI.ObjectModels.RequestModels;
 //using LaserCatEyes.HttpClientListener;
-using OpenAI.GPT3.ObjectModels.ResponseModels;
-using Core.Templates;
 
-namespace Technologai.External.TestApp
+namespace Technologai.Agents.Core
 {
     internal class OpenAI
     {
@@ -26,7 +24,7 @@ namespace Technologai.External.TestApp
             //.AddLaserCatEyesHttpClientListener()
             .AddOpenAIService();
 
-            _sdk = serviceCollection.BuildServiceProvider().GetRequiredService<IOpenAIService>();
+            serviceCollection.Services.BuildServiceProvider().GetRequiredService<IOpenAIService>();
         }
 
         internal async Task<string?> GetPromptCompletion(string prompt)

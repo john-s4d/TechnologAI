@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\openai\OpenAI.SDK\OpenAI.GPT3.csproj" />
+    <ProjectReference Include="..\..\..\openai\OpenAI.SDK\OpenAI.csproj" />
     <ProjectReference Include="..\..\..\symbl-csharp-sdk\Sdk\SymblAISharp.csproj" />
     <ProjectReference Include="..\..\Agent\.NET 6.0\Technologai.csproj" />
   </ItemGroup>

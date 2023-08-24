@@ -1,4 +1,4 @@
-﻿namespace Technologai.Agents.Models
+﻿namespace Technologai.Agents.Core.DataModels
 {
     public record class GenerateImageRequest(
         string Prompt,

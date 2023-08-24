@@ -1,10 +1,8 @@
-﻿namespace Technologai.Agents
+﻿namespace Technologai.Agents.Core
 {
     internal class Program
     {
-
-        private static Agent? _agent;        
-
+        private static Agent? _agent;   
         private static AppConfig _config = new AppConfig();
 
         internal static async Task Main(string[] args)

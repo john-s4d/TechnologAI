@@ -5,7 +5,7 @@ namespace Technologai
     /// <summary>
     /// Git clone from the method
     /// </summary>
-    public class GitClone : Process
+    public class GitClone : Template
     {
         public string Description { get; } = "Git clone a repository.";
         public string SampleJsonIn { get; } = "{\"repoLink\":\"string\", \"directory\":\"string\"}";

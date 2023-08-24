@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Technologai.Agents.Models
+namespace Technologai.Agents.Core.DataModels
 {
     public class DallERequestData
     {

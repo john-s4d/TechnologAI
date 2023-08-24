@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
-using Technologai.Agents.Models;
+using Technologai.Agents.Core.DataModels;
 
 namespace Technologai
 {

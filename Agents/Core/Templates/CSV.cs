@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.IO;
 
-namespace Technologai.External.TestApp
+namespace Technologai.Agents.Core
 {
     internal class CSV
     {

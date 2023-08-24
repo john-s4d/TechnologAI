@@ -1,11 +1,10 @@
-﻿using Newtonsoft.Json;
-
-public class EmbeddingsRequestDataModel
+﻿namespace Technologai.Agents.Cognition.DataModels
 {
-    [JsonProperty("input")]
-    public string InputText { get; set; } = null!;
+    public class EmbeddingsRequestDataModel
+    {
+        public string? Input { get; set; }
 
-    [JsonProperty("model")]
-    public string EmbeddingsModel { get; set; } = null!;
+        public string? Model { get; set; }
+    }
 }
 

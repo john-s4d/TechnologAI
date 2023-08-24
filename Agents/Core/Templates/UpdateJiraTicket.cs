@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
 using System.Xml.Linq;
-using Technologai.Agents.Models;
+using Technologai.Agents.Core.DataModels;
 
 namespace Technologai
 {

@@ -1,29 +1,30 @@
-﻿using Technologai;
-
-public class DownloadFile : Template
+﻿namespace Technologai
 {
-    public string? LocalPath { get; set; }
-
-    public new string Description { get; } = "Read a text file on the local filesystem.";
-    //public new string SampleJsonIn { get; } = "{\"filename\":\"string\"}";
-    //public new string SampleJsonOut { get; } = "{\"contents\":\"string\"}";
-
-    public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+    public class DownloadFile : Template
     {
-        if (data == null || !data.TryGetValue("filename", out object filenameObj) || !(filenameObj is string filename))
-        {
-            return new Dictionary<string, object> { { "error", $"Invalid or missing filename in input data." } };
-        }
+        public string? LocalPath { get; set; }
 
-        try
-        {   
-            using StreamReader reader = new StreamReader(filename);
-            var contents = await reader.ReadToEndAsync();
-            return new Dictionary<string, object> { { "contents", contents } };
-        }
-        catch (Exception ex)
+        public new string Description { get; } = "Read a text file on the local filesystem.";
+        //public new string SampleJsonIn { get; } = "{\"filename\":\"string\"}";
+        //public new string SampleJsonOut { get; } = "{\"contents\":\"string\"}";
+
+        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
         {
-            return new Dictionary<string, object> { { "error", $"Error reading file '{filename}': {ex.Message}" } };
+            if (data == null || !data.TryGetValue("filename", out object filenameObj) || !(filenameObj is string filename))
+            {
+                return new Dictionary<string, object> { { "error", $"Invalid or missing filename in input data." } };
+            }
+
+            try
+            {
+                using StreamReader reader = new StreamReader(filename);
+                var contents = await reader.ReadToEndAsync();
+                return new Dictionary<string, object> { { "contents", contents } };
+            }
+            catch (Exception ex)
+            {
+                return new Dictionary<string, object> { { "error", $"Error reading file '{filename}': {ex.Message}" } };
+            }
         }
     }
 }
