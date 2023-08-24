@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.IO;
 
-namespace Core
+namespace Technologai.Agents.Core
 {
     internal class CSV
     {

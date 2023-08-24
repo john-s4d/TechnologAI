@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Technologai.Agents.Core.DataModels;
 
-namespace Core
+namespace Technologai.Agents.Core   
 {
     public class GenerateImageDallE
     {

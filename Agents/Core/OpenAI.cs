@@ -6,7 +6,7 @@ using OpenAI.ObjectModels;
 using OpenAI.ObjectModels.RequestModels;
 //using LaserCatEyes.HttpClientListener;
 
-namespace Core
+namespace Technologai.Agents.Core
 {
     internal class OpenAI
     {
