@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     public class ChunkText : Template
     {

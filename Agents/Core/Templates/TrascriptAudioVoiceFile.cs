@@ -1,13 +1,11 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
-using Technologai.Agents.Core.DataModels;
 
-namespace Technologai
+namespace Technologai.Templates
 {
-    
-/// <summary>
-/// TranscriptAudioVoiceFile
-public class TrascriptAudioVoiceFile : Template
+    /// <summary>
+    /// TranscriptAudioVoiceFile
+    public class TrascriptAudioVoiceFile : Template
     {
 
         /*

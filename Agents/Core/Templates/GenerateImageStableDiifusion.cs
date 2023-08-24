@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /*
     //GenerateImage Stable Diffusion

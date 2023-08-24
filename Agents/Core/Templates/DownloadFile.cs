@@ -1,4 +1,4 @@
-﻿namespace Technologai
+﻿namespace Technologai.Templates
 {
     public class DownloadFile : Template
     {

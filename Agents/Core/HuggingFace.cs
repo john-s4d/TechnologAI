@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 
 namespace Technologai.Agents.Core
 {
-
     class HuggingFace
     {
 
@@ -63,7 +62,7 @@ namespace Technologai.Agents.Core
             }
 
         }
-       
+
 
     }
 }

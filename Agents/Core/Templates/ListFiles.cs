@@ -1,4 +1,4 @@
-﻿namespace Technologai
+﻿namespace Technologai.Templates
 {
     /// <summary>
     /// List files from a local directory.

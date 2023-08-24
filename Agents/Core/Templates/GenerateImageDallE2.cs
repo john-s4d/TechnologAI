@@ -1,7 +1,7 @@
 ﻿using Technologai.Agents.Core.DataModels;
-using static Technologai.Agents.Core.GenerateImageDallE;
+using static Core.GenerateImageDallE;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /// <summary>
     /// Generate Image DaLL E

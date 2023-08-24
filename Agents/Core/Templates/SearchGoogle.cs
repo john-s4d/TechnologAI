@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /// <summary>
     /// Search Google

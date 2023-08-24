@@ -1,6 +1,6 @@
 ﻿using System.Speech.Synthesis;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /// <summary>
     /// Generate Audio Voice

@@ -1,7 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     public class Generate32BitString : Template
     {   

@@ -1,4 +1,6 @@
-﻿namespace Technologai.Agents.Cognition
+﻿using Technologai.Templates;
+
+namespace Technologai.Agents.Cognition
 {
     internal class Program
     {

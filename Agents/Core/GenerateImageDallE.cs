@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Technologai.Agents.Core.DataModels;
 
-namespace Technologai.Agents.Core
+namespace Core
 {
     public class GenerateImageDallE
     {
@@ -25,14 +25,14 @@ namespace Technologai.Agents.Core
 
             public OpenAIHttpService(string _subscriptionId, string _apiKey, string openApiUrl)
             {
-                this._httpClient = new HttpClient { BaseAddress = new Uri(openApiUrl) };
+                _httpClient = new HttpClient { BaseAddress = new Uri(openApiUrl) };
                 this._subscriptionId = _subscriptionId;
                 this._apiKey = _apiKey;
             }
             public async Task<GenerateImageResponse> GenerateImages(GenerateImageRequest prompt, CancellationToken cancellation = default)
             {
                 using var rq = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/images/generations");
-                var jsonRequest = System.Text.Json.JsonSerializer.Serialize(prompt, new JsonSerializerOptions
+                var jsonRequest = JsonSerializer.Serialize(prompt, new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });

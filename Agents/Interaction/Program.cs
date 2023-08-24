@@ -1,4 +1,6 @@
-﻿namespace Technologai.Agents.Interaction
+﻿using Technologai.Templates;
+
+namespace Technologai.Agents.Interaction
 {
     internal class Program
     {

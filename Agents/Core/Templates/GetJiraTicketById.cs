@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using Technologai.Agents.Core.DataModels;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /*
     // Get Jira Ticket By Id

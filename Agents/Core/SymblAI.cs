@@ -69,9 +69,9 @@ namespace Technologai.Agents.Core
 
             string filePath = "<filepath>";
 
-            File.WriteAllText(filePath, response.transcript.payload);            
+            File.WriteAllText(filePath, response.transcript.payload);
         }
-               
+
 
         internal async Task<string> SubmitVideoAsync()
         {

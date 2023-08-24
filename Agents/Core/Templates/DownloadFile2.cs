@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /// <summary>
     /// Download file from web url

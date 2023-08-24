@@ -1,4 +1,4 @@
-﻿namespace Technologai
+﻿namespace Technologai.Templates
 {
     /// <summary>
     /// Delete a file from the local filesystem.

@@ -2,7 +2,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /// <summary>
     /// Post To Reddit

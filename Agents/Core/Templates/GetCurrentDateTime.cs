@@ -1,4 +1,4 @@
-﻿namespace Technologai
+﻿namespace Technologai.Templates
 {
     /// <summary>
     /// Get current datetime.

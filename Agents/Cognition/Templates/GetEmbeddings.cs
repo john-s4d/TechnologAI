@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Technologai.Agents.Cognition.DataModels;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /// <summary>
     /// GetEmbeddings

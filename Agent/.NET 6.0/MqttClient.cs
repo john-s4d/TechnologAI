@@ -3,7 +3,6 @@ using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Formatter;
 using MQTTnet.Protocol;
-using System.Security.Claims;
 
 namespace Technologai
 {

@@ -6,7 +6,7 @@ using OpenAI.ObjectModels;
 using OpenAI.ObjectModels.RequestModels;
 //using LaserCatEyes.HttpClientListener;
 
-namespace Technologai.Agents.Core
+namespace Core
 {
     internal class OpenAI
     {
@@ -184,6 +184,6 @@ namespace Technologai.Agents.Core
                 result.Write($"<filepath>{filename}.csv");
             }
         */
-        }
     }
+}
 

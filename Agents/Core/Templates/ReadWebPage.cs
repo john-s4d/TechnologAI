@@ -1,6 +1,6 @@
 ﻿using HtmlAgilityPack;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     // <summary>
     /// Read Web Page

@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /// <summary>
     /// Git clone from the method

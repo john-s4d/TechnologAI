@@ -2,7 +2,7 @@
 using System.Text;
 using Technologai.Agents.Core.DataModels;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /*
     //Receive Transcript

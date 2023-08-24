@@ -3,7 +3,7 @@ using System.Text;
 using System.Xml.Linq;
 using Technologai.Agents.Core.DataModels;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /*
     //Update Jira Ticket

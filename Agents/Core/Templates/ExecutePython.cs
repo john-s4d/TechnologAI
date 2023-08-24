@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /// <summary>
     /// Execute python

@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
 
-namespace Technologai
+namespace Technologai.Templates
 {
     /*
     //Post Jira Comment

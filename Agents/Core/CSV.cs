@@ -1,9 +1,8 @@
-﻿
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.IO;
 
-namespace Technologai.Agents.Core
+namespace Core
 {
     internal class CSV
     {
@@ -11,7 +10,7 @@ namespace Technologai.Agents.Core
         public List<List<string>> Data { get { return _data; } }
 
         private List<List<string>> _data = new List<List<string>>();
-        
+
         public CSV(string[] headers)
         {
             Headers = headers;
@@ -21,9 +20,9 @@ namespace Technologai.Agents.Core
         {
             List<string> escaped = new List<string>();
 
-            foreach(string column in rowData)
+            foreach (string column in rowData)
             {
-                var value = column;                
+                var value = column;
                 escaped.Add($"\"{value.Replace("\"", "\"\"")}\"");
             }
 
@@ -33,7 +32,7 @@ namespace Technologai.Agents.Core
         public void Write(string filePath)
         {
             using (StreamWriter sw = new StreamWriter(filePath))
-            {   
+            {
                 sw.WriteLine(string.Join(",", Headers));
 
                 foreach (List<string> row in Data.ToArray())
@@ -49,11 +48,11 @@ namespace Technologai.Agents.Core
             CSV output;
 
             using (StreamReader reader = new StreamReader(filePath))
-            {   
+            {
                 string? line = reader.ReadLine();
 
                 output = new CSV(ParseLine(line).ToArray());
-                
+
                 List<List<string>> rowData = new List<List<string>>();
 
                 while ((line = reader.ReadLine()) != null)

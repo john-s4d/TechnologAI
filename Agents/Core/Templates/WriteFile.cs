@@ -1,4 +1,4 @@
-﻿namespace Technologai
+﻿namespace Technologai.Templates
 {
     /// <summary>
     /// Write a text file on the local filesystem.
