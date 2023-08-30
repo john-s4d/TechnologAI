@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
 
-namespace Technologai.Templates
+namespace Technologai.Templates.Jira
 {
     /*
     // Get Jira Tickets
@@ -21,11 +21,18 @@ namespace Technologai.Templates
     /// </summary>
     public class GetJiraTickets : Template
     {
-        public string Description { get; } = "Get Jira Tickets";
-        public string SampleJsonIn { get; set; } = "{\"domain\":\"string\",\"username\":\"string\",\"password\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"object\"}";
+        internal string Username { get; set; } = string.Empty;
+        internal string Password { get; set; } = string.Empty;
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        internal GetJiraTickets(string username, string password)
+        {
+            Id = "get_all_jira_tickets";
+            Description = "Get all Jira tickets.";
+            Username = username;
+            Password = password;            
+        }   
+        
+        public async Task<Dictionary<string, object>> Process(Dictionary<string, object> data)
         {
             var domain = ((string)data["domain"]);
             var username = ((string)data["username"]);

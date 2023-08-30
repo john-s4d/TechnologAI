@@ -5,31 +5,29 @@
     /// </summary>
     public class DeleteFile : Template
     {
-        public string Description { get; } = "Delete a text file on the local filesystem";
-        public string SampleJsonIn { get; } = "{\"filename\":\"string\"}";
-        public string SampleJsonOut { get; } = "{\"contents\":\"string\"}";
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public DeleteFile()
         {
-            string fileName = ((string)data["fileName"]).Trim();
-            try
+            Id = "delete_file";
+            Description = "Delete a text file on the local filesystem";
+            InputKeys = new string[] { "fileName" };
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
+        {
+            string fileName = (information.Input?.Structured?["fileName"])?.Trim() ?? string.Empty;
+
+            if (File.Exists(fileName))
             {
-                if (!File.Exists(fileName))
-                {
-                    return new Dictionary<string, object> { { "error", $"Error file name is not found'" } };
-                }
                 await Task.Run(() =>
                 {
                     File.Delete(fileName);
                 });
-
-                return new Dictionary<string, object>();
-            }
-            catch (Exception ex)
-            {
-                return new Dictionary<string, object> { { "error", $"Error writting content to file '{fileName}': {ex.Message}" } };
             }
 
+            return null;
         }
     }
 }

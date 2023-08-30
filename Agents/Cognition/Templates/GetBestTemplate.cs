@@ -9,8 +9,8 @@
             _defaultTemplateId = defaultTemplateId;
 
             Id = "get_best_template";
-            Description = "Get the Id for the best template to handle the input.";
-            OutputKeys = new string[] { "Id" };
+            Description = "Get the ID for the template which is best described by the input.";
+            OutputKeys = new string[] { "id" };
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
@@ -38,7 +38,7 @@
                 templateId = await information.Publish("get_prompt_completion", prompt);
             }                    
 
-            return new Data(new Dictionary<string, string> { { "Id", templateId ?? _defaultTemplateId } });
+            return new Data(new Dictionary<string, string> { { "id", templateId ?? _defaultTemplateId } });
         }
     }
 }

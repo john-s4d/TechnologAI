@@ -6,16 +6,10 @@
         {
             Id = "append_to_file";
             Description = "Append text to file in the local filesystem.";
-            InputKeys = new string[] { "filename", "content" };
+            InputKeys = new string[] { "filename", "content" };            
         }
 
-        public override Task<bool> Assess(Information information)
-        {
-            return Task.FromResult(
-                    (information.Input?.Structured?.ContainsKey("filename") ?? false) &&
-                    (information.Input?.Structured?.ContainsKey("content") ?? false)
-            );
-        }
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
         public override async Task<Data?> Process(Information information)
         {

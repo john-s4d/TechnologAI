@@ -8,7 +8,7 @@
         public KillSwitch(Agent agent)
         {
             Id = "kill_switch";
-            Description = "Immediately Shut Down All Agents.";
+            Description = "Immediately shut down all agents.";
             InputKeys = new string[] { "initiatorId", "reason" };
 
             _agent = agent;

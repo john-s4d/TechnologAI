@@ -10,6 +10,8 @@ namespace Technologai.Agents.Core
         internal string? ClientId => _config["clientId"];
         internal string? ClientSecret => _config["clientSecret"];        
         internal string? MemberId => _config["memberId"];
+        internal string? JiraUsername => _config["jiraUsername"];
+        internal string? JiraPassword => _config["jiraPassword"];
 
         internal AppConfig()
         {
