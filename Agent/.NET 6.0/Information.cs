@@ -87,7 +87,7 @@ namespace Technologai
         {
             if (Agent == null) { return; }
 
-            // Only one spike can be in progress at a time. We don't queue up another one.
+            // Only one process can be in progress at a time. We don't queue up another one.
             // FIXME: Not Threadsafe
 
             if (TemplateState == TemplateState.RESTING && Agent.Catalog.ContainsKey(TemplateId))
@@ -102,18 +102,18 @@ namespace Technologai
 
                 WorkerId = CreatorId;
                 
-                await Agent.PublishAsync(null, this);
+                await Agent.PublishAsync(this, null);
             }
         }
         
-        public async Task PublishAsync(PublishCallback? publishCallback, string templateId, Data? input = null)
+        public async Task PublishAsync(OutputCallback? callback, string templateId, Data? input = null)
         {
             if (Agent == null) { return; }
 
             var information = new Information(Agent, templateId, input);            
             Agent.Context.Add(information);
             Agent.Context.Spawn(information.Id, Id);
-            await Agent.PublishAsync(publishCallback, information);            
+            await Agent.PublishAsync(information, callback);
         }        
 
         public async Task<Data?> Publish(string templateId, Data? input = null)

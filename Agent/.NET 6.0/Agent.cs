@@ -1,5 +1,6 @@
 ﻿using MQTTnet.Client;
 using System.Collections.Concurrent;
+using static Technologai.Agent;
 using Timer = System.Timers.Timer;
 
 namespace Technologai
@@ -7,7 +8,7 @@ namespace Technologai
     public class Agent
     {
         public event EventHandler<string>? LogMessage;
-        public delegate Task PublishCallback(Information information);
+        public delegate Task OutputCallback(Data? output);
 
         const string LOG_MESSAGE_ID = "monitor.display_message";
 
@@ -18,7 +19,7 @@ namespace Technologai
         public Catalog Catalog { get; private set; }
         public Context Context { get; private set; }
 
-        private ConcurrentDictionary<string, PublishCallback> _publishCallbacks = new();
+        private ConcurrentDictionary<string, OutputCallback> _outputCallbacks = new();
         private ConcurrentDictionary<string, DateTime> _knownAgents = new();
         private MqttClient _mqtt;
         private Timer? _killTimer;
@@ -130,12 +131,12 @@ namespace Technologai
             if (information.InformationState == InformationState.CLOSED && information.CreatorId == Id)
             {
                 // Invoke the callback.
-                if (_publishCallbacks.Remove(information.Id, out PublishCallback? callback))
+                if (_outputCallbacks.Remove(information.Id, out OutputCallback? callback))
                 {
-                      await callback.Invoke(information);
+                      await callback.Invoke(information.Output);
                 }
 
-                // Activate the publisher's information
+                // Process the publisher information
                 var publisherInformation = Context.GetPublisher(information.Id);
 
                 if (publisherInformation == null)
@@ -146,7 +147,7 @@ namespace Technologai
 
                 information = publisherInformation;
 
-                // -> Fall through to next if condition               
+                // Fall through to next if condition               
             }
 
             // Open, and this agent is assigned
@@ -156,6 +157,7 @@ namespace Technologai
 
                 if (await information.Assess())
                 {
+                    // TODO: Exception Handling
                     await information.Process();
                 }
             }
@@ -173,13 +175,13 @@ namespace Technologai
 
             Data? result = null;
 
-            await PublishAsync((returnedInformation) =>
+            await PublishAsync(information, 
+                    (output) =>
                 {
-                    Context.Add(returnedInformation);
-                    result = returnedInformation.Output;
+                    result = output;
                     callbackComplete = true;
                     return Task.CompletedTask;
-                }, information
+                }
             );
 
             // FIXME TODO: This can wait indefinitly if the information is never closed or template doesn't exist. Add timeout / decay.
@@ -192,21 +194,21 @@ namespace Technologai
             return result;
         }
 
-        public async Task PublishAsync(PublishCallback? publishCallback, string templateId, Data? input = null)
+        public async Task PublishAsync(string templateId, OutputCallback? callback, Data? input = null)
         {
-            await PublishAsync(publishCallback, new Information(this, templateId, input));
+            await PublishAsync(new Information(this, templateId, input), callback);
         }
 
-        public async Task PublishAsync(PublishCallback? publishCallback, Information information)
+        public async Task PublishAsync(Information information, OutputCallback? callback)
         {
             if (information.TemplateId != LOG_MESSAGE_ID)
             {
                 await WriteLog($"{information.Id} Publish> {information.TemplateId} | {information.InformationState} | {information.Input} | {information.Output}");
             }
 
-            if (publishCallback != null)
+            if (callback != null)
             {
-                _publishCallbacks[information.Id] = publishCallback;
+                _outputCallbacks[information.Id] = callback;
             }
 
             if (information.InformationState == InformationState.DRAFT)
@@ -246,7 +248,7 @@ namespace Technologai
         {
             if (_mqtt.IsConnected && Catalog.ContainsKey(LOG_MESSAGE_ID) && Catalog[LOG_MESSAGE_ID].MemberId != null && Catalog[LOG_MESSAGE_ID].MemberId != Id)
             {
-                await PublishAsync(null, LOG_MESSAGE_ID, $"{Name?.PadRight(21)} | {message}");
+                await PublishAsync(LOG_MESSAGE_ID, null, $"{Name?.PadRight(21)} | {message}");
             }
             else
             {
@@ -265,8 +267,6 @@ namespace Technologai
             await new HttpClient().GetAsync($"{Identity.Authority.AuthUri}/.well-known/openid-configuration");
 
             await Identity.Authenticate(Identity.Authority.BrokerUri);
-
-            //this.Name = Identity.Name;
 
             await WriteLog($"Authenticated");
 

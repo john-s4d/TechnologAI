@@ -30,7 +30,7 @@ namespace Technologai.Agents.Interaction
 
                 await _agent.Start();
 
-                await _agent.PublishAsync(interactWithUser_callback, "interact_with_user", "Ready for Input");
+                await _agent.PublishAsync("interact_with_user", InteractWithUser_callback, "Ready for Input");
                                 
                 do { await Task.Delay(10); } while (_isStarted);
 
@@ -44,9 +44,9 @@ namespace Technologai.Agents.Interaction
             }
         }
 
-        private async static Task interactWithUser_callback(Information information)
+        private async static Task InteractWithUser_callback(Data? output)
         {
-            if (information.Output?.Raw?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
+            if (output?.Raw?.Equals("quit", StringComparison.OrdinalIgnoreCase) ?? false)
             {
                 _isStarted = false;
 
@@ -54,7 +54,7 @@ namespace Technologai.Agents.Interaction
             }
             else
             {
-                await _agent.PublishAsync(interactWithUser_callback, "interact_with_user", information.Output) ;
+                await _agent.PublishAsync("interact_with_user", InteractWithUser_callback, output) ;
             }
         }
 
