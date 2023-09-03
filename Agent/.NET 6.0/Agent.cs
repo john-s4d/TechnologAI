@@ -1,6 +1,5 @@
 ﻿using MQTTnet.Client;
 using System.Collections.Concurrent;
-using static Technologai.Agent;
 using Timer = System.Timers.Timer;
 
 namespace Technologai
@@ -10,7 +9,7 @@ namespace Technologai
         public event EventHandler<string>? LogMessage;
         public delegate Task OutputCallback(Data? output);
 
-        const string LOG_MESSAGE_ID = "monitor.display_message";
+        const string LOG_MESSAGE_TEMPLATE_ID = "monitor.display_message";
 
         public string? Name => Identity.Name;
         public string Id => Identity.Id;
@@ -52,38 +51,6 @@ namespace Technologai
                     await Receive(brokerMessage.MessageData as Information);
                     break;
             }
-        }
-
-        private async Task Send(Pulse pulse, string toMemberId = "0")
-        {
-            await WriteLog($"{toMemberId} {pulse.MemberId} pulse send");
-
-            var brokerMessage = new BrokerMessage(Identity)
-            {
-                MessageType = AgentMessageType.PULSE,
-                MessageData = pulse,
-                ToMemberId = toMemberId
-            };
-
-            string messageJson = brokerMessage.ConvertMessageDataToString();
-
-            await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
-        }
-
-        public async Task Send(Template template, string toMemberId)
-        {
-            await WriteLog($"{toMemberId} {template.Id} template send");
-
-            var brokerMessage = new BrokerMessage(Identity)
-            {
-                MessageType = AgentMessageType.TEMPLATE,
-                MessageData = template,
-                ToMemberId = toMemberId
-            };
-
-            string messageJson = brokerMessage.ConvertMessageDataToString();
-
-            await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
         private async Task Receive(Pulse? pulse)
@@ -169,6 +136,42 @@ namespace Technologai
             }
         }
 
+        private async Task Send(Pulse pulse, string toMemberId = "0")
+        {
+            await WriteLog($"{toMemberId} {pulse.MemberId} pulse send");
+
+            await Send(AgentMessageType.PULSE, pulse, toMemberId);
+        }
+
+        public async Task Send(Template template, string toMemberId)
+        {
+            await WriteLog($"{toMemberId} {template.Id} template send");
+
+            await Send(AgentMessageType.TEMPLATE, template, toMemberId);
+        }
+
+        public async Task Send(Information information, string toMemberId)
+        {
+            await WriteLog($"{toMemberId} {information.Id} information send");
+
+            await Send(AgentMessageType.INFORMATION, information, toMemberId);
+        }
+
+        public async Task Send(AgentMessageType messageType, object? messageData, string toMemberId = "0")
+        {
+
+            var brokerMessage = new BrokerMessage(Identity)
+            {
+                MessageType = messageType,
+                MessageData = messageData,
+                ToMemberId = toMemberId
+            };
+
+            string messageJson = brokerMessage.ConvertMessageDataToString();
+
+            await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
+        }
+
         internal async Task<Data?> Publish(Information information)
         {
             bool callbackComplete = false;
@@ -201,7 +204,7 @@ namespace Technologai
 
         public async Task PublishAsync(Information information, OutputCallback? callback)
         {
-            if (information.TemplateId != LOG_MESSAGE_ID)
+            if (information.TemplateId != LOG_MESSAGE_TEMPLATE_ID)
             {
                 await WriteLog($"{information.Id} Publish> {information.TemplateId} | {information.InformationState} | {information.Input} | {information.Output}");
             }
@@ -222,7 +225,7 @@ namespace Technologai
             }
 
             // Short circuit
-            if (information.WorkerId == Id)
+            if (information.WorkerId == null || information.WorkerId == Id)
             {
                 new Task(async () =>
                 {
@@ -232,23 +235,14 @@ namespace Technologai
             }
 
             // Long route
-            var brokerMessage = new BrokerMessage(Identity)
-            {
-                MessageType = AgentMessageType.INFORMATION,
-                MessageData = information,
-                ToMemberId = information.WorkerId
-            };
-
-            var messageJson = brokerMessage.ConvertMessageDataToString();
-
-            await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
+            await Send(information, information.WorkerId);
         }
 
         public async Task WriteLog(string message)
         {
-            if (_mqtt.IsConnected && Catalog.ContainsKey(LOG_MESSAGE_ID) && Catalog[LOG_MESSAGE_ID].MemberId != null && Catalog[LOG_MESSAGE_ID].MemberId != Id)
+            if (_mqtt.IsConnected && Catalog.ContainsKey(LOG_MESSAGE_TEMPLATE_ID) && Catalog[LOG_MESSAGE_TEMPLATE_ID].MemberId != null && Catalog[LOG_MESSAGE_TEMPLATE_ID].MemberId != Id)
             {
-                await PublishAsync(LOG_MESSAGE_ID, null, $"{Name?.PadRight(21)} | {message}");
+                await PublishAsync(LOG_MESSAGE_TEMPLATE_ID, null, $"{Name?.PadRight(21)} | {message}");
             }
             else
             {
@@ -260,11 +254,12 @@ namespace Technologai
 
         public async Task Start()
         {
-            // TODO: Fix in AI-17
+            // Hack
+            // TODO: Fix per AI-17            
             await WriteLog($"Warming up...");
-
             await new HttpClient().GetAsync($"{Identity.Authority.AuthUri}/.well-known/jwks.json");
             await new HttpClient().GetAsync($"{Identity.Authority.AuthUri}/.well-known/openid-configuration");
+            // End Hack
 
             await Identity.Authenticate(Identity.Authority.BrokerUri);
 
