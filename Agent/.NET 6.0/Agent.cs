@@ -152,7 +152,8 @@ namespace Technologai
 
         public async Task Send(Information information, string toMemberId)
         {
-            await WriteLog($"{toMemberId} {information.Id} information send");
+            // TODO: Review this. Uncommenting causes stack-overflow.
+            // await WriteLog($"{toMemberId} {information.Id} information send");
 
             await Send(AgentMessageType.INFORMATION, information, toMemberId);
         }
