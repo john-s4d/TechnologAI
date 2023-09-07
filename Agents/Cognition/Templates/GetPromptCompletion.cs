@@ -21,15 +21,23 @@
 
             else if (information.Input.Format == DataFormat.STRUCTURED)
             {
-                string model = information.Input.Structured?["model"] ?? DEFAULT_MODEL;
-                string prompt = information.Input.Structured?["prompt"] ?? string.Empty;
-                //return Task.FromResult(new Data(LLM.GetPromptCompletion(model, prompt)));
+                // string model = information.Input.Structured?["model"] ?? DEFAULT_MODEL;
+                // string prompt = information.Input.Structured?["prompt"] ?? string.Empty;
+                // return Task.FromResult(new Data(LLM.GetPromptCompletion(model, prompt)));
+                
+                // throw new NotImplementedException();
+                // TODO: Implement this
+
                 return Task.FromResult((Data?)null);
+                
             }
             else
             {
+                // return Task.FromResult(new Data(LLM.GetPromptCompletion(DEFAULT_MODEL, information.Input.Raw)));
 
-                //return Task.FromResult(new Data(LLM.GetPromptCompletion(DEFAULT_MODEL, information.Input.Raw)));
+                // throw new NotImplementedException();
+                // TODO: Implement this
+
                 return Task.FromResult((Data?)null);
             }
         }

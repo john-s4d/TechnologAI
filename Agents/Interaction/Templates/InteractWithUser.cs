@@ -12,8 +12,7 @@
 
         public override async Task<Data?> Process(Information information)
         {
-            await information.Publish("show_message_to_user", information.Input);
-            await information.Publish("show_message_to_user", "\r\n> ");
+            await information.Publish("show_message_to_user", $"{information.Input} \r\n> ");
 
             var userInput = await information.Publish("get_input_from_user");
 

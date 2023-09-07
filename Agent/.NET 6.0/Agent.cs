@@ -55,10 +55,11 @@ namespace Technologai
 
         private async Task Receive(Pulse? pulse)
         {
-            await WriteLog($"{pulse?.MemberId} pulse receive");
-
             if (pulse != null && !string.IsNullOrEmpty(pulse.MemberId) && pulse.MemberId != Id)
             {
+                
+                await WriteLog($"{pulse?.MemberId} pulse receive");
+
                 if (!_knownAgents.ContainsKey(pulse.MemberId))
                 {
                     await Send(new Pulse(Id), pulse.MemberId);
@@ -92,7 +93,7 @@ namespace Technologai
 
             information.Agent = this;
 
-            Context.Add(information); // TODO: only update if newer or completed
+            Context.Add(information); // TODO? only update if newer
 
             // Closed and this agent is the creator
             if (information.InformationState == InformationState.CLOSED && information.CreatorId == Id)
@@ -103,7 +104,7 @@ namespace Technologai
                       await callback.Invoke(information.Output);
                 }
 
-                // Process the publisher information
+                // Assess the publisher information
                 var publisherInformation = Context.GetPublisher(information.Id);
 
                 if (publisherInformation == null)
@@ -114,7 +115,7 @@ namespace Technologai
 
                 information = publisherInformation;
 
-                // Fall through to next if condition               
+                // Fall through to next if condition so the publisher can be assessed and processed               
             }
 
             // Open, and this agent is assigned
@@ -160,7 +161,6 @@ namespace Technologai
 
         public async Task Send(AgentMessageType messageType, object? messageData, string toMemberId = "0")
         {
-
             var brokerMessage = new BrokerMessage(Identity)
             {
                 MessageType = messageType,
@@ -173,6 +173,7 @@ namespace Technologai
             await _mqtt.PublishAsync(brokerMessage.Topic, messageJson, brokerMessage.MessageType);
         }
 
+        // This Publish method returns the output of the information. It will await until the information is closed and the output is available. Better for short running processes.
         internal async Task<Data?> Publish(Information information)
         {
             bool callbackComplete = false;
@@ -198,6 +199,7 @@ namespace Technologai
             return result;
         }
 
+        // This PublishAsync method publishes information immediately and stores a callback to be invoked when the information is closed. Better for long running processes.
         public async Task PublishAsync(string templateId, OutputCallback? callback, Data? input = null)
         {
             await PublishAsync(new Information(this, templateId, input), callback);
