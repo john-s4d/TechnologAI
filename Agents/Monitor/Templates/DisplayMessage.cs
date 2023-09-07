@@ -14,7 +14,8 @@
 
         public override Task<Data?> Process(Information information)
         {
-            Message?.Invoke(information.CreatorId, information?.Input?.Raw ?? string.Empty);
+            var literal =  Microsoft.CodeAnalysis.CSharp.SymbolDisplay.FormatLiteral(information?.Input?.Raw ?? string.Empty, false);
+            Message?.Invoke(information?.CreatorId, literal);
             return Task.FromResult((Data?)null);
         }
     }

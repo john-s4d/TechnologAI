@@ -10,7 +10,7 @@
         
         public Authority(string authUri)
         {
-            // TODO: Connect to Discovery Endpoint and get the correct values
+            // TODO: Connect to an OIDC Discovery Endpoint and get the authoratative values
 
             if (authUri != "https://auth.technologai.com") { throw new NotImplementedException(); }
 
