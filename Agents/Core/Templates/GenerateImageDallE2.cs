@@ -24,19 +24,27 @@ namespace Technologai.Templates.Core
         var reponseByGenerateImageDallE = generateImageDallE.Execute(generateInageDallEDict).Result;
         */
 
-        public string Description { get; } = "Generate Image Dall E";
-        public string SampleJsonIn { get; set; } = "{\"nImages\":\"int\",\"imageSize\":\"string\",\"openApiUrl\":\"string\",\"organisationId\":\"string\",\"apiKey\":\"string\",\"msg\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"object\"}";
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        internal string ApiKey { get; set; } = string.Empty;
+        public GenerateImageDallE2(string apiKey)
         {
-            var nImages = int.Parse(((string)data["nImages"]).Trim());
-            var imageSize = ((string)data["imageSize"]).Trim();
-            var openApiUrl = ((string)data["openApiUrl"]).Trim();
-            var organisationId = ((string)data["organisationId"]).Trim();
-            var apiKey = ((string)data["apiKey"]).Trim();
-            var msg = ((string)data["msg"]).Trim();
+            Id = "generate_imagedall_e2";
+            Description = "Generate Image Dall E";
+            InputKeys = new[] { "nImages", "imageSize", "openApiUrl", "organisationId", "msg" };
+            OutputKeys = new[] { "contents" };
+            ApiKey = apiKey;
+        }
 
-            IOpenAIProxy aiClient = new OpenAIHttpService(organisationId, apiKey, openApiUrl);
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public async override Task<Data?> Process(Information information)
+        {
+            var nImages = int.Parse(((string)information.Input.Structured["nImages"]).Trim());
+            var imageSize = ((string)information.Input.Structured["imageSize"]).Trim();
+            var openApiUrl = ((string)information.Input.Structured["openApiUrl"]).Trim();
+            var organisationId = ((string)information.Input.Structured["organisationId"]).Trim();
+            var msg = ((string)information.Input.Structured["msg"]).Trim();
+
+            IOpenAIProxy aiClient = new OpenAIHttpService(organisationId, ApiKey, openApiUrl);
             try
             {
                 var prompt = new GenerateImageRequest(msg, nImages, imageSize);
@@ -49,15 +57,15 @@ namespace Technologai.Templates.Core
                         var fullPath = Path.Combine(Directory.GetCurrentDirectory(), $"{Guid.NewGuid()}.png");
                         var img = await aiClient.DownloadImage(item.Url);
                         await File.WriteAllBytesAsync(fullPath, img);
-                        return new Dictionary<string, object> { { "New image saved at {0}", $"'{fullPath}'" } };
+                        return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "New image saved at {0}", $"'{fullPath}'" } }));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "Error", $"Unable to generate image : '{ex.Message}'" } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"Unable to generate image : '{ex.Message}'" } }));
             }
-            return new Dictionary<string, object> { { "contents", "image generating failed" } };
+            return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", "image generating failed" } }));
         }
     }
 }

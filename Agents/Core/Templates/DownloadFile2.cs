@@ -7,14 +7,20 @@ namespace Technologai.Templates
     /// </summary>
     public class DownloadFile2 : Template
     {
-        public string Description { get; } = "Downloaded a file to the local filesystem.";
-        public string SampleJsonIn { get; } = "{\"weburl\":\"string\",\"filepath\":\"string\" }";
-        public string SampleJsonOut { get; } = string.Empty;
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public DownloadFile2()
         {
-            var url = new Uri($"{((string)data["weburl"]).Trim()}");
-            string filePath = ((string)data["filepath"]).Trim();
+            Id = "download_File2";
+            Description = "Downloaded a file to the local filesystem.";
+            InputKeys = new string[] { "weburl", "filepath" };
+            OutputKeys = new string[] { "output" };
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+        public override async Task<Data?> Process(Information information)
+        {
+            var url = new Uri($"{((string)information.Input.Structured?["weburl"]).Trim()}");
+            string filePath = ((string)information.Input.Structured?["filepath"]).Trim();
             try
             {
                 await Task.Run(() =>
@@ -25,11 +31,11 @@ namespace Technologai.Templates
                     };
                 });
 
-                return new Dictionary<string, object>();
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "output", string.Empty } }));
             }
             catch (WebException ex)
             {
-                return new Dictionary<string, object> { { "error", $"Error downloading file '{url}': {ex.Message}" } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error downloading file '{url}': {ex.Message}" } }));
             }
         }
     }

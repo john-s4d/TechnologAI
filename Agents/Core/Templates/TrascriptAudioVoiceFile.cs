@@ -29,20 +29,27 @@ namespace Technologai.Templates
             Console.WriteLine(deserialisedData.text);
         }
             */
+        internal string ApiKey { get; set; } = string.Empty;
+        public TrascriptAudioVoiceFile(string apiKey)
+        {
+            Id = "trascript_audio_voice_file";
+            Description = "Trascript Audio Voice Stream";
+            InputKeys = new string[] { "filepath" };
+            OutputKeys = new string[] {"contents"};  
+            ApiKey = apiKey;    
+        }
 
-        public string Description { get; } = "Trascript Audio Voice Stream";
-        public string SampleJsonIn { get; set; } = "{\"ApiKey\":\"string\",\"FilePath\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"object\"}";
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public override async Task<Data?> Process(Information information)
         {
             Console.WriteLine("Please select 1. to send the file.");
             Console.WriteLine("Please select 2. to check the file if it's ready.");
 
             // saving path in local system
-            string filePath = ((string)data["filepath"]).Trim();
+            string filePath = ((string)information.Input.Structured["filepath"]).Trim();
             //reading api key
-            var api_Key = ((string)data["API_Key"]).Trim();
+            ApiKey = ApiKey.Trim();
 
             var operation = Console.ReadLine();
 
@@ -52,7 +59,7 @@ namespace Technologai.Templates
                 {
                     BaseAddress = new Uri("https://api.assemblyai.com/v2/")
                 };
-                httpClient.DefaultRequestHeaders.Add("authorization", api_Key);
+                httpClient.DefaultRequestHeaders.Add("authorization", ApiKey);
 
                 string jsonResult = SendFile(httpClient, filePath).Result;
                 Console.WriteLine(jsonResult);
@@ -62,7 +69,7 @@ namespace Technologai.Templates
                 httpClient = new();
                 httpClient.BaseAddress = new Uri("https://api.assemblyai.com/v2/");
                 //add the request header which is our api key paste you api key here
-                httpClient.DefaultRequestHeaders.Add("authorization", api_Key);
+                httpClient.DefaultRequestHeaders.Add("authorization", ApiKey);
 
                 var json = new { audio_url = JsonConvert.DeserializeObject<string>(jsonResult) };
                 //create a string content from our JSON which we will need for our next request
@@ -73,7 +80,7 @@ namespace Technologai.Templates
                 responseMessage.EnsureSuccessStatusCode();
                 //display the data
                 var responseJson = await responseMessage.Content.ReadAsStringAsync();
-                return new Dictionary<string, object> { { "contents", responseJson } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", responseJson } }));
 
                 Console.WriteLine(responseJson);
             }
@@ -85,7 +92,7 @@ namespace Technologai.Templates
                 using (HttpClient httpClient = new HttpClient())
                 {
                     //pass the API key
-                    httpClient.DefaultRequestHeaders.Add("authorization", api_Key);
+                    httpClient.DefaultRequestHeaders.Add("authorization", ApiKey);
                     //set the header to json
                     httpClient.DefaultRequestHeaders.Add("Accepts", "application/json");
                     //send a get request to the transcript enpoint and add the ticketId to the url
@@ -94,13 +101,13 @@ namespace Technologai.Templates
                     responseMessage.EnsureSuccessStatusCode();
                     //dispaly the data
                     var responseJson = await responseMessage?.Content.ReadAsStringAsync();
-                    return new Dictionary<string, object> { { "contents", responseJson } };
+                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", responseJson } }));
                 }
             }
             else
             {
                 Console.WriteLine("Please select 1 or 2 to perform operation");
-                return new Dictionary<string, object> { { "content", "Please enter valid Keyword like 1, 2 " } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "content", "Please enter valid Keyword like 1, 2 " } }));
             }
         }
         static async Task<string> SendFile(HttpClient httpClient, string filePath)

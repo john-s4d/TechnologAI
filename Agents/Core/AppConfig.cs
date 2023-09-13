@@ -12,6 +12,13 @@ namespace Technologai.Agents.Core
         internal string? MemberId => _config["memberId"];
         internal string? JiraUsername => _config["jiraUsername"];
         internal string? JiraPassword => _config["jiraPassword"];
+        internal string? SearchGoogleApiKey => _config["searchGoogleApiKey"];
+        internal string? TrascriptAudioVoiceFileApiKey => _config["trascriptAudioVoiceFileApiKey"];
+        internal string? GenerateImageDallE2ApiKey => _config["generateImageDallE2ApiKey"];
+        internal string? GenerateImageDallE3ApiKey => _config["generateImageDallE3ApiKey"];
+        internal string? ReceiveTranscriptApiKey => _config["receiveTranscriptApiKey"];
+        internal string? RedditUsername => _config["redditUsername"];
+        internal string? RedditPassword => _config["redditPassword"];
 
         internal AppConfig()
         {

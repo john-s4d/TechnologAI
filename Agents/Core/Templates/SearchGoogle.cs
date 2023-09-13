@@ -7,23 +7,24 @@ namespace Technologai.Templates
     /// </summary>
     public class SearchGoogle : Template
     {
-        public string Description { get; } = "Search Google using serach query";
-        public string SampleJsonIn { get; set; } = "{\"apikey\":\"string\",\"searchEngineID\":\"string\",\"searchQuery\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";
-
-        private string ApiKey { get; set; }
-
+        readonly public string ApiKey;
         public SearchGoogle(string apiKey)
         {
+            Id = "search_google";
+            Description = "Search Google using serach query";
+            InputKeys = new string[] {"searchEngineID", "searchQuery" };
+            OutputKeys = new string[] { "output" };
             ApiKey = apiKey;
         }
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
         {
-            var searchEngineId = ((string)data["searchEngineID"]).Trim(); ;
+            var searchEngineId = ((string)information.Input.Structured["searchEngineID"]).Trim(); ;
 
             // Define the search query
-            var query = ((string)data["searchQuery"]).Trim();
+            var query = ((string)information.Input.Structured["searchQuery"]).Trim();
 
             // Create a new instance of HttpClient to send HTTP requests
             var httpClient = new HttpClient();
@@ -41,16 +42,16 @@ namespace Technologai.Templates
                     // Parse the JSON response using Newtonsoft.Json
                     var jsonObject = JObject.Parse(jsonString);
 
-                    return new Dictionary<string, object>() { { "result", jsonObject } };
+                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "result", jsonObject.ToString() } }));
                 }
                 else
                 {
-                    return new Dictionary<string, object>();
+                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> ()));
                 }
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", $"Error executing request on google: {ex.Message}" } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error executing request on google: {ex.Message}" } }));
             }
         }
     }

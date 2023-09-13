@@ -26,31 +26,37 @@ namespace Technologai.Templates
     /// 
     public class PostToTwitter : Template
     {
-        public string Description { get; } = "Post To Twitter";
-        public string SampleJsonIn { get; set; } = "{\"ConsumerKey\":\"string\",\"ConsumerKeySecret\":\"string\",\"AccessToken\":\"string\",\"AccessTokenSecret\":\"string\",\"textToPost\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"object\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public PostToTwitter()
         {
-            var consumerKey = ((string)data["ConsumerKey"]).Trim();
-            var consumerKeySecret = ((string)data["ConsumerKeySecret"]).Trim();
-            var accessToken = ((string)data["AccessToken"]).Trim();
-            var accessTokenSecret = ((string)data["AccessTokenSecret"]).Trim();
-            var tweetText = ((string)data["textToPost"]).Trim();
+            Id = "post_to_twitter";
+            Description = "Post To Twitter";
+            InputKeys = new string[] { "ConsumerKey", "ConsumerKeySecret", "AccessToken", "AccessTokenSecret", "textToPost" };
+            OutputKeys = new string[] { "contents" };
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
+        {
+            var consumerKey = (information.Input.Structured?["ConsumerKey"]).Trim();
+            var consumerKeySecret = (information.Input.Structured?["ConsumerKeySecret"]).Trim();
+            var accessToken = (information.Input.Structured?["AccessToken"]).Trim();
+            var accessTokenSecret = (information.Input.Structured?["AccessTokenSecret"]).Trim();
+            var tweetText = (information.Input.Structured?["textToPost"]).Trim();
 
             var httpMethod = "POST";
             var url = "https://api.twitter.com/2/tweets";
             var timeStamp = ((int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds).ToString();
             var nonce = Guid.NewGuid().ToString();
             Dictionary<string, string> parameters = new Dictionary<string, string>
-            {
-                { "oauth_consumer_key", consumerKey },
-                { "oauth_nonce", nonce },
-                { "oauth_signature_method", "HMAC-SHA1" },
-                { "oauth_timestamp", timeStamp },
-                { "oauth_token", accessToken },
-                { "oauth_version", "1.0" }
-            };
+                {
+                    { "oauth_consumer_key", consumerKey },
+                    { "oauth_nonce", nonce },
+                    { "oauth_signature_method", "HMAC-SHA1" },
+                    { "oauth_timestamp", timeStamp },
+                    { "oauth_token", accessToken },
+                    { "oauth_version", "1.0" }
+                };
 
             var signature = HttpUtility.UrlEncode(GenerateSignature(httpMethod, url, parameters, consumerKeySecret, accessTokenSecret));
             var httpClient = new HttpClient();
@@ -65,11 +71,11 @@ namespace Technologai.Templates
             if (response.IsSuccessStatusCode)
             {
                 var responseContent = await response.Content.ReadAsStringAsync();
-                return new Dictionary<string, object> { { "contents", responseContent } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", responseContent } }));
             }
             else
             {
-                return new Dictionary<string, object> { { "Errors", $"The request failed with status code: {response.StatusCode}" } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Errors", $"The request failed with status code: {response.StatusCode}" } }));
             }
         }
         public static string GenerateSignature(string httpMethod, string url, IDictionary<string, string> parameters, string consumerSecret, string tokenSecret = null)

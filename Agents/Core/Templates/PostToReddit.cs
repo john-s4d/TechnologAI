@@ -27,20 +27,28 @@ namespace Technologai.Templates
         var postToRedditResponse = postToReddit.Execute(postToRedditDict).Result;
         */
 
-        public string Description { get; } = "Post To Reddit";
-        public string SampleJsonIn { get; set; } = "{\"clientId\":\"string\",\"clientSecret\":\"string\",\"username\":\"string\",\"password\":\"string\",\"subreddit\":\"string\",\"title\":\"string\",\"text\":\"string\",\"redditAppName\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"postUrl\":\"string\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        internal string Username { get; set; } = string.Empty;
+        internal string Password { get; set; } = string.Empty;
+        public PostToReddit(string username, string password)
         {
-            var clientId = ((string)data["clientId"]).Trim();
-            var clientSecret = ((string)data["clientSecret"]).Trim();
-            var username = ((string)data["username"]).Trim();
-            var password = ((string)data["password"]).Trim();
-            var subreddit = ((string)data["subreddit"]).Trim();
-            var title = ((string)data["title"]).Trim();
-            var text = ((string)data["text"]).Trim();
-            var redditAppName = ((string)data["redditAppName"]).Trim();
+            Id = "post_to_reddit";
+            Description = "Post To Reddit";
+            InputKeys = new string[] { "clientId", "clientSecret", "subreddit", "title", "text", "redditAppName" };
+            OutputKeys = new string[] { "postUrl" };
+            Username = username;
+            Password = password;
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
+        {
+            var clientId = ((string)information.Input.Structured["clientId"]).Trim();
+            var clientSecret = ((string)information.Input.Structured["clientSecret"]).Trim();
+            var subreddit = ((string)information.Input.Structured["subreddit"]).Trim();
+            var title = ((string)information.Input.Structured["title"]).Trim();
+            var text = ((string)information.Input.Structured["text"]).Trim();
+            var redditAppName = ((string)information.Input.Structured["redditAppName"]).Trim();
 
             var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", redditAppName);
@@ -49,8 +57,8 @@ namespace Technologai.Templates
             tokenRequest.Content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 ["grant_type"] = "password",
-                ["username"] = username,
-                ["password"] = password
+                ["username"] = Username,
+                ["password"] = Password
             });
 
             tokenRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($"{clientId}:{clientSecret}")));
@@ -74,7 +82,7 @@ namespace Technologai.Templates
             var postJson = await postResponse.Content.ReadAsStringAsync();
             var postData = JsonConvert.DeserializeObject<Dictionary<string, object>>(postJson);
             var postUrl = postData["url"];
-            return new Dictionary<string, object> { { "postUrl", postUrl } };
+            return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "postUrl", postUrl.ToString() } }));
         }
     }
 }

@@ -7,11 +7,17 @@ namespace Technologai.Templates
     /// </summary>
     public class ExecutePython : Template
     {
-        public new string Description { get; } = "Execute python in the local system.";
-        public string SampleJsonIn { get; } = "{\"cmd\":\"string\",\"args\":\"string\" }";
-        public string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";
+        public ExecutePython()
+        {
+            Id = "execute_python";
+            Description = "Execute Python";
+            InputKeys = new string[] { "cmd", "args" };
+            OutputKeys = new string[] { "output" };  
+        }
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
         {
             try
             {
@@ -19,8 +25,8 @@ namespace Technologai.Templates
                 {
                     ProcessStartInfo start = new()
                     {
-                        FileName = data["cmd"].ToString(),
-                        Arguments = data["args"].ToString(),
+                        FileName = information.Input.Structured?["cmd"].ToString(),
+                        Arguments = information.Input.Structured?["args"].ToString(),
                         UseShellExecute = false,
                         RedirectStandardOutput = true
                     };
@@ -33,14 +39,13 @@ namespace Technologai.Templates
 
                 if (!string.IsNullOrEmpty(output))
                 {
-                    return new Dictionary<string, object> { { "output", output } };
+                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "output", output } }));
                 }
-
-                return new Dictionary<string, object>();
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { }));
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", $"Error occured while executing python cmd : {ex.Message}" } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error occured while executing python cmd : {ex.Message}" } }));
             }
         }
     }

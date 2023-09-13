@@ -5,11 +5,17 @@
     /// </summary>
     public class ExecuteShell : Template
     {
-        public string Description { get; } = "Execute Shell in the local system.";
-        public string SampleJsonIn { get; set; } = "{\"fileName\":\"string\", \"arguments\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";
+        public ExecuteShell()
+        {
+            Id = "execute_shell";
+            Description = "Execute Shell in the local system.";
+            InputKeys = new string[] { "fileName", "arguments" };
+            OutputKeys = new string[] { "output"};
+        }
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
         {
             try
             {
@@ -18,8 +24,8 @@
                     System.Diagnostics.Process process = new();
 
                     // Configure the process to run the command
-                    process.StartInfo.FileName = ((string)data["fileName"]).Trim();
-                    process.StartInfo.Arguments = ((string)data["arguments"]).Trim();
+                    process.StartInfo.FileName = ((string)information.Input.Structured?["fileName"]).Trim();
+                    process.StartInfo.Arguments = ((string)information.Input.Structured?["arguments"]).Trim();
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
 
@@ -35,14 +41,14 @@
 
                 if (output != string.Empty)
                 {
-                    return new Dictionary<string, object> { { "output", output } };
+                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "output", output } }));
                 }
-                return new Dictionary<string, object>();
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> ()));
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", $"Error occured while processing request: {ex.Message}" } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error occured while processing request: {ex.Message}" } }));
             }
-        }
+        }    
     }
 }
