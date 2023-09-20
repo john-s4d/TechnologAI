@@ -10,7 +10,7 @@ namespace Technologai
     public class Identity
     {
         public string? Name { get; private set; }
-        public string Id { get; private set; }        
+        public string AgentId { get; private set; }        
         public string? AgencyId { get; private set; }
         internal Authority Authority { get; private set; }
         internal string ClientId { get; private set; }
@@ -18,18 +18,18 @@ namespace Technologai
         
         internal Dictionary<string, string> Tokens = new Dictionary<string, string>();
         internal string PublishMask => $"{AgencyId}/+";
-        internal string SubscribeMemberMask => $"{AgencyId}/{Id}";
+        internal string SubscribeMemberMask => $"{AgencyId}/{AgentId}";
         internal string SubscribeAgencyMask => $"{AgencyId}/0";        
 
-        public Identity(string authUri, string clientId, string clientSecret, string memberId)
+        public Identity(string authUri, string clientId, string clientSecret, string agentId)
         {
             Authority = new Authority(authUri);
             ClientId = clientId;
             ClientSecret = clientSecret;
-            Id = memberId;
+            AgentId = agentId;
         }
 
-        internal async Task Authenticate(string audience)
+        internal async Task Authenticate(string audience, string? version = null)
         {
             using (var httpClient = new HttpClient())
             {
@@ -37,9 +37,24 @@ namespace Technologai
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                 var parameters = new Dictionary<string, string>();
-                parameters.Add("grant_type", "client_credentials");
-                parameters.Add("scope", $"member:{Id}");
+                parameters.Add("grant_type", "client_credentials");                
                 parameters.Add("audience", audience);
+                
+                if (version != null)
+                {
+                    parameters.Add("version", version);
+
+                }
+                
+                if (version == null) // pre-versioned
+                {
+                    parameters.Add("scope", $"member:{AgentId}");
+                }
+                
+                if (version == "2")
+                {
+                    parameters.Add("scope", $"agent_id:{AgentId}");
+                }
 
                 var endpoint = Authority?.AuthUri + Authority?.TokenApi;
 
