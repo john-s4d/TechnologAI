@@ -1,35 +1,41 @@
-﻿using Microsoft.VisualBasic;
+﻿using System.Net;
 
 namespace Technologai.Templates
 {
+    /// <summary>
+    /// Download file from web url
+    /// </summary>
     public class DownloadFile : Template
     {
+
         public DownloadFile()
         {
-            Id = "download_file";
-            Description = "Download file";
-            InputKeys = new string[] { "filename" };
-            OutputKeys = new string[] { "contents" };
+            Id = "download_File";
+            Description = "Download a file from the web to the local filesystem.";
+            InputKeys = new string[] { "weburl", "filepath" };
+            OutputKeys = new string[] { "output" };
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
-
         public override async Task<Data?> Process(Information information)
         {
-            var filenameObj = information.Input.Structured?["filename"];
-            if (information.Input == null || filenameObj != null || !(filenameObj is string filename))
-            {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Invalid or missing filename in input data." } }));
-            }
+            var url = new Uri($"{((string)information.Input.Structured?["weburl"]).Trim()}");
+            string filePath = ((string)information.Input.Structured?["filepath"]).Trim();
             try
             {
-                using StreamReader reader = new StreamReader(filename);
-                var contents = await reader.ReadToEndAsync();
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", contents } }));
+                await Task.Run(() =>
+                {
+                    using (var client = new WebClient())
+                    {
+                        client.DownloadFile(url, filePath);
+                    };
+                });
+
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "output", string.Empty } }));
             }
-            catch (Exception ex)
+            catch (WebException ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error reading file '{filename}': {ex.Message}" } }));
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error downloading file '{url}': {ex.Message}" } }));
             }
         }
     }

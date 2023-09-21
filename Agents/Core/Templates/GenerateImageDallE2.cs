@@ -1,4 +1,5 @@
-﻿using Technologai.Agents.Core.DataModels;
+﻿using System.Text.Json;
+using Technologai.Agents.Core.DataModels;
 using static Technologai.Agents.Core.GenerateImageDallE;
 
 namespace Technologai.Templates.Core
@@ -24,48 +25,58 @@ namespace Technologai.Templates.Core
         var reponseByGenerateImageDallE = generateImageDallE.Execute(generateInageDallEDict).Result;
         */
 
-        internal string ApiKey { get; set; } = string.Empty;
-        public GenerateImageDallE2(string apiKey)
+        private string _apiKey;
+        private string _organizationId;
+        private string _openApiUrl;
+
+        public GenerateImageDallE2(string openApiUrl, string organizationId, string apiKey)
         {
             Id = "generate_imagedall_e2";
             Description = "Generate Image Dall E";
-            InputKeys = new[] { "nImages", "imageSize", "openApiUrl", "organisationId", "msg" };
-            OutputKeys = new[] { "contents" };
-            ApiKey = apiKey;
+            InputKeys = new[] { "integer:imageCount", "imageSize", "prompt" };            
+            OutputKeys = new[] { "text[]:fileNames" };
+
+            // TODO: Validate input values according to key type definition
+
+            _apiKey = apiKey;
+            _organizationId = organizationId;
+            _openApiUrl = openApiUrl;
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
         public async override Task<Data?> Process(Information information)
         {
-            var nImages = int.Parse(((string)information.Input.Structured["nImages"]).Trim());
-            var imageSize = ((string)information.Input.Structured["imageSize"]).Trim();
-            var openApiUrl = ((string)information.Input.Structured["openApiUrl"]).Trim();
-            var organisationId = ((string)information.Input.Structured["organisationId"]).Trim();
-            var msg = ((string)information.Input.Structured["msg"]).Trim();
+            var imageCount = int.Parse(information.Input?.Structured?["imageCount"]?.Trim() ?? string.Empty);
+            var imageSize = information.Input?.Structured?["imageSize"].Trim() ?? string.Empty;            
+            var prompt = information.Input?.Structured?["prompt"].Trim() ?? string.Empty;
 
-            IOpenAIProxy aiClient = new OpenAIHttpService(organisationId, ApiKey, openApiUrl);
+            IOpenAIProxy aiClient = new OpenAIHttpService(_organizationId, _apiKey, _openApiUrl);
             try
             {
-                var prompt = new GenerateImageRequest(msg, nImages, imageSize);
-                var result = await aiClient.GenerateImages(prompt);
+                var request = new GenerateImageRequest(prompt, imageCount, imageSize);
+                var result = await aiClient.GenerateImages(request);
                 if (result != null)
                 {
+                    List<string> fileNames = new();
+
                     foreach (var item in result.Data)
                     {
                         Console.WriteLine(item.Url);
                         var fullPath = Path.Combine(Directory.GetCurrentDirectory(), $"{Guid.NewGuid()}.png");
                         var img = await aiClient.DownloadImage(item.Url);
                         await File.WriteAllBytesAsync(fullPath, img);
-                        return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "New image saved at {0}", $"'{fullPath}'" } }));
+                        fileNames.Add(fullPath);
                     }
+                    return Data.Create("fileNames", fileNames);
                 }
             }
             catch (Exception ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"Unable to generate image : '{ex.Message}'" } }));
+                return Data.Create(ex);
             }
-            return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", "image generating failed" } }));
+
+            return null;
         }
     }
 }

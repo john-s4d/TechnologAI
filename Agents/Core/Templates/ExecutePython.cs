@@ -10,9 +10,8 @@ namespace Technologai.Templates
         public ExecutePython()
         {
             Id = "execute_python";
-            Description = "Execute Python";
-            InputKeys = new string[] { "cmd", "args" };
-            OutputKeys = new string[] { "output" };  
+            Description = "Execute a Python script.";
+            InputKeys = new string[] { "cmd", "args" };            
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
@@ -23,30 +22,25 @@ namespace Technologai.Templates
             {
                 var output = await Task.Run(() =>
                 {
-                    ProcessStartInfo start = new()
+                    ProcessStartInfo start = new ProcessStartInfo();
+                    start.FileName = "python"; // or "python3" depending on your installation
+                    start.Arguments = information.Input?.Structured?["cmd"] + " " + information.Input?.Structured?["args"]; // TODO: Sanitize input
+                    start.UseShellExecute = false;
+                    start.RedirectStandardOutput = true;
+                    using (Process? process = System.Diagnostics.Process.Start(start))
                     {
-                        FileName = information.Input.Structured?["cmd"].ToString(),
-                        Arguments = information.Input.Structured?["args"].ToString(),
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true
-                    };
-                    using Process? process = System.Diagnostics.Process.Start(start);
-                    using StreamReader? reader = process?.StandardOutput;
-                    string? output = reader?.ReadToEnd();
-
-                    return output;
+                        using (StreamReader? reader = process?.StandardOutput)
+                        {
+                            return reader?.ReadToEnd();                            
+                        }
+                    }
                 });
-
-                if (!string.IsNullOrEmpty(output))
-                {
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "output", output } }));
-                }
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { }));
             }
             catch (Exception ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error occured while executing python cmd : {ex.Message}" } }));
+                return Data.Create(ex);
             }
+            return null;
         }
     }
 }
