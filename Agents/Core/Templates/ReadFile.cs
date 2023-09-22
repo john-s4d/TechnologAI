@@ -5,22 +5,29 @@
     /// </summary>
     internal class ReadFile : Template
     {
-        public string Description { get; } = "Read a text file on the local filesystem.";
-        public string SampleJsonIn { get; } = "{\"fileName\":\"string\"}";
-        public string SampleJsonOut { get; } = "{\"contents\":\"string\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public ReadFile()
         {
-            string fileName = ((string)data["fileName"]).Trim();
+            Id = "read_file";
+            Description = "Read a text file on the local filesystem.";
+            InputKeys = new string[] { "fileName" };
+            OutputKeys = new string[] {"contents"};
+        }
+
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
+        {
+            string fileName = ((string)information.Input.Structured["fileName"]).Trim();
             try
             {
                 using StreamReader reader = new(fileName);
                 var contents = await reader.ReadToEndAsync();
-                return new Dictionary<string, object> { { "contents", contents } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", contents } }));
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", $"Error reading file '{fileName}': {ex.Message}" } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error reading file '{fileName}': {ex.Message}" } }));
             }
         }
     }

@@ -30,19 +30,26 @@ namespace Technologai.Templates
     /// </summary>
     public class GenerateImageDallE3 : Template
     {
-        public string Description { get; } = "Generate Image Dall E using open AI";
-        public string SampleJsonIn { get; set; } = "{\"apiKey\":\"string\",\"apiUrl\":\"string\",\"inputText\":\"string\",\"noOfImages\":\"int\",\"imageSize\":\"string\",\"savePath\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"string\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        internal string ApiKey { get; set; } = string.Empty;
+        public GenerateImageDallE3(string apiKey)
         {
-            var apiKey = ((string)data["apiKey"]);
-            var apiUrl = ((string)data["apiUrl"]);
-            var inputText = ((string)data["inputText"]);
+            Id = "generate_image_dall_e3";
+            Description = "Generate Image Dall E using open AI";
+            InputKeys = new string[] { "apiUrl", "inputText", "noOfImages", "imageSize", "savePath" };
+            OutputKeys = new string[] { "contents" };
+            ApiKey = apiKey;
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public async override Task<Data?> Process(Information information)
+        { 
+            var apiUrl = ((string)information.Input.Structured["apiUrl"]);
+            var inputText = ((string)information.Input.Structured["inputText"]);
 
             int noOfImages = 1;
-            int.TryParse((string)data["noOfImages"], out noOfImages);
-            var imageSize = ((string)data["imageSize"]);
+            int.TryParse((string)information.Input.Structured["noOfImages"], out noOfImages);
+            var imageSize = ((string)information.Input.Structured["imageSize"]);
 
             var requestData = new DallERequestData()
             {
@@ -55,7 +62,7 @@ namespace Technologai.Templates
             try
             {
                 using HttpClient client = new();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
                 var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await client.PostAsync(apiUrl, content);
                 if (response.IsSuccessStatusCode)
@@ -68,7 +75,7 @@ namespace Technologai.Templates
                         foreach (var output in responseData.data)
                         {
                             //Spliting the image name with . extension
-                            var imageNameWithExtension = ((string)data["imageNameWithExtension"]);
+                            var imageNameWithExtension = ((string)information.Input.Structured["imageNameWithExtension"]);
                             string[] str = imageNameWithExtension.Split(".");
                             string imageName = string.Empty;
                             string dynamicImageName = string.Empty;
@@ -83,27 +90,27 @@ namespace Technologai.Templates
                             dynamicImageName = imageName + $"{countOfImages}";
                             imageNameWithExtension = imageNameWithExtension.Replace(imageName, dynamicImageName);
                             //reading local system path
-                            var savePath = ((string)data["savePath"]);
+                            var savePath = ((string)information.Input.Structured["savePath"]);
                             savePath += $"{imageNameWithExtension}";
                             await DownloadImage(output.url.ToString(), savePath);
 
                         }
-                        return new Dictionary<string, object> { { "contents", responseData.data } };
+                        return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", responseData.data.ToString() } }));
                     }
                     else
                     {
-                        return new Dictionary<string, object> { { "Error", $"Error occured while parsing response" } };
+                        return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"Error occured while parsing response" } }));
                     }
                 }
                 else
                 {
                     // Display the error message
-                    return new Dictionary<string, object> { { "Error", $"'{response.ReasonPhrase}'" } };
+                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"'{response.ReasonPhrase}'" } }));
                 }
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "Error", $"Unable to generate image : '{ex.Message}'" } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"Unable to generate image : '{ex.Message}'" } }));
             }
 
             //Download Image

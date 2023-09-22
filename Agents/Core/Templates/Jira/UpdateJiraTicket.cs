@@ -1,9 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.VisualBasic;
+using Newtonsoft.Json;
 using System.Text;
 using System.Xml.Linq;
+using Technologai;
 using Technologai.Agents.Core.DataModels;
+using Information = Technologai.Information;
 
-namespace Technologai.Templates
+namespace Core.Templates.Jira
 {
     /*
     //Update Jira Ticket
@@ -51,20 +54,28 @@ namespace Technologai.Templates
     /// </summary>
     public class UpdateJiraTicket : Template
     {
-        public string Description { get; } = "Update Jira Ticket By Id";
-        public string SampleJsonIn { get; set; } = "{\"domain\":\"string\",\"issueID\":\"string\",\"username\":\"string\",\"password\":\"string\",\"editObject\":\"RootModel\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"object\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        internal string Username { get; set; } = string.Empty;
+        internal string Password { get; set; } = string.Empty;
+        public UpdateJiraTicket(string username, string password)
         {
-            var domain = ((string)data["domain"]);
-            var issueID = ((string)data["issueID"]);
-            var username = ((string)data["username"]);
-            var password = ((string)data["password"]);
-            var editObject = ((Root)data["editObject"]);
+            Id = "update_jira_ticket";
+            Description = "Update Jira Ticket By Id";
+            InputKeys = new string[] { "domain", "issueID", "editObject" };
+            OutputKeys = new string[] { "contents" };
+            Username = username;
+            Password = password;
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
+        {
+            var domain = (string)information.Input.Structured["domain"];
+            var issueID = (string)information.Input.Structured["issueID"];
+            var editObject = (string)information.Input.Structured["editObject"];
 
             var jsonData = JsonConvert.SerializeObject(editObject);
-            var byteArray = Encoding.ASCII.GetBytes($"{username}:{password}");
+            var byteArray = Encoding.ASCII.GetBytes($"{Username}:{Password}");
 
             try
             {
@@ -80,13 +91,13 @@ namespace Technologai.Templates
                 if (response.IsSuccessStatusCode)
                 {
                     var responseResult = await response.Content.ReadAsStringAsync();
-                    return new Dictionary<string, object> { { "contents", responseResult } };
+                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", responseResult } }));
                 }
-                return new Dictionary<string, object> { { "Error", $"unable to find the response result" } }; ;
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to find the response result" } }));
             }
             catch (Exception e)
             {
-                return new Dictionary<string, object> { { "Error", $"unable to find the comments  '{e.Message}'" } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to find the comments  '{e.Message}'" } }));
             }
         }
     }

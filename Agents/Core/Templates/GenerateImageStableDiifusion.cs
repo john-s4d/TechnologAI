@@ -18,15 +18,19 @@ namespace Technologai.Templates
     /// </summary>
     public class GenerateImageStableDiifusion : Template
     {
-        public string Description { get; } = "Generate Image Stable Diffusion";
-        public string SampleJsonIn { get; set; } = "{\"orginalImagePathWithExtension\":\"string\",\"diffusedImagePathWithExtension\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"content\":\"string\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public GenerateImageStableDiifusion()
         {
+            Id = "generate_image_stable_diifusion";
+            Description = "Generate Image Stable Diffusion";
+            InputKeys = new string[] { "orginalImagePathWithExtension", "diffusedImagePathWithExtension" };
+            OutputKeys = new string[] { "content" };
+        }
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-            var orginalImagePathWithExtension = ((string)data["orginalImagePath"]);
-            var diffusedImagePathWithExtension = ((string)data["diffuesedImagePath"]);
+        public async override Task<Data?> Process(Information information)
+        {
+            var orginalImagePathWithExtension = ((string)information.Input.Structured["orginalImagePathWithExtension"]);
+            var diffusedImagePathWithExtension = ((string)information.Input.Structured["diffusedImagePathWithExtension"]);
             try
             {
                 if (orginalImagePathWithExtension != null)
@@ -36,23 +40,24 @@ namespace Technologai.Templates
                     if (diffusedImage != null && diffusedImagePathWithExtension != null)
                     {
                         diffusedImage.Save(diffusedImagePathWithExtension);
-                        return new Dictionary<string, object> { { "content", $"Diffused image saved successfully! : '{diffusedImagePathWithExtension}' " } };
+                        return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "content", $"Diffused image saved successfully! : '{diffusedImagePathWithExtension}' " } }));
                     }
                     else
                     {
-                        return new Dictionary<string, object> { { "Error", "Unable to diffused orginal image" } };
+                        return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", "Unable to diffused orginal image" } }));
                     }
                 }
                 else
                 {
-                    return new Dictionary<string, object> { { "Error", "Unable to find orginal image" } };
+                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", "Unable to find orginal image" } }));
                 }
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "Exception", $"Something went wrong :  '{ex.Message}'" } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Exception", $"Something went wrong :  '{ex.Message}'" } }));
             }
         }
+
         static Bitmap GenerateImageStableDiffusion(Bitmap originalImage)
         {
             // Create a new bitmap for the diffused image

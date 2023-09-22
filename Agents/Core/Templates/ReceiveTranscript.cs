@@ -20,18 +20,25 @@ namespace Technologai.Templates
     /// </summary>
     public class ReceiveTranscript : Template
     {
-        public new string Description { get; set; } = "Receive transcript using deepgram api key";
-        public new string SampleJsonIn { get; set; } = "{\"apiKey\":\"string\",\"audioUrl\":\"string\"}";
-        public new string SampleJsonOut { get; set; } = "{\"contents\":\"string\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        internal string ApiKey { get; set; } = string.Empty;
+        public ReceiveTranscript(string apiKey)
         {
-            var apiKey = ((string)data["apiKey"]);
-            var audioUrl = ((string)data["audioUrl"]);
+            Id = "receive_transcript";
+            Description = "Receive transcript using deepgram api key";
+            InputKeys = new string[] { "audioUrl" };
+            OutputKeys = new string[] { "contents" }; 
+            ApiKey = apiKey;
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
+        {
+            var audioUrl = ((string)information.Input.Structured["audioUrl"]);
             try
             {
                 using HttpClient client = new();
-                client.DefaultRequestHeaders.Add("Authorization", "Token " + apiKey);
+                client.DefaultRequestHeaders.Add("Authorization", "Token " + ApiKey);
                 RequestReceiveTranscriptModel reqData = new()
                 {
                     url = audioUrl
@@ -43,16 +50,16 @@ namespace Technologai.Templates
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
                     var jsonResponse = JsonConvert.SerializeObject(responseContent);
-                    return new Dictionary<string, object> { { "contents", jsonResponse } };
+                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", jsonResponse } }));
                 }
                 else
                 {
-                    return new Dictionary<string, object> { { "Error", $"Unable to generate transcript :'{response.StatusCode} - {response.ReasonPhrase}'" } };
+                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"Unable to generate transcript :'{response.StatusCode} - {response.ReasonPhrase}'" } }));
                 }
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "Exception occured", $"'{ex.Message}'" } };
+                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Exception occured", $"'{ex.Message}'" } }));
             }
         }
     }
