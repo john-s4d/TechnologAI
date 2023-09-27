@@ -15,19 +15,31 @@ namespace Technologai.Agents.Core
             var clientId = _config.ClientId ?? throw new ArgumentNullException(nameof(_config.ClientId));
             var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
             var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
-            
+
+            // Post To Reddit Credentials
+            var redditUsername = _config.RedditUsername ?? throw new ArgumentNullException(nameof(_config.RedditUsername));
+            var redditPassword = _config.RedditPassword ?? throw new ArgumentNullException(nameof(_config.RedditPassword));
+            var redditClientId = _config.ClientId ?? throw new ArgumentNullException(nameof(_config.RedditClientId));
+            var redditClientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
+            var redditSubReddit = _config.SubReddit ?? throw new ArgumentNullException(nameof(_config.SubReddit));
+            var redditAppName = _config.RedditAppName ?? throw new ArgumentNullException(nameof(_config.RedditAppName));
+
+            // Twitter Credentials
+            var twitterConsumerKey = _config.TwitterConsumerKey ?? throw new ArgumentNullException(nameof(_config.TwitterConsumerKey));
+            var twitterConsumerKeySecret = _config.TwitterConsumerKeySecret ?? throw new ArgumentNullException(nameof(_config.TwitterConsumerKeySecret));
+            var twitterAccessToken = _config.TwitterAccessToken ?? throw new ArgumentNullException(nameof(_config.TwitterAccessToken));
+            var twitterAccessTokenSecret = _config.TwitterAccessTokenSecret ?? throw new ArgumentNullException(nameof(_config.TwitterAccessTokenSecret));
+
             var jiraUsername = _config.JiraUsername;
             var jiraPassword = _config.JiraPassword;
-            var redditUsername = _config.RedditUsername;
-            var redditPassword = _config.RedditPassword;
             var searchGoogleApiKey = _config.SearchGoogleApiKey;
             var trascriptAudioVoiceFileApiKey = _config.TrascriptAudioVoiceFileApiKey;
             var openAiApiKey = _config.OpenAiApiKey;
             var openAiOrgId = _config.OpenAiOrgId;
             var openAiUrl = _config.OpenAiUrl;
             var receiveTranscriptApiKey = _config.ReceiveTranscriptApiKey;
-            
-            var 
+
+
 
             _agent = new Agent(authUri, clientId, clientSecret, memberId);
             _agent.LogMessage += LogMessage_callback;
@@ -59,8 +71,8 @@ namespace Technologai.Agents.Core
             _agent.Catalog.Add(new GetJiraTickets(jiraUsername, jiraPassword));
             _agent.Catalog.Add(new GitClone());
             _agent.Catalog.Add(new ListFiles());
-            _agent.Catalog.Add(new PostToReddit(redditUsername, redditPassword));
-            _agent.Catalog.Add(new PostToTwitter());
+            _agent.Catalog.Add(new PostToReddit(redditUsername, redditPassword, redditClientId, redditClientSecret, redditSubReddit, redditAppName));
+            _agent.Catalog.Add(new PostToTwitter(twitterAccessToken, twitterAccessTokenSecret, twitterConsumerKey, twitterConsumerKeySecret));
             _agent.Catalog.Add(new ReadFile());
             _agent.Catalog.Add(new ReadLocalFile());
             _agent.Catalog.Add(new ReadWebPage());

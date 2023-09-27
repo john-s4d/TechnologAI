@@ -10,7 +10,7 @@
             Id = "list_files";
             Description = "List file from the local directory.";
             InputKeys = new string[] { "directory", "includeSubDirectories", "fileExtension" };
-            OutputKeys = new string[] { "files" };
+            OutputKeys = new[] { "text[]:files" };
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
@@ -22,7 +22,7 @@
             {
                 if (!Directory.Exists(directory))
                 {
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Directory doesn't exists'" } }));
+                    return Data.Create("Error", $"Directory doesn't exists : {directory}");
                 }
 
                 var files = await Task.Run(() =>
@@ -44,11 +44,11 @@
 
                     return files;
                 });
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "files", files.ToString() } }));
+                return Data.Create("files", files);
             }
             catch (Exception ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error reading directory '{directory}': {ex.Message}" } }));
+                return Data.Create(ex);
             }
         }
     }

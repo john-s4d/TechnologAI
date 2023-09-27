@@ -10,7 +10,6 @@
             Id = "write_file";
             Description = "Write a text file on the local filesystem.";
             InputKeys = new string[] { "fileName", "content", "overrideIfExists" };
-            OutputKeys = new string[] { };
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
@@ -25,17 +24,17 @@
                 {
                     if (File.Exists(fileName))
                     {
-                        return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"File already exists." } }));
+                        return Data.Create("error", $"File already exists: '{fileName}'");
                     }
                 }
 
                 using StreamWriter writer = new(fileName);
                 await writer.WriteAsync((string)information.Input.Structured["content"]);
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> ()));
+                return null;
             }
             catch (Exception ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error writting content to file '{fileName}': {ex.Message}" } }));
+                return Data.Create(ex);
             }
         }
     }

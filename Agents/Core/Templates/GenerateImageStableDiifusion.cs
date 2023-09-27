@@ -2,16 +2,6 @@
 
 namespace Technologai.Templates
 {
-    /*
-    //GenerateImage Stable Diffusion
-    GenerateImageStableDiifusion generateImageStableDiifusion = new();
-    var generateImageStableDiifusion_Dict = new Dictionary<string, object>()
-        {
-            {"orginalImagePath",@"C:\Users\local\Images\original_image.jpg"},
-            {"diffuesedImagePath",@"C:\User\local\Images\diffused_image.jpg"}
-        };
-    var generateImageStableDiifusionResponse = await generateImageStableDiifusion.Execute(generateImageStableDiifusion_Dict);
-    */
 
     /// <summary>
     /// Generate Image Stable Diffusion
@@ -23,7 +13,7 @@ namespace Technologai.Templates
             Id = "generate_image_stable_diifusion";
             Description = "Generate Image Stable Diffusion";
             InputKeys = new string[] { "orginalImagePathWithExtension", "diffusedImagePathWithExtension" };
-            OutputKeys = new string[] { "content" };
+            OutputKeys = new string[] { "diffusedImagePathWithExtension" };
         }
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
@@ -40,21 +30,21 @@ namespace Technologai.Templates
                     if (diffusedImage != null && diffusedImagePathWithExtension != null)
                     {
                         diffusedImage.Save(diffusedImagePathWithExtension);
-                        return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "content", $"Diffused image saved successfully! : '{diffusedImagePathWithExtension}' " } }));
+                        return Data.Create(diffusedImagePathWithExtension);
                     }
                     else
                     {
-                        return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", "Unable to diffused orginal image" } }));
+                        return Data.Create("Error", "Unable to diffused orginal image");
                     }
                 }
                 else
                 {
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", "Unable to find orginal image" } }));
+                    return Data.Create("Error", "Unable to find orginal image");
                 }
             }
             catch (Exception ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Exception", $"Something went wrong :  '{ex.Message}'" } }));
+                return Data.Create(ex);
             }
         }
 

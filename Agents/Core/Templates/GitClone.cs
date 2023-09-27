@@ -11,8 +11,7 @@ namespace Technologai.Templates
         {
             Id = "git_clone";
             Description = "Git clone a repository.";
-            InputKeys = new string[] { "repoLink", "directory" };
-            OutputKeys = new string[] { };
+            InputKeys = new string[] { "repoLink:Uri", "directory" };
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
@@ -35,11 +34,11 @@ namespace Technologai.Templates
                     };
                     process.Start();
                 });
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> () ));
+                return null;
             }
             catch (Exception ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error cloning the given ropo '{reopoLink}': {ex.Message}" } }));
+                return Data.Create(ex);
             }
         }
     }

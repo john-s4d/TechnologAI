@@ -9,13 +9,14 @@
         {
             Id = "get_current_date_time";
             Description = "Get the current date and time.";
+            OutputKeys = new string[] { "currentDateTime:DateTime" };
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-        public override Task<Data?> Process(Information information)
+        public async override Task<Data?> Process(Information information)
         {
-            return Task.FromResult(Data.Create(DateTime.Now.ToString()));
+            return Data.Create(DateTime.Now.ToString());
         }
     }
 }

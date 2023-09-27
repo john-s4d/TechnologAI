@@ -31,7 +31,7 @@ namespace Core.Templates.Jira
             Id = "post_jira_comment";
             Description = "Post Jira Comments";
             InputKeys = new string[] { "domain", "issueID", "comment" };
-            OutputKeys = new string[] { "contents" };
+            OutputKeys = new string[] { "content" };
             Username = username;
             Password = password;
         }
@@ -71,14 +71,14 @@ namespace Core.Templates.Jira
                 using var response = await httpClient.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseResult = await response.Content.ReadAsStringAsync();
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", responseResult } }));
+                    var content = await response.Content.ReadAsStringAsync();
+                    return Data.Create(content);
                 }
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to find the responseresult" } }));
+                return Data.Create("Error", $"Unable to Post Jira Comments Status Code: '{response.StatusCode}'");
             }
             catch (Exception e)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to find the comments  '{e.Message}'" } }));
+                return Data.Create(e);
             }
         }
     }

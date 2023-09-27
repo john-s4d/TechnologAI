@@ -18,7 +18,7 @@ namespace Core.Templates.Jira
                  {"username","your username" },
                  {"password","your password (access_token)"},
              };
-    Root userData = new();
+    JiraResModel userData = new();
     userData.fields.description = "Description";
             userData.fields.status = new Status()
     {
@@ -44,7 +44,7 @@ namespace Core.Templates.Jira
                  {"password",(string)userEditData["password"]}
              };
     var rr1 = getJiraTicketById.Execute(getJiraTicketByIdDict).Result;
-    var deserializedData = (Root)rr1["contents"];
+    var deserializedData = (JiraResModel)rr1["contents"];
     userEditData.Add("editObject", deserializedData);
             var postJiraCommentResult = updateJiraTicket.Execute(userEditData).Result;
     */
@@ -61,7 +61,7 @@ namespace Core.Templates.Jira
             Id = "update_jira_ticket";
             Description = "Update Jira Ticket By Id";
             InputKeys = new string[] { "domain", "issueID", "editObject" };
-            OutputKeys = new string[] { "contents" };
+            OutputKeys = new string[] { "content" };
             Username = username;
             Password = password;
         }
@@ -90,14 +90,14 @@ namespace Core.Templates.Jira
                 using var response = await httpClient.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseResult = await response.Content.ReadAsStringAsync();
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", responseResult } }));
+                    var content = await response.Content.ReadAsStringAsync();
+                    return Data.Create(content);
                 }
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to find the response result" } }));
+                return Data.Create("Error", $"Unable to Update Jira Tickets Status Code : '{response.StatusCode}'");
             }
             catch (Exception e)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to find the comments  '{e.Message}'" } }));
+                return Data.Create(e);
             }
         }
     }

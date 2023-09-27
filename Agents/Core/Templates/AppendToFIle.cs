@@ -13,12 +13,19 @@
 
         public override async Task<Data?> Process(Information information)
         {
-            using (var writer = new StreamWriter(information.Input?.Structured?["filename"]
-                       ?? throw new ArgumentNullException("filename"), true))
-            {
-                await writer.WriteAsync(information.Input?.Structured?["content"]);
+            try
+            { 
+                using (var writer = new StreamWriter(information.Input?.Structured?["filename"]
+                        ?? throw new ArgumentNullException("filename"), true))
+                {
+                    await writer.WriteAsync(information.Input?.Structured?["content"]);
+                }
             }
-            return null;
+            catch (Exception ex)
+            {
+                return Data.Create(ex);
+            }
+            return null; 
         }
     }
 }

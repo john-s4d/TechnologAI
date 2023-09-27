@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Text.Json;
 
 namespace Technologai.Templates
 {
@@ -10,7 +12,7 @@ namespace Technologai.Templates
         {
             Id = "chunk_text";
             Description = "Split Text Into Chunks";
-            InputKeys = new string[] { "text", "size" };
+            InputKeys = new string[] { "text", "size:int" };
             OutputKeys = new string[] { "chunks" };
         }
 
@@ -30,7 +32,7 @@ namespace Technologai.Templates
             return Task.FromResult(false);
         }
 
-        public override Task<Data?> Process(Information information)
+        public async override Task<Data?> Process(Information information)
         {
             string? text = string.Empty;
             int size = DEFAULT_SIZE;
@@ -47,8 +49,8 @@ namespace Technologai.Templates
             }
 
             var result = SplitText(text ?? string.Empty, size);
+             return Data.Create("Chunks", result);
 
-            return Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "chunks", JsonSerializer.Serialize(result) } }));
         }
 
         public static string[] SplitText(string text, int maxLength = DEFAULT_SIZE)

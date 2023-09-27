@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace Technologai.Templates
 {
@@ -13,7 +14,7 @@ namespace Technologai.Templates
             Id = "search_google";
             Description = "Search Google using serach query";
             InputKeys = new string[] {"searchEngineID", "searchQuery" };
-            OutputKeys = new string[] { "output" };
+            OutputKeys = new string[] { "content" };
             ApiKey = apiKey;
         }
 
@@ -37,21 +38,17 @@ namespace Technologai.Templates
                 if (response != null)
                 {
                     // Read the content of the response as a string
-                    var jsonString = response.Content.ReadAsStringAsync().Result;
-
-                    // Parse the JSON response using Newtonsoft.Json
-                    var jsonObject = JObject.Parse(jsonString);
-
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "result", jsonObject.ToString() } }));
+                    var content = await response.Content.ReadAsStringAsync();
+                    return Data.Create(content);
                 }
                 else
                 {
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> ()));
+                    return null;
                 }
             }
             catch (Exception ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error executing request on google: {ex.Message}" } }));
+                return Data.Create(ex);
             }
         }
     }

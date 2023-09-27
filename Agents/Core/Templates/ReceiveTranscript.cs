@@ -49,17 +49,17 @@ namespace Technologai.Templates
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
-                    var jsonResponse = JsonConvert.SerializeObject(responseContent);
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", jsonResponse } }));
+                    var contents = JsonConvert.SerializeObject(responseContent);
+                    return Data.Create(contents);
                 }
                 else
                 {
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"Unable to generate transcript :'{response.StatusCode} - {response.ReasonPhrase}'" } }));
+                    return Data.Create("Error", $"Unable to generate transcript :'{response.StatusCode} - {response.ReasonPhrase}'");
                 }
             }
             catch (Exception ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Exception occured", $"'{ex.Message}'" } }));
+                return Data.Create(ex);
             }
         }
     }

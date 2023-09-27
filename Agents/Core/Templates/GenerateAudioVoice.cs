@@ -7,28 +7,13 @@ namespace Technologai.Templates
     /// </summary>
     public class GenerateAudioVoice : Template
     {
-        /*
-        //Generate Audio Voice
-        GenerateAudioVoice generateAudioVoice = new();
-        var generateAudioVoiceDict = new Dictionary<string, object>()
-             {
-                 //"1: MALE, 2: FEMALE"
-                 {"voiceGender" ,"1"},
-                 //"65: Senior, 10: Child, 15: Teen, 30: Adult"
-                 {"voiceAge", "10"},
-                 //Enter text to convert to speech:
-                 {"textToCreateAudio", "Hey i m dummy file to convert in audio" },
-                 {"pathToSaveAudioFile",@"path of local directory" }
-             };
-        var responseFromOpenAI = generateAudioVoice.Execute(generateAudioVoiceDict).Result;
-        */
         
         public GenerateAudioVoice()
         {
             Id = "generate_audio_voice";
             Description = "Generate Audio Voice";
             InputKeys = new[] { "voiceGender", "voiceAge", "pathToSaveAudioFile", "textToCreateAudio" };
-            OutputKeys = new[] { "contents" };
+            OutputKeys = new[] { " filename"};
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
@@ -56,16 +41,17 @@ namespace Technologai.Templates
                     // Set the voice to use for synthesis
                     synth.SelectVoiceByHints((VoiceGender)voiceGender, (VoiceAge)voiceAge);
                     synth.Speak(text);
-                    return Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "output", $"Created file {text.Split(" ").First()} at location {filename}" } }));
+                    return filename;
                 });
-                if (response != null)
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", $"{response}" } }));
 
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to find the response result" } }));
+                if (response != null)
+                   return Data.Create(filename);
+
+                return Data.Create("Error", $"unable to generateAudioVoice");
             }
             catch (Exception e)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to convert to audio file '{e.Message}'" } }));
+                return Data.Create(e);
             }
         }
     }

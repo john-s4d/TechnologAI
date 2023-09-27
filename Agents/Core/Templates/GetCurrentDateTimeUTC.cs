@@ -8,14 +8,15 @@
         public GetCurrentDateTimeUTC()
         {
             Id = "get_current_date_time_utc";
-            Description = "Get the current date and time in UTC";            
+            Description = "Get the current date and time in UTC";
+            OutputKeys = new string[] { "currentDateWithUTC:DateTime" };
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-        public override Task<Data?> Process(Information information)
+        public async override Task<Data?> Process(Information information)
         {
-            return Task.FromResult(Data.Create(DateTime.UtcNow.ToString()));
+            return Data.Create(DateTime.UtcNow.ToString());
         }
     }
 }
