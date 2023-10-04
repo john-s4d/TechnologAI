@@ -31,6 +31,8 @@ namespace Technologai.Agents.Interaction
                 await _agent.Start();
 
                 await _agent.PublishAsync("interact_with_user", InteractWithUser_callback, "Ready for Input");
+
+                //await _agent.Prompt("Start a new conversation.", InteractWithUser_callback);
                                 
                 do { await Task.Delay(10); } while (_isStarted);
 
@@ -55,6 +57,7 @@ namespace Technologai.Agents.Interaction
             else
             {
                 await _agent.PublishAsync("interact_with_user", InteractWithUser_callback, output) ;
+                //await _agent.Prompt("Continue the conversation.", InteractWithUser_callback);
             }
         }
 
