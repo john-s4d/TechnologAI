@@ -14,7 +14,7 @@ namespace Technologai.Agents.Core
             Id = "csv_merge";
             Description = "Merging CSV file";
             InputKeys = new[] { "FileName", "MethodName" , "Result", "directoryName" };
-            OutputKeys = new[] { "output" };
+            OutputKeys = new[] { "MergedData.csv" };
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
@@ -41,7 +41,7 @@ namespace Technologai.Agents.Core
                     output.AddRow(new List<string> { Path.GetFileNameWithoutExtension(fileName), rowData[0], rowData[1] });
                 }
             }
-            return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "output", $"{directoryName}\\MergedData.csv" } }));
+            return Data.Create($"{directoryName}\\MergedData.csv");
         }
     }
 }

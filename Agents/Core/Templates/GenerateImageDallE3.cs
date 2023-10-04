@@ -5,25 +5,6 @@ using Technologai.Agents.Core.DataModels;
 
 namespace Technologai.Templates
 {
-    /*
-      //GenerateImageDall E
-        GenerateImageDallE generateImageDallE = new();
-        var generateImageDallE_Dict = new Dictionary<string, object>()
-        {
-            {"apiKey","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"},
-            {"savePath", @"local path to store image"},
-            {"imageNameWithExtension","tiger.jpg"},
-            {"apiUrl", "https://api.openai.com/v1/images/generations"},
-            //A text description of the desired image(s). The maximum length is 1000 characters.
-            {"inputText", "a happy and colorful tiger  in forest"},
-            //The number of images to generate. Must be between 1 and 10.
-            {"noOfImages", "10"},
-            //The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024
-            {"imageSize","1024x1024"}
-        };
-        //var generateImageDallEResponse =await generateImageDallE.Execute(generateImageDallE_Dict);
-
-     */
 
     /// <summary>
     /// Generate Image Dall E
@@ -35,8 +16,8 @@ namespace Technologai.Templates
         {
             Id = "generate_image_dall_e3";
             Description = "Generate Image Dall E using open AI";
-            InputKeys = new string[] { "apiUrl", "inputText", "noOfImages", "imageSize", "savePath" };
-            OutputKeys = new string[] { "contents" };
+            InputKeys = new string[] { "apiUrl", "inputText", "noOfImages:int", "imageSize", "savePath" };
+            OutputKeys = new[] { "text[]:fileNames" };
             ApiKey = apiKey;
         }
 
@@ -72,6 +53,8 @@ namespace Technologai.Templates
                     int countOfImages = 0;
                     if (responseData != null)
                     {
+                        List<string> fileNames = new();
+
                         foreach (var output in responseData.data)
                         {
                             //Spliting the image name with . extension
@@ -90,27 +73,26 @@ namespace Technologai.Templates
                             dynamicImageName = imageName + $"{countOfImages}";
                             imageNameWithExtension = imageNameWithExtension.Replace(imageName, dynamicImageName);
                             //reading local system path
-                            var savePath = ((string)information.Input.Structured["savePath"]);
-                            savePath += $"{imageNameWithExtension}";
-                            await DownloadImage(output.url.ToString(), savePath);
-
+                            var fullPath = ((string)information.Input.Structured["savePath"]);
+                            fullPath += $"{imageNameWithExtension}";
+                            await DownloadImage(output.url.ToString(), fullPath);
+                            fileNames.Add(fullPath);
                         }
-                        return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", responseData.data.ToString() } }));
+                        return Data.Create("fileNames", fileNames);
                     }
-                    else
-                    {
-                        return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"Error occured while parsing response" } }));
-                    }
+                    return Data.Create("Error", $"Error occured while parsing response");
+
+
                 }
                 else
                 {
                     // Display the error message
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"'{response.ReasonPhrase}'" } }));
+                    return Data.Create("Error", response.ReasonPhrase);
                 }
             }
             catch (Exception ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"Unable to generate image : '{ex.Message}'" } }));
+               return Data.Create(ex);
             }
 
             //Download Image

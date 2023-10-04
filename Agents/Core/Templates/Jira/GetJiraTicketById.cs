@@ -31,7 +31,7 @@ namespace Core.Templates.Jira
             Id = "get_jira_ticket_by_id";
             Description = "Get Jira Ticket By Id";
             InputKeys = new string[] { "domain", "issueID"};
-            OutputKeys = new string[] { "contents" };
+            OutputKeys = new string[] { "deserializedData:JiraResModel" };
             Username = username;
             Password = password;
         }
@@ -59,14 +59,14 @@ namespace Core.Templates.Jira
                 if (response.IsSuccessStatusCode)
                 {
                     var responseResult = await response.Content.ReadAsStringAsync();
-                    var deserializedData = JsonConvert.DeserializeObject<Root>(responseResult);
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", deserializedData.ToString() } }));
+                    var deserializedData = JsonConvert.DeserializeObject<JiraResModel>(responseResult);
+                    return Data.Create(deserializedData.ToString());
                 }
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to find the response result" } }));
+                return Data.Create("Error", $"Unable to find the comments Status Code: '{response.StatusCode}'");
             }
             catch (Exception e)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to find the comments  '{e.Message}'" } }));
+                return Data.Create(e);
             }
         }
     }

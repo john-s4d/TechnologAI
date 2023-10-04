@@ -33,7 +33,7 @@ namespace Technologai.Templates.Core
         {
             Id = "generate_imagedall_e2";
             Description = "Generate Image Dall E";
-            InputKeys = new[] { "integer:imageCount", "imageSize", "prompt" };            
+            InputKeys = new[] { "integer:imageCount", "imageSize:int", "prompt" };            
             OutputKeys = new[] { "text[]:fileNames" };
 
             // TODO: Validate input values according to key type definition

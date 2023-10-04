@@ -17,16 +17,22 @@
 
         public override async Task<Data?> Process(Information information)
         {
-            string fileName = (information.Input?.Structured?["fileName"])?.Trim() ?? string.Empty;
+            try
+            { 
+                string fileName = (information.Input?.Structured?["fileName"])?.Trim() ?? string.Empty;
 
-            if (File.Exists(fileName))
-            {
-                await Task.Run(() =>
+                if (File.Exists(fileName))
                 {
-                    File.Delete(fileName);
-                });
+                    await Task.Run(() =>
+                    {
+                        File.Delete(fileName);
+                    });
+                }
             }
-
+            catch (Exception ex)
+            {
+                return Data.Create(ex);
+            }
             return null;
         }
     }

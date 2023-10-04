@@ -12,7 +12,7 @@ namespace Technologai.Templates
             Id = "read_web_page";
             Description = "Read Web Page to scrape html.";
             InputKeys = new[] { "url", "x-path" };
-            OutputKeys = new[] { "result" };
+            OutputKeys = new[] { "HtmlNodes[]:nodes" };
         }
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
@@ -37,13 +37,13 @@ namespace Technologai.Templates
                 });
                 if (nodes.Any())
                 {
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "result", nodes.ToString() } }));
+                    return Data.Create("nodes", (IEnumerable<IConvertible>)nodes);
                 }
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> ()));
+                return Data.Create("Error","No data found!");
             }
             catch (Exception ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error occured while processing request: {ex.Message}" } }));
+                return Data.Create(ex);
             }
         }
     }

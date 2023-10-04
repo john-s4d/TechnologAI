@@ -9,9 +9,9 @@
         }
         public override Task<bool> Assess(Information information) => Task.FromResult(true);        
 
-        public override Task<Data?> Process(Information information)
+        public async override Task<Data?> Process(Information information)
         {
-            return Task.FromResult((Data?)"bar");
+            return  Data.Create((Data?)"bar");
         }
     }
 }

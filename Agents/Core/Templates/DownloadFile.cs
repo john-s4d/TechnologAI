@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 
 namespace Technologai.Templates
 {
@@ -13,30 +14,35 @@ namespace Technologai.Templates
             Id = "download_File";
             Description = "Download a file from the web to the local filesystem.";
             InputKeys = new string[] { "weburl", "filepath" };
-            OutputKeys = new string[] { "output" };
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
         public override async Task<Data?> Process(Information information)
         {
-            var url = new Uri($"{((string)information.Input.Structured?["weburl"]).Trim()}");
-            string filePath = ((string)information.Input.Structured?["filepath"]).Trim();
+            var url = new Uri($"{((string)information?.Input?.Structured?["weburl"]).Trim()}");
+            string filePath = ((string)information?.Input.Structured?["filepath"]).Trim();
+
             try
             {
-                await Task.Run(() =>
+                // Assuming this code is inside an async method
+                await Task.Run(async () =>
                 {
-                    using (var client = new WebClient())
+                    using (HttpClient client = new())
                     {
-                        client.DownloadFile(url, filePath);
-                    };
+                        HttpResponseMessage response = await client.GetAsync(url);
+                        response.EnsureSuccessStatusCode(); // Ensure a successful response
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await response.Content.CopyToAsync(fileStream);
+                        }
+                    }
                 });
-
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "output", string.Empty } }));
             }
             catch (WebException ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error downloading file '{url}': {ex.Message}" } }));
+                return Data.Create(ex);
             }
+            return null;
         }
     }
 }

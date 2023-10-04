@@ -6,13 +6,14 @@
         {
             Id = "get_text_length";
             Description = "Get the number of characters in the raw input.";
+            OutputKeys = new string[] { "lenght:int" };
         }
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-        public override Task<Data?> Process(Information information)
+        public async override Task<Data?> Process(Information information)
         {
-            return Task.FromResult((Data?)new Data(information.Input?.Raw?.Length.ToString()));
+            return Data.Create(information.Input?.Raw?.Length.ToString());
         }
     }
 }

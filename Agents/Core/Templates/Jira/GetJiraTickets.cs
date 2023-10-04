@@ -29,6 +29,8 @@ namespace Core.Templates.Jira
         {
             Id = "get_all_jira_tickets";
             Description = "Get all Jira tickets.";
+            InputKeys = new string[] { "domain" };
+            OutputKeys = new string[] { "content" };
             Username = username;
             Password = password;
         }
@@ -53,14 +55,14 @@ namespace Core.Templates.Jira
                 HttpResponseMessage response = await client.GetAsync(client.BaseAddress);
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseResult = await response.Content.ReadAsStringAsync();
-                    return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", responseResult } }));
+                    var content = await response.Content.ReadAsStringAsync();
+                    return Data.Create(content);
                 }
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to find the response result" } }));
+                return Data.Create("Error", $"Unable to find the Jira Ticket Status Code:'{response.StatusCode}'");
             }
             catch (Exception e)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Error", $"unable to find the comments  '{e.Message}'" } }));
+                return Data.Create(e);
             }
         }
     }

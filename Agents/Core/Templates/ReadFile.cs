@@ -23,11 +23,11 @@
             {
                 using StreamReader reader = new(fileName);
                 var contents = await reader.ReadToEndAsync();
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "contents", contents } }));
+                return Data.Create(contents);
             }
             catch (Exception ex)
             {
-                return await Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "error", $"Error reading file '{fileName}': {ex.Message}" } }));
+                return Data.Create(ex);
             }
         }
     }
