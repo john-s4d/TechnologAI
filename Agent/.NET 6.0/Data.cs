@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Technologai
@@ -99,6 +100,29 @@ namespace Technologai
         }
        
         public override string? ToString() => Raw;
+
+        public static Data? Create(string raw)
+        {
+            return new Data(raw);
+        }
+
+        public static Data? Create(Exception exception)
+        {
+            return Create("error", exception.Message);
+        }
+
+        public static Data? Create(string key, string value)
+        {
+            return new Data(new Dictionary<string, string>()
+            {
+                { key, value }
+            });
+        }
+
+        public static Data? Create(string key, IEnumerable<IConvertible> value)
+        {
+            return Create(key, JsonSerializer.Serialize(value));            
+        }
 
         public static implicit operator Data?(string? raw) => new Data(raw);
 

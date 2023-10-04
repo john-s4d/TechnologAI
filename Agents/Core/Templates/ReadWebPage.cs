@@ -7,18 +7,23 @@ namespace Technologai.Templates
     /// </summary>
     public class ReadWebPage : Template
     {
-        public string Description { get; } = "Read Web Page to scrape html.";
-        public string SampleJsonIn { get; set; } = "{\"url\":\"string\", \"x-path\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"result\":\"string\"}";
+        public ReadWebPage()
+        {
+            Id = "read_web_page";
+            Description = "Read Web Page to scrape html.";
+            InputKeys = new[] { "url", "x-path" };
+            OutputKeys = new[] { "HtmlNodes[]:nodes" };
+        }
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public override async Task<Data?> Process(Information information)
         {
             try
             {
                 var nodes = await Task.Run(() =>
                 {
                     // the URL of the target page
-                    string url = ((string)data["url"]).Trim();
+                    string url = ((string)information.Input.Structured["url"]).Trim();
                     var web = new HtmlWeb();
 
                     // downloading to the target page
@@ -26,20 +31,19 @@ namespace Technologai.Templates
                     var document = web.Load(url);
 
                     // selecting the HTML nodes of interest  
-                    var nodes = document.DocumentNode.SelectNodes($"//*{((string)data["x-path"]).Trim()}");
+                    var nodes = document.DocumentNode.SelectNodes($"//*{((string)information.Input.Structured["x-path"]).Trim()}");
                     var list = nodes.ToList();
                     return list;
                 });
                 if (nodes.Any())
                 {
-                    return new Dictionary<string, object>() { { "result", nodes } };
+                    return Data.Create("nodes", (IEnumerable<IConvertible>)nodes);
                 }
-
-                return new Dictionary<string, object>();
+                return Data.Create("Error","No data found!");
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", $"Error occured while processing request: {ex.Message}" } };
+                return Data.Create(ex);
             }
         }
     }

@@ -1,30 +1,48 @@
-﻿namespace Technologai.Templates
+﻿using System;
+using System.Net;
+
+namespace Technologai.Templates
 {
+    /// <summary>
+    /// Download file from web url
+    /// </summary>
     public class DownloadFile : Template
     {
-        public string? LocalPath { get; set; }
 
-        public new string Description { get; } = "Read a text file on the local filesystem.";
-        //public new string SampleJsonIn { get; } = "{\"filename\":\"string\"}";
-        //public new string SampleJsonOut { get; } = "{\"contents\":\"string\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public DownloadFile()
         {
-            if (data == null || !data.TryGetValue("filename", out object filenameObj) || !(filenameObj is string filename))
-            {
-                return new Dictionary<string, object> { { "error", $"Invalid or missing filename in input data." } };
-            }
+            Id = "download_File";
+            Description = "Download a file from the web to the local filesystem.";
+            InputKeys = new string[] { "weburl", "filepath" };
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+        public override async Task<Data?> Process(Information information)
+        {
+            var url = new Uri($"{((string)information?.Input?.Structured?["weburl"]).Trim()}");
+            string filePath = ((string)information?.Input.Structured?["filepath"]).Trim();
 
             try
             {
-                using StreamReader reader = new StreamReader(filename);
-                var contents = await reader.ReadToEndAsync();
-                return new Dictionary<string, object> { { "contents", contents } };
+                // Assuming this code is inside an async method
+                await Task.Run(async () =>
+                {
+                    using (HttpClient client = new())
+                    {
+                        HttpResponseMessage response = await client.GetAsync(url);
+                        response.EnsureSuccessStatusCode(); // Ensure a successful response
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await response.Content.CopyToAsync(fileStream);
+                        }
+                    }
+                });
             }
-            catch (Exception ex)
+            catch (WebException ex)
             {
-                return new Dictionary<string, object> { { "error", $"Error reading file '{filename}': {ex.Message}" } };
+                return Data.Create(ex);
             }
+            return null;
         }
     }
 }

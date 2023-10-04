@@ -1,4 +1,5 @@
-﻿using Technologai.Agents.Core.DataModels;
+﻿using System.Text.Json;
+using Technologai.Agents.Core.DataModels;
 using static Technologai.Agents.Core.GenerateImageDallE;
 
 namespace Technologai.Templates.Core
@@ -24,40 +25,58 @@ namespace Technologai.Templates.Core
         var reponseByGenerateImageDallE = generateImageDallE.Execute(generateInageDallEDict).Result;
         */
 
-        public string Description { get; } = "Generate Image Dall E";
-        public string SampleJsonIn { get; set; } = "{\"nImages\":\"int\",\"imageSize\":\"string\",\"openApiUrl\":\"string\",\"organisationId\":\"string\",\"apiKey\":\"string\",\"msg\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"object\"}";
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
-        {
-            var nImages = int.Parse(((string)data["nImages"]).Trim());
-            var imageSize = ((string)data["imageSize"]).Trim();
-            var openApiUrl = ((string)data["openApiUrl"]).Trim();
-            var organisationId = ((string)data["organisationId"]).Trim();
-            var apiKey = ((string)data["apiKey"]).Trim();
-            var msg = ((string)data["msg"]).Trim();
+        private string _apiKey;
+        private string _organizationId;
+        private string _openApiUrl;
 
-            IOpenAIProxy aiClient = new OpenAIHttpService(organisationId, apiKey, openApiUrl);
+        public GenerateImageDallE2(string openApiUrl, string organizationId, string apiKey)
+        {
+            Id = "generate_imagedall_e2";
+            Description = "Generate Image Dall E";
+            InputKeys = new[] { "integer:imageCount", "imageSize:int", "prompt" };            
+            OutputKeys = new[] { "text[]:fileNames" };
+
+            // TODO: Validate input values according to key type definition
+
+            _apiKey = apiKey;
+            _organizationId = organizationId;
+            _openApiUrl = openApiUrl;
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public async override Task<Data?> Process(Information information)
+        {
+            var imageCount = int.Parse(information.Input?.Structured?["imageCount"]?.Trim() ?? string.Empty);
+            var imageSize = information.Input?.Structured?["imageSize"].Trim() ?? string.Empty;            
+            var prompt = information.Input?.Structured?["prompt"].Trim() ?? string.Empty;
+
+            IOpenAIProxy aiClient = new OpenAIHttpService(_organizationId, _apiKey, _openApiUrl);
             try
             {
-                var prompt = new GenerateImageRequest(msg, nImages, imageSize);
-                var result = await aiClient.GenerateImages(prompt);
+                var request = new GenerateImageRequest(prompt, imageCount, imageSize);
+                var result = await aiClient.GenerateImages(request);
                 if (result != null)
                 {
+                    List<string> fileNames = new();
+
                     foreach (var item in result.Data)
                     {
                         Console.WriteLine(item.Url);
                         var fullPath = Path.Combine(Directory.GetCurrentDirectory(), $"{Guid.NewGuid()}.png");
                         var img = await aiClient.DownloadImage(item.Url);
                         await File.WriteAllBytesAsync(fullPath, img);
-                        return new Dictionary<string, object> { { "New image saved at {0}", $"'{fullPath}'" } };
+                        fileNames.Add(fullPath);
                     }
+                    return Data.Create("fileNames", fileNames);
                 }
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "Error", $"Unable to generate image : '{ex.Message}'" } };
+                return Data.Create(ex);
             }
-            return new Dictionary<string, object> { { "contents", "image generating failed" } };
+
+            return null;
         }
     }
 }

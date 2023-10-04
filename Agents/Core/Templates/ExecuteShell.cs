@@ -1,47 +1,57 @@
-﻿namespace Technologai.Templates
+﻿using System.Diagnostics;
+
+namespace Technologai.Templates
 {
     /// <summary>
     /// Execute Shell
     /// </summary>
     public class ExecuteShell : Template
     {
-        public string Description { get; } = "Execute Shell in the local system.";
-        public string SampleJsonIn { get; set; } = "{\"fileName\":\"string\", \"arguments\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";
+        public ExecuteShell()
+        {
+            Id = "execute_shell";
+            Description = "Execute a shell process on the local system.";
+            InputKeys = new string[] { "cmd", "args" };
+        }
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
         {
             try
             {
-                var output = await Task.Run(() =>
+                return await Task.Run(() =>
                 {
-                    System.Diagnostics.Process process = new();
+                    try
+                    {
+                        Process process = new()
+                        {
+                            StartInfo = new ProcessStartInfo()
+                            {
+                                FileName = information.Input?.Structured?["cmd"].Trim(),
+                                Arguments = information.Input?.Structured?["args"].Trim(),
+                                UseShellExecute = false,
+                                RedirectStandardOutput = true
+                            }
+                        };
 
-                    // Configure the process to run the command
-                    process.StartInfo.FileName = ((string)data["fileName"]).Trim();
-                    process.StartInfo.Arguments = ((string)data["arguments"]).Trim();
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardOutput = true;
+                        // Start the process and wait for it to complete
+                        process.Start();
+                        process.WaitForExit();
 
-                    // Start the process and wait for it to complete
-                    process.Start();
-                    process.WaitForExit();
-
-                    // Read the output from the command and print it to the console
-                    string output = process.StandardOutput.ReadToEnd();
-
-                    return output;
+                        // Read the output from the command and print it to the console
+                        return process.StandardOutput.ReadToEnd();
+                    }
+                    catch (Exception ex)
+                    {
+                        return ex.Message;
+                    }
+                    
                 });
-
-                if (output != string.Empty)
-                {
-                    return new Dictionary<string, object> { { "output", output } };
-                }
-                return new Dictionary<string, object>();
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", $"Error occured while processing request: {ex.Message}" } };
+                return Data.Create(ex);
             }
         }
     }

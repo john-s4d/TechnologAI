@@ -16,12 +16,12 @@
 
         public override Task<bool> Assess(Information information) => Task.FromResult(true);
         
-        public override Task<Data?> Process(Information information)
+        public async override Task<Data?> Process(Information information)
         {
             // FIXME: Only kills Core agent. Need to kill all agents.
             // TODO: Broadcast a message to all agents to shut down.            
             _agent.Kill(KILL_DELAY);
-            return Task.FromResult((Data?)null);
+            return Data.Create((Data?)null);
         }       
     }
 }

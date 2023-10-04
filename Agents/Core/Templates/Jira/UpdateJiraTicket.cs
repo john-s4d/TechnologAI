@@ -1,9 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.VisualBasic;
+using Newtonsoft.Json;
 using System.Text;
 using System.Xml.Linq;
+using Technologai;
 using Technologai.Agents.Core.DataModels;
+using Information = Technologai.Information;
 
-namespace Technologai.Templates
+namespace Core.Templates.Jira
 {
     /*
     //Update Jira Ticket
@@ -15,7 +18,7 @@ namespace Technologai.Templates
                  {"username","your username" },
                  {"password","your password (access_token)"},
              };
-    Root userData = new();
+    JiraResModel userData = new();
     userData.fields.description = "Description";
             userData.fields.status = new Status()
     {
@@ -41,7 +44,7 @@ namespace Technologai.Templates
                  {"password",(string)userEditData["password"]}
              };
     var rr1 = getJiraTicketById.Execute(getJiraTicketByIdDict).Result;
-    var deserializedData = (Root)rr1["contents"];
+    var deserializedData = (JiraResModel)rr1["contents"];
     userEditData.Add("editObject", deserializedData);
             var postJiraCommentResult = updateJiraTicket.Execute(userEditData).Result;
     */
@@ -51,20 +54,28 @@ namespace Technologai.Templates
     /// </summary>
     public class UpdateJiraTicket : Template
     {
-        public string Description { get; } = "Update Jira Ticket By Id";
-        public string SampleJsonIn { get; set; } = "{\"domain\":\"string\",\"issueID\":\"string\",\"username\":\"string\",\"password\":\"string\",\"editObject\":\"RootModel\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"object\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        internal string Username { get; set; } = string.Empty;
+        internal string Password { get; set; } = string.Empty;
+        public UpdateJiraTicket(string username, string password)
         {
-            var domain = ((string)data["domain"]);
-            var issueID = ((string)data["issueID"]);
-            var username = ((string)data["username"]);
-            var password = ((string)data["password"]);
-            var editObject = ((Root)data["editObject"]);
+            Id = "update_jira_ticket";
+            Description = "Update Jira Ticket By Id";
+            InputKeys = new string[] { "domain", "issueID", "editObject" };
+            OutputKeys = new string[] { "content" };
+            Username = username;
+            Password = password;
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
+        {
+            var domain = (string)information.Input.Structured["domain"];
+            var issueID = (string)information.Input.Structured["issueID"];
+            var editObject = (string)information.Input.Structured["editObject"];
 
             var jsonData = JsonConvert.SerializeObject(editObject);
-            var byteArray = Encoding.ASCII.GetBytes($"{username}:{password}");
+            var byteArray = Encoding.ASCII.GetBytes($"{Username}:{Password}");
 
             try
             {
@@ -79,14 +90,14 @@ namespace Technologai.Templates
                 using var response = await httpClient.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseResult = await response.Content.ReadAsStringAsync();
-                    return new Dictionary<string, object> { { "contents", responseResult } };
+                    var content = await response.Content.ReadAsStringAsync();
+                    return Data.Create(content);
                 }
-                return new Dictionary<string, object> { { "Error", $"unable to find the response result" } }; ;
+                return Data.Create("Error", $"Unable to Update Jira Tickets Status Code : '{response.StatusCode}'");
             }
             catch (Exception e)
             {
-                return new Dictionary<string, object> { { "Error", $"unable to find the comments  '{e.Message}'" } };
+                return Data.Create(e);
             }
         }
     }

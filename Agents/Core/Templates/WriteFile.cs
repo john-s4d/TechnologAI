@@ -5,31 +5,36 @@
     /// </summary>
     internal class WriteFile : Template
     {
-        public new string Description { get; } = "Write a text file on the local filesystem.";
-        public  string SampleJsonIn { get; } = "{\"fileName\":\"string\", \"content\":\"string\", \"overrideIfExists\":\"bool\"}";// optional: overrideIfExists
-        public  string SampleJsonOut { get; } = string.Empty;
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public WriteFile()
         {
-            string fileName = ((string)data["fileName"]).Trim();
+            Id = "write_file";
+            Description = "Write a text file on the local filesystem.";
+            InputKeys = new string[] { "fileName", "content", "overrideIfExists" };
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
+        {
+            string fileName = ((string)information.Input.Structured["fileName"]).Trim();
             try
             {
-                data.TryGetValue("overrideIfExists", out object overrideIfExists);
-                if (overrideIfExists == null || (overrideIfExists != null && (bool)overrideIfExists == false))
+                var overrideIfExists = information.Input.Structured["overrideIfExists"];
+                if (overrideIfExists == null || (overrideIfExists != null && Convert.ToBoolean(overrideIfExists) == false))
                 {
                     if (File.Exists(fileName))
                     {
-                        return new Dictionary<string, object> { { "error", $"File already exists." } };
+                        return Data.Create("error", $"File already exists: '{fileName}'");
                     }
                 }
 
                 using StreamWriter writer = new(fileName);
-                await writer.WriteAsync((string)data["content"]);
-                return new Dictionary<string, object>();
+                await writer.WriteAsync((string)information.Input.Structured["content"]);
+                return null;
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", $"Error writting content to file '{fileName}': {ex.Message}" } };
+                return Data.Create(ex);
             }
         }
     }

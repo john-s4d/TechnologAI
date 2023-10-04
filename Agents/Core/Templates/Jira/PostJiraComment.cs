@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
+using System.IO;
 using System.Text;
+using Technologai;
 
-namespace Technologai.Templates
+namespace Core.Templates.Jira
 {
     /*
     //Post Jira Comment
@@ -22,17 +24,25 @@ namespace Technologai.Templates
     /// </summary>
     public class PostJiraComment : Template
     {
-        public string Description { get; } = "Post Jira Comments";
-        public string SampleJsonIn { get; set; } = "{\"domain\":\"string\",\"issueID\":\"string\",\"username\":\"string\",\"password\":\"string\",\"comment\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"object\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        internal string Username { get; set; } = string.Empty;
+        internal string Password { get; set; } = string.Empty;
+        public PostJiraComment(string username, string password)
         {
-            var domain = ((string)data["domain"]);
-            var issueID = ((string)data["issueID"]);
-            var username = ((string)data["username"]);
-            var password = ((string)data["password"]);
-            var textComment = ((string)data["textComment"]);
+            Id = "post_jira_comment";
+            Description = "Post Jira Comments";
+            InputKeys = new string[] { "domain", "issueID", "comment" };
+            OutputKeys = new string[] { "content" };
+            Username = username;
+            Password = password;
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
+        {
+            var domain = information.Input.Structured["domain"];
+            var issueID = information.Input.Structured["issueID"];
+            var textComment = information.Input.Structured["textComment"];
             var configs = new
             {
                 body = new
@@ -46,7 +56,7 @@ namespace Technologai.Templates
                 }
             };
             var jsonData = JsonConvert.SerializeObject(configs);
-            var byteArray = Encoding.ASCII.GetBytes($"{username}:{password}");
+            var byteArray = Encoding.ASCII.GetBytes($"{Username} : {Password}");
 
             try
             {
@@ -61,14 +71,14 @@ namespace Technologai.Templates
                 using var response = await httpClient.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseResult = await response.Content.ReadAsStringAsync();
-                    return new Dictionary<string, object> { { "contents", responseResult } };
+                    var content = await response.Content.ReadAsStringAsync();
+                    return Data.Create(content);
                 }
-                return new Dictionary<string, object> { { "Error", $"unable to find the responseresult" } }; ;
+                return Data.Create("Error", $"Unable to Post Jira Comments Status Code: '{response.StatusCode}'");
             }
             catch (Exception e)
             {
-                return new Dictionary<string, object> { { "Error", $"unable to find the comments  '{e.Message}'" } };
+                return Data.Create(e);
             }
         }
     }

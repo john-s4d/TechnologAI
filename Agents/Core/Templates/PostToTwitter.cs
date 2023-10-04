@@ -1,24 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿
+using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Web;
 
 namespace Technologai.Templates
 {
-    /*
-         //PostToTwitter
-            PostToTwitter postToTwitter = new();
-            var postToTwitterDict = new Dictionary<string, object>()
-            {
-                {"ConsumerKey","Enter Consumer Key"},
-                {"ConsumerKeySecret","Enter Consumer Key Secret"},
-                {"AccessToken", "Enter Access Token"},
-                {"AccessTokenSecret","Enter Access Token Secret"},
-                {"textToPost","Enter the desired text to Post to twitter"}
-            };
-            var postToTwitterResponse = postToTwitter.Execute(postToTwitterDict).Result; 
-    */
+ 
 
     /// <summary>
     /// Post To Twitter
@@ -26,50 +16,68 @@ namespace Technologai.Templates
     /// 
     public class PostToTwitter : Template
     {
-        public string Description { get; } = "Post To Twitter";
-        public string SampleJsonIn { get; set; } = "{\"ConsumerKey\":\"string\",\"ConsumerKeySecret\":\"string\",\"AccessToken\":\"string\",\"AccessTokenSecret\":\"string\",\"textToPost\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"object\"}";
+        internal string ConsumerKey { get; set; } = null!;
+        internal string ConsumerKeySecret { get; set; } = null!;
+        internal string AccessToken { get; set; } = null!;
+        internal string AccessTokenSecret { get; set; } = null!;
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public PostToTwitter(string consumerKey, string consumerKeySecret, string accessToken, string accessTokenSecret)
         {
-            var consumerKey = ((string)data["ConsumerKey"]).Trim();
-            var consumerKeySecret = ((string)data["ConsumerKeySecret"]).Trim();
-            var accessToken = ((string)data["AccessToken"]).Trim();
-            var accessTokenSecret = ((string)data["AccessTokenSecret"]).Trim();
-            var tweetText = ((string)data["textToPost"]).Trim();
+            Id = "post_to_twitter";
+            Description = "Post To Twitter";
+            InputKeys = new string[] { "textToPost" };
+            OutputKeys = new string[] { "result" };
 
-            var httpMethod = "POST";
-            var url = "https://api.twitter.com/2/tweets";
-            var timeStamp = ((int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds).ToString();
-            var nonce = Guid.NewGuid().ToString();
-            Dictionary<string, string> parameters = new Dictionary<string, string>
+            ConsumerKey = consumerKey;
+            ConsumerKeySecret = consumerKeySecret;
+            AccessToken = accessToken;
+            AccessTokenSecret = accessTokenSecret;
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
+        {
+            try
             {
-                { "oauth_consumer_key", consumerKey },
-                { "oauth_nonce", nonce },
-                { "oauth_signature_method", "HMAC-SHA1" },
-                { "oauth_timestamp", timeStamp },
-                { "oauth_token", accessToken },
-                { "oauth_version", "1.0" }
-            };
+                var tweetText = (information.Input.Structured?["textToPost"]).Trim();
+                var httpMethod = "POST";
+                var url = "https://api.twitter.com/2/tweets";
+                var timeStamp = ((int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds).ToString();
+                var nonce = Guid.NewGuid().ToString();
+                Dictionary<string, string> parameters = new Dictionary<string, string>
+                {
+                    { "oauth_consumer_key", ConsumerKey },
+                    { "oauth_nonce", nonce },
+                    { "oauth_signature_method", "HMAC-SHA1" },
+                    { "oauth_timestamp", timeStamp },
+                    { "oauth_token", AccessToken },
+                    { "oauth_version", "1.0" }
+                };
 
-            var signature = HttpUtility.UrlEncode(GenerateSignature(httpMethod, url, parameters, consumerKeySecret, accessTokenSecret));
-            var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth",
-                $"oauth_consumer_key=\"{consumerKey}\",oauth_token=\"{accessToken}\",oauth_signature_method=\"HMAC-SHA1\",oauth_timestamp=\"{timeStamp}\",oauth_nonce=\"{nonce}\",oauth_version=\"1.0\",oauth_signature=\"{signature}\"");
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var signature = HttpUtility.UrlEncode(GenerateSignature(httpMethod, url, parameters, ConsumerKeySecret, AccessTokenSecret));
+                var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth",
+                    $"oauth_consumer_key=\"{ConsumerKey}\",oauth_token=\"{AccessToken}\",oauth_signature_method=\"HMAC-SHA1\",oauth_timestamp=\"{timeStamp}\",oauth_nonce=\"{nonce}\",oauth_version=\"1.0\",oauth_signature=\"{signature}\"");
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            var tweet = new { text = tweetText };
-            var tweetJson = JsonConvert.SerializeObject(tweet);
-            var content = new StringContent(tweetJson, System.Text.Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync("https://api.twitter.com/2/tweets", content);
-            if (response.IsSuccessStatusCode)
-            {
-                var responseContent = await response.Content.ReadAsStringAsync();
-                return new Dictionary<string, object> { { "contents", responseContent } };
+                var tweet = new { text = tweetText };
+                var tweetJson = JsonConvert.SerializeObject(tweet);
+                var content = new StringContent(tweetJson, System.Text.Encoding.UTF8, "application/json");
+                var response = await httpClient.PostAsync("https://api.twitter.com/2/tweets", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadAsStringAsync();
+                    return Data.Create(result);
+                }
+                else
+                {
+                    return Data.Create("Errors", $"The request failed with status code: {response.StatusCode}");
+                }
             }
-            else
-            {
-                return new Dictionary<string, object> { { "Errors", $"The request failed with status code: {response.StatusCode}" } };
+            catch(Exception ex) 
+            { 
+                return Data.Create(ex);
             }
         }
         public static string GenerateSignature(string httpMethod, string url, IDictionary<string, string> parameters, string consumerSecret, string tokenSecret = null)

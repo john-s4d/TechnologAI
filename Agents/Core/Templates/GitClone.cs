@@ -7,13 +7,18 @@ namespace Technologai.Templates
     /// </summary>
     public class GitClone : Template
     {
-        public string Description { get; } = "Git clone a repository.";
-        public string SampleJsonIn { get; } = "{\"repoLink\":\"string\", \"directory\":\"string\"}";
-        public string SampleJsonOut { get; } = string.Empty;
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public GitClone()
         {
-            var reopoLink = ((string)data["repoLink"]).Trim();
+            Id = "git_clone";
+            Description = "Git clone a repository.";
+            InputKeys = new string[] { "repoLink:Uri", "directory" };
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public async override Task<Data?> Process(Information information)
+        {
+            var reopoLink = ((string)information.Input.Structured?["repoLink"]).Trim();
             try
             {
                 await Task.Run(() =>
@@ -23,19 +28,18 @@ namespace Technologai.Templates
                         StartInfo = new ProcessStartInfo()
                         {
                             FileName = "git",
-                            Arguments = $"clone {((string)data["repoLink"]).Trim()}",
-                            WorkingDirectory = ((string)data["directory"]).Trim(),
+                            Arguments = $"clone {((string)information.Input.Structured?["repoLink"]).Trim()}",
+                            WorkingDirectory = ((string)information.Input.Structured?["directory"]).Trim(),
                         }
                     };
                     process.Start();
                 });
-                return new Dictionary<string, object>();
+                return null;
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", $"Error cloning the given ropo '{reopoLink}': {ex.Message}" } };
+                return Data.Create(ex);
             }
-
         }
     }
 }

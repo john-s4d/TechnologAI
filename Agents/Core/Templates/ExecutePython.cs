@@ -7,41 +7,40 @@ namespace Technologai.Templates
     /// </summary>
     public class ExecutePython : Template
     {
-        public new string Description { get; } = "Execute python in the local system.";
-        public string SampleJsonIn { get; } = "{\"cmd\":\"string\",\"args\":\"string\" }";
-        public string SampleJsonOut { get; set; } = "{\"output\":\"string\"}";
+        public ExecutePython()
+        {
+            Id = "execute_python";
+            Description = "Execute a Python script.";
+            InputKeys = new string[] { "cmd", "args" };            
+        }
 
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
         {
             try
             {
                 var output = await Task.Run(() =>
                 {
-                    ProcessStartInfo start = new()
+                    ProcessStartInfo start = new ProcessStartInfo();
+                    start.FileName = "python"; // or "python3" depending on your installation
+                    start.Arguments = information.Input?.Structured?["cmd"] + " " + information.Input?.Structured?["args"]; // TODO: Sanitize input
+                    start.UseShellExecute = false;
+                    start.RedirectStandardOutput = true;
+                    using (Process? process = System.Diagnostics.Process.Start(start))
                     {
-                        FileName = data["cmd"].ToString(),
-                        Arguments = data["args"].ToString(),
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true
-                    };
-                    using Process? process = System.Diagnostics.Process.Start(start);
-                    using StreamReader? reader = process?.StandardOutput;
-                    string? output = reader?.ReadToEnd();
-
-                    return output;
+                        using (StreamReader? reader = process?.StandardOutput)
+                        {
+                            return reader?.ReadToEnd();                            
+                        }
+                    }
                 });
-
-                if (!string.IsNullOrEmpty(output))
-                {
-                    return new Dictionary<string, object> { { "output", output } };
-                }
-
-                return new Dictionary<string, object>();
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", $"Error occured while executing python cmd : {ex.Message}" } };
+                return Data.Create(ex);
             }
+            return null;
         }
     }
 }

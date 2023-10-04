@@ -7,36 +7,27 @@ namespace Technologai.Templates
     /// </summary>
     public class GenerateAudioVoice : Template
     {
-        /*
-        //Generate Audio Voice
-        GenerateAudioVoice generateAudioVoice = new();
-        var generateAudioVoiceDict = new Dictionary<string, object>()
-             {
-                 //"1: MALE, 2: FEMALE"
-                 {"voiceGender" ,"1"},
-                 //"65: Senior, 10: Child, 15: Teen, 30: Adult"
-                 {"voiceAge", "10"},
-                 //Enter text to convert to speech:
-                 {"textToCreateAudio", "Hey i m dummy file to convert in audio" },
-                 {"pathToSaveAudioFile",@"path of local directory" }
-             };
-        var responseFromOpenAI = generateAudioVoice.Execute(generateAudioVoiceDict).Result;
-        */
-
-        public string Description { get; } = "Generate Audio Voice";
-        public string SampleJsonIn { get; set; } = "{\"voiceGender\":\"string\",\"voiceAge\":\"string\",\"pathToSaveAudioFile\":\"string\",\"textToCreateAudio\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"object\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        
+        public GenerateAudioVoice()
         {
-            var voiceGender = Convert.ToInt32(data["voiceGender"]);
+            Id = "generate_audio_voice";
+            Description = "Generate Audio Voice";
+            InputKeys = new[] { "voiceGender", "voiceAge", "pathToSaveAudioFile", "textToCreateAudio" };
+            OutputKeys = new[] { " filename"};
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public async override Task<Data?> Process(Information information)
+        {
+            var voiceGender = Convert.ToInt32(information.Input.Structured?["voiceGender"]);
             if (voiceGender != 1 && voiceGender != 2)
                 voiceGender = 1;
-            var voiceAge = Convert.ToInt32(data["voiceAge"]);
+            var voiceAge = Convert.ToInt32(information.Input.Structured?["voiceAge"]);
             if (voiceAge != 65 && voiceAge != 30 && voiceAge != 10 && voiceAge != 15)
                 voiceAge = 30;
-            var writeToFolder = (string)data["pathToSaveAudioFile"];
-            string text = (string)data["textToCreateAudio"];
+            var writeToFolder = (string)information.Input.Structured?["pathToSaveAudioFile"];
+            string text = (string)information.Input.Structured?["textToCreateAudio"];
             var filename = writeToFolder + "\\" + text.Split(" ").First();
             try
             {
@@ -50,16 +41,17 @@ namespace Technologai.Templates
                     // Set the voice to use for synthesis
                     synth.SelectVoiceByHints((VoiceGender)voiceGender, (VoiceAge)voiceAge);
                     synth.Speak(text);
-                    return $"Created file {text.Split(" ").First()} at location {filename}";
+                    return filename;
                 });
-                if (response != null)
-                    return new Dictionary<string, object> { { "contents", $"{response}" } };
 
-                return new Dictionary<string, object> { { "Error", $"unable to find the response result" } };
+                if (response != null)
+                   return Data.Create(filename);
+
+                return Data.Create("Error", $"unable to generateAudioVoice");
             }
             catch (Exception e)
             {
-                return new Dictionary<string, object> { { "Error", $"unable to convert to audio file '{e.Message}'" } };
+                return Data.Create(e);
             }
         }
     }

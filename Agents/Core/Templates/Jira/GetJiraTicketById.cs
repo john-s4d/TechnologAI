@@ -1,9 +1,10 @@
 ﻿using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
+using Technologai;
 using Technologai.Agents.Core.DataModels;
 
-namespace Technologai.Templates
+namespace Core.Templates.Jira
 {
     /*
     // Get Jira Ticket By Id
@@ -23,16 +24,24 @@ namespace Technologai.Templates
     /// </summary>
     public class GetJiraTicketById : Template
     {
-        public string Description { get; } = "Get Jira Ticket By Id";
-        public string SampleJsonIn { get; set; } = "{\"domain\":\"string\",\"issueID\":\"string\",\"username\":\"string\",\"password\":\"string\"}";
-        public string SampleJsonOut { get; set; } = "{\"contents\":\"object\"}";
-
-        public async Task<Dictionary<string, object>> Execute(Dictionary<string, object> data)
+        internal string Username { get; set; } = string.Empty;
+        internal string Password { get; set; } = string.Empty;
+        public GetJiraTicketById(string username, string password)
         {
-            var domain = ((string)data["domain"]);
-            var issueID = ((string)data["issueID"]);
-            var username = ((string)data["username"]);
-            var password = ((string)data["password"]);
+            Id = "get_jira_ticket_by_id";
+            Description = "Get Jira Ticket By Id";
+            InputKeys = new string[] { "domain", "issueID"};
+            OutputKeys = new string[] { "deserializedData:JiraResModel" };
+            Username = username;
+            Password = password;
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public async override Task<Data?> Process(Information information)
+        {
+            var domain = information.Input.Structured["domain"];
+            var issueID = information.Input.Structured["issueID"];
 
             HttpClient client = new()
             {
@@ -40,8 +49,8 @@ namespace Technologai.Templates
             };
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            var byteArray = Encoding.ASCII.GetBytes($"{username}:{password}");
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            var byteArray = Encoding.ASCII.GetBytes($"{Username} : {Password}");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
 
             try
             {
@@ -50,14 +59,14 @@ namespace Technologai.Templates
                 if (response.IsSuccessStatusCode)
                 {
                     var responseResult = await response.Content.ReadAsStringAsync();
-                    var deserializedData = JsonConvert.DeserializeObject<Root>(responseResult);
-                    return new Dictionary<string, object> { { "contents", deserializedData } };
+                    var deserializedData = JsonConvert.DeserializeObject<JiraResModel>(responseResult);
+                    return Data.Create(deserializedData.ToString());
                 }
-                return new Dictionary<string, object> { { "Error", $"unable to find the response result" } };
+                return Data.Create("Error", $"Unable to find the comments Status Code: '{response.StatusCode}'");
             }
             catch (Exception e)
             {
-                return new Dictionary<string, object> { { "Error", $"unable to find the comments  '{e.Message}'" } };
+                return Data.Create(e);
             }
         }
     }

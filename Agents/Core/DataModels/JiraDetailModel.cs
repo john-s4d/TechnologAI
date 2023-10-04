@@ -8,7 +8,8 @@
         public object duedate { get; set; } = null!;
         public string summary { get; set; } = null!;
     }
-    public class Root
+
+    public class JiraResModel
     {
         public string expand { get; set; } = string.Empty;
         public string id { get; set; } = string.Empty;

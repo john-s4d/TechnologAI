@@ -1,7 +1,8 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
+using Technologai;
 
-namespace Technologai.Templates.Jira
+namespace Core.Templates.Jira
 {
     /*
     // Get Jira Tickets
@@ -28,15 +29,16 @@ namespace Technologai.Templates.Jira
         {
             Id = "get_all_jira_tickets";
             Description = "Get all Jira tickets.";
+            InputKeys = new string[] { "domain" };
+            OutputKeys = new string[] { "content" };
             Username = username;
-            Password = password;            
-        }   
-        
-        public async Task<Dictionary<string, object>> Process(Dictionary<string, object> data)
+            Password = password;
+        }
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public async override Task<Data?> Process(Information information)
         {
-            var domain = ((string)data["domain"]);
-            var username = ((string)data["username"]);
-            var password = ((string)data["password"]);
+            var domain = information.Input.Structured["domain"];
 
             HttpClient client = new()
             {
@@ -44,8 +46,8 @@ namespace Technologai.Templates.Jira
             };
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            var byteArray = Encoding.ASCII.GetBytes($"{username}:{password}");
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            var byteArray = Encoding.ASCII.GetBytes($"{Username} : {Password}");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
 
             try
             {
@@ -53,14 +55,14 @@ namespace Technologai.Templates.Jira
                 HttpResponseMessage response = await client.GetAsync(client.BaseAddress);
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseResult = await response.Content.ReadAsStringAsync();
-                    return new Dictionary<string, object> { { "contents", responseResult } };
+                    var content = await response.Content.ReadAsStringAsync();
+                    return Data.Create(content);
                 }
-                return new Dictionary<string, object> { { "Error", $"unable to find the response result" } };
+                return Data.Create("Error", $"Unable to find the Jira Ticket Status Code:'{response.StatusCode}'");
             }
             catch (Exception e)
             {
-                return new Dictionary<string, object> { { "Error", $"unable to find the comments  '{e.Message}'" } };
+                return Data.Create(e);
             }
         }
     }
