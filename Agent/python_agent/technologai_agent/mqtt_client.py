@@ -1,7 +1,8 @@
 import asyncio
 from paho.mqtt import client as mqtt_client
-from broker_message import BrokerMessage
-from identity import Identity
+from .broker_message import BrokerMessage
+from .constants import BROKER_URI
+from .identity import Identity
 
 PORT = 8083
 
@@ -14,9 +15,11 @@ class MqttClient:
         self.client.tls_set()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
-        self.client.username_pw_set(identity.tokens[identity.authority.broker_uri], "password")
+        # self.client.username_pw_set(identity.tokens[identity.authority.broker_uri], "password")
+        # self.client.username_pw_set(identity.tokens[BROKER_URI], "password")
 
-    def connect_async(self, broker_uri):
+    async def connect_async(self, broker_uri):
+        self.client.username_pw_set(self.identity.tokens[broker_uri], "password")
         self.client.connect_async(broker_uri, PORT)
         self.client.loop_start()
 
@@ -39,10 +42,4 @@ class MqttClient:
         self.client.subscribe(subscribe_mask)
 
     async def publish_async(self, topic, payload, message_type):
-        message = mqtt_client.MQTTMessage()
-        message.topic = topic
-        message.payload = payload
-        message.retain = False
-        message.qos = 0
-        message.properties = {'user_property': [(BrokerMessage.MESSAGE_TYPE, message_type)]}
-        self.client.publish(message)
+        self.client.publish(topic, payload=payload, properties={'user_property': [(BrokerMessage.MESSAGE_TYPE, message_type)]})

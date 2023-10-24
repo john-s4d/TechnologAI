@@ -1,9 +1,13 @@
-from ....Agent.python_agent.information import Information
+from technologai_agent.information import Information
+from technologai_agent.template import Template
 
-class InteractWithUser:
-    def __init__(self):
-        self.id = "interact_with_user"
-        self.description = "Show a message to the user and then receive a text input from the user. Find, and then respond with, the best template response to the user's input."
+class InteractWithUser(Template):
+    def __init__(self, **kwargs):
+        super().__init__(
+            id="interact_with_user",
+            description="Show a message to the user and then receive a text input from the user. Find, and then respond with, the best template response to the user's input.",
+            **kwargs
+        )
 
     async def assess(self, information: Information):
         return True
@@ -13,9 +17,9 @@ class InteractWithUser:
 
         user_input = await information.publish("get_input_from_user")
 
-        if user_input and user_input.raw.startswith("DEBUG:"):
-            return await information.publish("debug", user_input)
+        if user_input and user_input["message"].startswith("DEBUG:"):
+            return await information.publish("debug", user_input["message"])
 
-        best_template = await information.publish("get_best_template", user_input)
+        best_template = await information.publish("get_best_template", user_input["message"])
 
         return await information.publish(best_template.structured.get("id", "input_to_output"), user_input)
