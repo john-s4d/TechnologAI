@@ -45,7 +45,7 @@ namespace Technologai.Agents.Core
             _agent.LogMessage += LogMessage_callback;
 
             _agent.Catalog.Add(new AppendToFile());
-            _agent.Catalog.Add(new Generate32BitString());
+            _agent.Catalog.Add(new Generate32ByteString());
             _agent.Catalog.Add(new RespondBar());
             _agent.Catalog.Add(new ChunkText());
             _agent.Catalog.Add(new InputToOutput());
