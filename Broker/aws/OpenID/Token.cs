@@ -5,11 +5,20 @@ using Amazon.KeyManagementService;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Microsoft.IdentityModel.Tokens;
+using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Amazon.Util;
+using System.Net.Mime;
+using System.Runtime.CompilerServices;
+using static System.Formats.Asn1.AsnWriter;
+using Amazon.Runtime.Internal.Transform;
+using System.Security.Claims;
 
 namespace Technologai.AWS.OpenID
 {
@@ -29,7 +38,7 @@ namespace Technologai.AWS.OpenID
 
                 if (!headers.ContainsKey(HeaderKeys.ContentTypeHeader) || !headers[HeaderKeys.ContentTypeHeader].StartsWith("application/json"))
                 {
-                    return new TokenErrorResponse(415, "unsupported_media_type");
+                    return new TokenErrorResponse(415, "Unsupported Media Type");
                 }
 
                 var tokenRequest = JsonSerializer.Deserialize<TokenRequest>(request.Body) ?? throw new ArgumentNullException(nameof(request.Body));
@@ -76,24 +85,38 @@ namespace Technologai.AWS.OpenID
                 if (inputClientSecretSaltHash == dbClientSecretSaltHash)
                 {
 
-                    // Crypto authentication done. Now validate credentials.                   
+                    // Crypto authentication done. Now validate credentials.
 
-                    var scope = tokenRequest.scope.Split(' ', StringSplitOptions.RemoveEmptyEntries & StringSplitOptions.TrimEntries);
+                    string query = string.Empty;
 
-                    var agentId = GetValueForKey(scope, "agent_id") ?? throw new Exception("agent_id not found in scope");
+                    foreach (string scope in new List<string>(tokenRequest.scope?.Split(' ') ?? new string[] { }))
+                    {
+                        if (scope == "agent")
+                        {
+                            query = $"SELECT Name FROM Agent__c WHERE Agent_Id__c = {clientId} LIMIT 1";
+                            throw new NotImplementedException(); // TODO: agents should be able to connect without a member
+                        }
+                        else if (scope.StartsWith("member:") || scope.StartsWith("agency:"))
+                        {
+                            var memberId = scope.Substring(scope.IndexOf(':') + 1).Replace("'", string.Empty); ; // Light sanitizing since this could have been constructed manually
 
-                    var tokenClaims = await SalesforceQueryAdapter.GetClaims(clientId, agentId);
+                            // TODO: Do Salesforce stuff somewhere else
+                            query = $"SELECT Member_Id__c, Name, Agency__r.Name, Agency__r.Agency_Id__c, Agent__r.Name, Agent__r.Agent_Id__c, Role__c " +
+                                    $"FROM Agency_Member__c WHERE Member_Id__c = '{memberId}' AND Agent__r.Agent_Id__c = '{clientId}' LIMIT 1";
+                            break;
+                        }
+                    }
+
+                    TokenClaims? tokenClaims = await QueryAdapter.GetClaimsFromSalesforce(query);
 
                     if (tokenClaims != null)
                     {
                         var claims = new Dictionary<string, string>();
-                        claims.Add("sub", tokenClaims.agent_id ?? string.Empty);
+                        claims.Add("sub", tokenClaims.member_id ?? string.Empty);
                         claims.Add("name", tokenClaims.name ?? string.Empty);
-
-                        // TODO: collision resistant claim names
+                        claims.Add("role", tokenClaims.role ?? string.Empty);
+                        claims.Add("client_id", tokenClaims.client_id ?? string.Empty);
                         claims.Add("agency_id", tokenClaims.agency_id ?? string.Empty);
-                        claims.Add("instance_id", tokenClaims.instance_id ?? string.Empty);
-                        claims.Add("role", "agent"); // client_credentials grants are only for agents.
 
                         if (tokenRequest.audience?.Equals(Config.BrokerUri) ?? false)
                         {
@@ -103,11 +126,6 @@ namespace Technologai.AWS.OpenID
                         if (tokenRequest.audience?.Equals(Config.StreamUri) ?? false)
                         {
                             claims.Add("aud", Config.StreamUri);
-                        }
-
-                        if (claims["aud"] == null)
-                        {
-                            throw new Exception("Invalid audience");
                         }
 
                         claims.Add("scp", tokenRequest.scope ?? string.Empty);
@@ -133,18 +151,6 @@ namespace Technologai.AWS.OpenID
             return new TokenErrorResponse(401, "Unauthorized");
         }
 
-        static string? GetValueForKey(string[] keyValuePairs, string key, char separator = ':')
-        {
-            foreach (string pair in keyValuePairs)
-            {
-                if (pair.StartsWith(key + separator))
-                {
-                    return pair.Substring(pair.IndexOf(separator) + 1).Trim();
-                }
-            }
-            return null;
-        }
-
         private async Task<string> getIdToken(Dictionary<string, string> claims)
         {
             var kms = new AmazonKeyManagementServiceClient();
@@ -164,6 +170,8 @@ namespace Technologai.AWS.OpenID
             {
                 jwtPayload.Add(key, claims[key]);
             }
+
+
 
             string jwtHeaderBase64 = Base64UrlEncoder.Encode(jwtHeader.SerializeToJson());
             string jwtPayloadBase64 = Base64UrlEncoder.Encode(jwtPayload.SerializeToJson());
@@ -186,8 +194,8 @@ namespace Technologai.AWS.OpenID
         public class TokenRequest
         {
             public string? grant_type { get; set; }
-            public string scope { get; set; } = string.Empty;
-            public string audience { get; set; } = string.Empty;
+            public string? scope { get; set; }
+            public string? audience { get; set; }
         }
 
         public class TokenResponse
@@ -220,8 +228,9 @@ namespace Technologai.AWS.OpenID
     public class TokenClaims
     {
         public string? name { get; set; }
-        public string? agent_id { get; set; }
+        public string? client_id { get; set; }
+        public string? member_id { get; set; }
         public string? agency_id { get; set; }
-        public string? instance_id { get; set; }
+        public string? role { get; set; }
     }
 }

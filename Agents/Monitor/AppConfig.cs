@@ -1,14 +1,14 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace Technologai.Agents.Cognition
+namespace Technologai.Agents.Monitor
 {
     internal class AppConfig
     {
         private readonly IConfiguration _config;
 
-        internal string? AuthUri => _config["authUri"];        
+        internal string? AuthUri => _config["authUri"]; 
+        internal string? ClientSecret => _config["clientSecret"];
         internal string? ClientId => _config["clientId"];
-        internal string? ClientSecret => _config["clientSecret"];        
         internal string? MemberId => _config["memberId"];
 
         internal AppConfig()
