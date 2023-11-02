@@ -5,6 +5,7 @@
     <consumerSecret>Placeholder_Value</consumerSecret>
     <executionUser>john@ikailo.com.technologai-dev</executionUser>
     <friendlyName>Cognito</friendlyName>
+    <idTokenIssuer>https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Bw6kEd6EK</idTokenIssuer>
     <includeOrgIdInIdentifier>false</includeOrgIdInIdentifier>
     <providerType>OpenIdConnect</providerType>
     <registrationHandler>CognitoRegistrationHandler</registrationHandler>

@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Agent__c</fullName>
+    <fullName>Agency__c</fullName>
     <externalId>false</externalId>
-    <label>Agent</label>
-    <referenceTo>Agent__c</referenceTo>
-    <relationshipLabel>Nodes</relationshipLabel>
-    <relationshipName>Nodes</relationshipName>
+    <label>Agency</label>
+    <referenceTo>Agency__c</referenceTo>
+    <relationshipName>Agencies</relationshipName>
     <relationshipOrder>0</relationshipOrder>
     <reparentableMasterDetail>false</reparentableMasterDetail>
     <trackHistory>false</trackHistory>
