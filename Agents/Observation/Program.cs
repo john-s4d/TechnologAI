@@ -10,12 +10,12 @@ namespace Technologai.Agents.Monitor
 
         internal static async Task Main(string[] args)
         {
-            var authUri = _config.AuthUri ?? throw new ArgumentNullException(nameof(_config.AuthUri));
-            var clientId = _config.ClientId ?? throw new ArgumentNullException(nameof(_config.ClientId));
-            var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
-            var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
+            var authority = _config.Authority ?? throw new ArgumentNullException(nameof(_config.Authority));
+            var instanceId = _config.InstanceId ?? throw new ArgumentNullException(nameof(_config.InstanceId));
+            var instanceSecret = _config.InstanceSecret ?? throw new ArgumentNullException(nameof(_config.InstanceSecret));
+            var agentId = _config.AgentId ?? throw new ArgumentNullException(nameof(_config.AgentId));
 
-            _agent = new Agent(authUri, clientId, clientSecret, memberId);
+            _agent = new Agent(authority, instanceId, instanceSecret, agentId);
             _agent.LogMessage += AgentLogMessage_callback;
 
             DisplayMessage displayMessage = new();
@@ -39,7 +39,7 @@ namespace Technologai.Agents.Monitor
         private static void AgentLogMessage_callback(object? sender, string message)
         {
 
-            Console.WriteLine($"{(_agent?.Name ?? "Monitor.Local").PadRight(21)} | {message}");
+            Console.WriteLine($"{(_agent?.Name ?? "Observation.Local").PadRight(21)} | {message}");
         }
     }
 }

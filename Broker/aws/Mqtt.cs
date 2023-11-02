@@ -1,16 +1,7 @@
 ﻿using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
-using Amazon.Runtime.CredentialManagement.Internal;
-using Amazon.Runtime.Internal;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Technologai.AWS.OpenID;
-using static Technologai.AWS.OpenID.QueryAdapter;
 
 namespace Technologai.AWS
 {
@@ -70,22 +61,22 @@ namespace Technologai.AWS
                 return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 401, Body = "readwrite_not_allowed" };
             }
             
-            string memberId = claims["sub"];
+            string agentId = claims["sub"];
             string agencyId = claims["agency_id"];
             string role = claims["role"];
 
-            if (role == "member")
+            if (role == "agent")
             {
                 string publishMask = $"{agencyId}/+";
                 string subscribeAgencyMask = $"{agencyId}/0";
-                string subscribeMemberMask = $"{agencyId}/{memberId}";
+                string subscribeAgentMask = $"{agencyId}/{agentId}";
 
                 if ((acl.acc == 1 || acl.acc == 4) && TopicAllowed(acl.topic, subscribeAgencyMask))
                 {
                     return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 200 };
                 }
 
-                if ((acl.acc == 1 || acl.acc == 4) && TopicAllowed(acl.topic, subscribeMemberMask))
+                if ((acl.acc == 1 || acl.acc == 4) && TopicAllowed(acl.topic, subscribeAgentMask))
                 {
                     return new APIGatewayHttpApiV2ProxyResponse() { StatusCode = 200 };
                 }
@@ -144,9 +135,9 @@ namespace Technologai.AWS
                 return false;
             }
 
-            if (!claims.ContainsKey("client_id") || string.IsNullOrEmpty(claims["client_id"]))
+            if (!claims.ContainsKey("instance_id") || string.IsNullOrEmpty(claims["instance_id"]))
             {
-                message = "client_id_missing";
+                message = "instance_id_missing";
                 return false;
             }
 
