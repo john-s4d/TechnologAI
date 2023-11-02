@@ -17,7 +17,7 @@ namespace Technologai
             {
                 if (template.MemberId == null)
                 {
-                    template.MemberId = _identity.AgentId;
+                    template.MemberId = _identity.Id;
                 }
 
                 this[template.Id] = template;

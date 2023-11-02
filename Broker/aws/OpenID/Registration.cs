@@ -9,7 +9,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.Json;
-using static Technologai.AWS.OpenID.Registration;
 
 namespace Technologai.AWS.OpenID
 {
@@ -37,6 +36,8 @@ namespace Technologai.AWS.OpenID
 
             try
             {
+                // TODO: Better null error handling, error description to caller
+
                 var clientRequest = JsonSerializer.Deserialize<ClientMetaData>(request.Body);
 
                 clientIdBytes = Base64UrlEncoder.DecodeBytes(clientRequest?.preferred_client_id);
@@ -47,21 +48,17 @@ namespace Technologai.AWS.OpenID
             catch (Exception ex)
             {
 #if DEBUG
-
-                // When in debug mode, we can generate a client key.
-                // Use "sub": "ff8ea777-e984-4c88-870c-850bce153a08"
-
-                if (request.Body == "GENERATE_CLIENT_REQUEST")
+                if (request.Body == "DEBUG")
                 {
                     clientIdBytes = RandomNumberGenerator.GetBytes(32);
                     jsonWebKey = JsonWebKeyConverter.ConvertFromRSASecurityKey(new(RSA.Create(2048).ExportParameters(false)));
                     
-                    var clientMetaData = new ClientMetaData
+                    var clientRequest = new ClientMetaData
                     {
                         preferred_client_id = Base64UrlEncoder.Encode(clientIdBytes),
                         json_web_key = JsonExtensions.SerializeToJson(jsonWebKey)
                     };
-                    LambdaLogger.Log(JsonSerializer.Serialize(clientMetaData));
+                    LambdaLogger.Log(JsonSerializer.Serialize(clientRequest));
                 }
 #else
                 LambdaLogger.Log(ex.Message);
@@ -86,10 +83,11 @@ namespace Technologai.AWS.OpenID
                         { "Salt", new AttributeValue { S = Base64UrlEncoder.Encode(salt) } },
                         { "ClientId", new AttributeValue { S = clientId } },
                         { "CreatedDateTime", new AttributeValue { S = clientIssuedAt.ToString("o") } },
-                        { "CreatedBy", new AttributeValue { S = request.RequestContext.Authorizer.Jwt.Claims["sub"] } },
+                        { "CreatedBy", new AttributeValue { S = request.RequestContext.Authorizer != null ? request.RequestContext.Authorizer.Jwt.Claims["sub"] : string.Empty } },
                         { "Active", new AttributeValue { BOOL = true } }
                     },
                 ConditionExpression = "attribute_not_exists(ClientId)"
+
             };
 
             try

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace Technologai.Agents.Cognition
+namespace Technologai.Agents.Core
 {
     internal class AppConfig
     {
@@ -8,8 +8,10 @@ namespace Technologai.Agents.Cognition
 
         internal string? AuthUri => _config["authUri"];        
         internal string? ClientId => _config["clientId"];
-        internal string? ClientSecret => _config["clientSecret"];        
+        internal string? ClientSecret => _config["clientSecret"];
         internal string? MemberId => _config["memberId"];
+        internal string? JiraUsername => _config["jiraUsername"];
+        internal string? JiraPassword => _config["jiraPassword"];
 
         internal AppConfig()
         {

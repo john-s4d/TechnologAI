@@ -16,19 +16,14 @@ namespace Technologai
 
         [JsonIgnore]
         public Agent? Agent { get; set; }
-
         public string Id { get; }
         public string CreatorId { get; }
         public string? WorkerId { get; set; }
         public string TemplateId { get; }
         public InformationState InformationState { get; internal set; }
         public TemplateState TemplateState { get; private set; }
-
-
         public Data? Input { get; }
         public Data? Output { get; private set; }
-        //public Data? Instruction { get; private set; }
-
 
         // TODO History, Signatures, ReadOnly fields ?        
 
@@ -48,7 +43,7 @@ namespace Technologai
 
         public Information(Agent agent, string templateId, Data? input = null)
             : this(Technologai.Id.Create(agent.Id), agent.Id, null, templateId, InformationState.OPEN, TemplateState.RESTING, input, null)
-        {
+        { 
             Agent = agent;
             WorkerId = Agent.Catalog[TemplateId].MemberId;
         }
@@ -102,30 +97,30 @@ namespace Technologai
                 Output = await Agent.Catalog[TemplateId].Process(this);
 
                 InformationState = InformationState.CLOSED;
-
+                
                 TemplateState = TemplateState.RESTING;
 
                 WorkerId = CreatorId;
-
+                
                 await Agent.PublishAsync(this, null);
             }
         }
-
+        
         public async Task PublishAsync(OutputCallback? callback, string templateId, Data? input = null)
         {
             if (Agent == null) { return; }
 
-            var information = new Information(Agent, templateId, input);
+            var information = new Information(Agent, templateId, input);            
             Agent.Context.Add(information);
             Agent.Context.Spawn(information.Id, Id);
             await Agent.PublishAsync(information, callback);
-        }
+        }        
 
         public async Task<Data?> Publish(string templateId, Data? input = null)
         {
             if (Agent == null) { return null; }
 
-            var information = new Information(Agent, templateId, input);
+            var information = new Information(Agent, templateId, input);            
             Agent.Context.Add(information);
             Agent.Context.Spawn(information.Id, this.Id);
             return await Agent.Publish(information);
@@ -134,6 +129,6 @@ namespace Technologai
         public int CompareTo(Information? other)
         {
             return object.ReferenceEquals(other, null) ? 1 : ((Id)Id).CompareTo((Id)other.Id);
-        }
+        }       
     }
 }

@@ -10,37 +10,36 @@ namespace Technologai
     public class Identity
     {
         public string? Name { get; private set; }
-        public string AgentId { get; private set; }        
+        public string Id { get; private set; }        
         public string? AgencyId { get; private set; }
         internal Authority Authority { get; private set; }
-        internal string InstanceId { get; private set; }
-        internal string InstanceSecret { get; private set; }        
+        internal string ClientId { get; private set; }
+        internal string ClientSecret { get; private set; }        
         
         internal Dictionary<string, string> Tokens = new Dictionary<string, string>();
         internal string PublishMask => $"{AgencyId}/+";
-        internal string SubscribeMemberMask => $"{AgencyId}/{AgentId}";
+        internal string SubscribeMemberMask => $"{AgencyId}/{Id}";
         internal string SubscribeAgencyMask => $"{AgencyId}/0";        
 
-        public Identity(string authority, string instanceId, string instanceSecret, string agentId)
+        public Identity(string authUri, string clientId, string clientSecret, string memberId)
         {
-            Authority = new Authority(authority);
-            InstanceId = instanceId;
-            InstanceSecret = instanceSecret;
-            AgentId = agentId;
+            Authority = new Authority(authUri);
+            ClientId = clientId;
+            ClientSecret = clientSecret;
+            Id = memberId;
         }
 
-        internal async Task Authenticate(string audience, string version = "1.0")
+        internal async Task Authenticate(string audience)
         {
             using (var httpClient = new HttpClient())
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Base64UrlEncoder.Encode($"{InstanceId}:{InstanceSecret}"));
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Base64UrlEncoder.Encode($"{ClientId}:{ClientSecret}"));
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                 var parameters = new Dictionary<string, string>();
-                parameters.Add("grant_type", "client_credentials");                
+                parameters.Add("grant_type", "client_credentials");
+                parameters.Add("scope", $"member:{Id}");
                 parameters.Add("audience", audience);
-                parameters.Add("version", version);
-                parameters.Add("scope", $"agent_id:{AgentId}");
 
                 var endpoint = Authority?.AuthUri + Authority?.TokenApi;
 
