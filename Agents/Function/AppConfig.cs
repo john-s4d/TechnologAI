@@ -6,10 +6,12 @@ namespace Technologai.Agents.Core
     {
         private readonly IConfiguration _config;
 
-        internal string? AuthUri => _config["authUri"];        
-        internal string? ClientId => _config["clientId"];
-        internal string? ClientSecret => _config["clientSecret"];
-        internal string? MemberId => _config["memberId"];
+        internal string? Authority => _config["authority"];        
+        internal string? InstanceId => _config["instanceId"];
+        internal string? InstanceSecret => _config["instanceSecret"];
+        internal string? AgentId => _config["agentId"];
+
+        /*** Other configuration settings ***/
         internal string? JiraUsername => _config["jiraUsername"];
         internal string? JiraPassword => _config["jiraPassword"];
         internal string? SearchGoogleApiKey => _config["searchGoogleApiKey"];
@@ -32,6 +34,7 @@ namespace Technologai.Agents.Core
         internal string? TwitterConsumerKeySecret => _config["twitterConsumerKeySecret"];
         internal string? TwitterAccessToken => _config["twitterAccessToken"];
         internal string? TwitterAccessTokenSecret => _config["twitterAccessTokenSecret"];
+        
 
         internal AppConfig()
         {

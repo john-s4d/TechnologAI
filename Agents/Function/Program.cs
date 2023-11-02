@@ -11,24 +11,24 @@ namespace Technologai.Agents.Core
 
         internal static async Task Main(string[] args)
         {
-            var authUri = _config.AuthUri ?? throw new ArgumentNullException(nameof(_config.AuthUri));
-            var clientId = _config.ClientId ?? throw new ArgumentNullException(nameof(_config.ClientId));
-            var clientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
-            var memberId = _config.MemberId ?? throw new ArgumentNullException(nameof(_config.MemberId));
-
+            var authUri = _config.Authority ?? throw new ArgumentNullException(nameof(_config.Authority));
+            var instanceId = _config.InstanceId ?? throw new ArgumentNullException(nameof(_config.InstanceId));
+            var instanceSecret = _config.InstanceSecret ?? throw new ArgumentNullException(nameof(_config.InstanceSecret));
+            var agentId = _config.AgentId ?? throw new ArgumentNullException(nameof(_config.AgentId));
+            
             // Post To Reddit Credentials
-            var redditUsername = _config.RedditUsername ?? throw new ArgumentNullException(nameof(_config.RedditUsername));
-            var redditPassword = _config.RedditPassword ?? throw new ArgumentNullException(nameof(_config.RedditPassword));
-            var redditClientId = _config.ClientId ?? throw new ArgumentNullException(nameof(_config.RedditClientId));
-            var redditClientSecret = _config.ClientSecret ?? throw new ArgumentNullException(nameof(_config.ClientSecret));
-            var redditSubReddit = _config.SubReddit ?? throw new ArgumentNullException(nameof(_config.SubReddit));
-            var redditAppName = _config.RedditAppName ?? throw new ArgumentNullException(nameof(_config.RedditAppName));
+            var redditUsername = _config.RedditUsername;
+            var redditPassword = _config.RedditPassword;
+            var redditClientId = _config.RedditClientId;
+            var redditClientSecret = _config.RedditClientSecret;
+            var redditSubReddit = _config.SubReddit;
+            var redditAppName = _config.RedditAppName;
 
             // Twitter Credentials
-            var twitterConsumerKey = _config.TwitterConsumerKey ?? throw new ArgumentNullException(nameof(_config.TwitterConsumerKey));
-            var twitterConsumerKeySecret = _config.TwitterConsumerKeySecret ?? throw new ArgumentNullException(nameof(_config.TwitterConsumerKeySecret));
-            var twitterAccessToken = _config.TwitterAccessToken ?? throw new ArgumentNullException(nameof(_config.TwitterAccessToken));
-            var twitterAccessTokenSecret = _config.TwitterAccessTokenSecret ?? throw new ArgumentNullException(nameof(_config.TwitterAccessTokenSecret));
+            var twitterConsumerKey = _config.TwitterConsumerKey;
+            var twitterConsumerKeySecret = _config.TwitterConsumerKeySecret;
+            var twitterAccessToken = _config.TwitterAccessToken;
+            var twitterAccessTokenSecret = _config.TwitterAccessTokenSecret;
 
             var jiraUsername = _config.JiraUsername;
             var jiraPassword = _config.JiraPassword;
@@ -41,7 +41,7 @@ namespace Technologai.Agents.Core
 
 
 
-            _agent = new Agent(authUri, clientId, clientSecret, memberId);
+            _agent = new Agent(authUri, instanceId, instanceSecret, agentId);
             _agent.LogMessage += LogMessage_callback;
 
             _agent.Catalog.Add(new AppendToFile());
@@ -92,7 +92,7 @@ namespace Technologai.Agents.Core
 
         private static void LogMessage_callback(object? sender, string message)
         {
-            Console.WriteLine($"{_agent?.Name ?? "Core.Local"} | {message}");
+            Console.WriteLine($"{_agent?.Name ?? "Function.Local"} | {message}");
         }
     }       
 }

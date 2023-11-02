@@ -23,9 +23,9 @@ namespace Technologai
         private MqttClient _mqtt;
         private Timer? _killTimer;
 
-        public Agent(string authUri, string clientId, string clientSecret, string memberId)
+        public Agent(string authority, string instanceId, string instanceSecret, string agentId)
         {
-            Identity = new Identity(authUri, clientId, clientSecret, memberId);
+            Identity = new Identity(authority, instanceId, instanceSecret, agentId);
 
             Catalog = new Catalog(Identity);
             Context = new Context(Identity);
