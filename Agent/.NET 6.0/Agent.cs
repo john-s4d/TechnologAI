@@ -12,7 +12,7 @@ namespace Technologai
         const string LOG_MESSAGE_TEMPLATE_ID = "monitor.display_message";
 
         public string? Name => Identity.Name;
-        public string Id => Identity.Id;
+        public string Id => Identity.AgentId;
 
         public Identity Identity { get; private set; }
         public Catalog Catalog { get; private set; }
@@ -23,9 +23,9 @@ namespace Technologai
         private MqttClient _mqtt;
         private Timer? _killTimer;
 
-        public Agent(string authUri, string clientId, string clientSecret, string memberId)
+        public Agent(string authority, string instanceId, string instanceSecret, string agentId)
         {
-            Identity = new Identity(authUri, clientId, clientSecret, memberId);
+            Identity = new Identity(authority, instanceId, instanceSecret, agentId);
 
             Catalog = new Catalog(Identity);
             Context = new Context(Identity);
@@ -189,7 +189,7 @@ namespace Technologai
                 }
             );
 
-            // FIXME TODO: This can wait indefinitly if the information is never closed or template doesn't exist. Add timeout / decay.
+            // FIXME TODO: This can wait indefinitly if the information is never closed or template doesn't exist. Add timeout / decay / cancellation token.
 
             while (!callbackComplete)
             {
@@ -198,6 +198,12 @@ namespace Technologai
 
             return result;
         }
+
+        /*
+        public async Task PublishAsync(OutputCallback? callback, string? instruction, Data? input = null)
+        {
+            await PublishAsync(new Information(this, templateId, input), callback);
+        }*/
 
         // This PublishAsync method publishes information immediately and stores a callback to be invoked when the information is closed. Better for long running processes.
         public async Task PublishAsync(string templateId, OutputCallback? callback, Data? input = null)
