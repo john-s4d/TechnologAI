@@ -9,13 +9,13 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.Json;
-using static Technologai.AWS.OpenID.Registration;
 
 namespace Technologai.AWS.OpenID
 {
     internal class Registration
     {
         // TODO: Provide method to deactivate ClientId
+        // TODO: Harden. Use a real OAuth2 library. Probably this one: https://github.com/DuendeSoftware/IdentityServer
 
         public async Task<APIGatewayHttpApiV2ProxyResponse> ClientPost(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
@@ -115,9 +115,7 @@ namespace Technologai.AWS.OpenID
                 {
                     client_id = preferredClientId,
                     encrypted_client_secret = Base64UrlEncoder.Encode(rsa.Encrypt(clientSecret, false)),
-                    client_id_issued_at = Convert.ToString(new DateTimeOffset(clientIssuedAt).ToUnixTimeMilliseconds()),
-                    //registration_access_token = "",
-                    registration_client_uri = Config.RegistrationEndpoint
+                    client_id_issued_at = Convert.ToString(new DateTimeOffset(clientIssuedAt).ToUnixTimeMilliseconds()),                    
                 };
                 return new ClientSuccessResponse(200, clientInformation);
             }
@@ -145,11 +143,8 @@ namespace Technologai.AWS.OpenID
         public class ClientInformation
         {
             public string? client_id { get; set; }
-            public string? client_secret { get; set; }
             public string? client_id_issued_at { get; set; }
-            public string? encrypted_client_secret { get; set; }
-            public string? registration_access_token { get; set; }
-            public string? registration_client_uri { get; set; }
+            public string? encrypted_client_secret { get; set; } // TODO: NOT defined in RFC. Requires more protocol stuff. See https://tools.ietf.org/html/rfc7591#section-3.2.1
         }
 
         public class ClientSuccessResponse : APIGatewayHttpApiV2ProxyResponse
