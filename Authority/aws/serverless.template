@@ -1,0 +1,78 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Technologai Serverless Application.",    
+    "Resources": {
+        "ClientsPost": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {                
+                "Handler": "Technologai.AWS::Technologai.AWS.OpenID.Registration::ClientPost",
+                "Runtime": "dotnet6",
+                "Role": "arn:aws:iam::154032908746:role/TechnologaiDev-Lambda",
+                "Timeout": 30
+            }
+        },
+        "TokenPost": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {                
+                "Handler": "Technologai.AWS::Technologai.AWS.OpenID.Token::TokenPost",                            
+                "Runtime": "dotnet6",
+                "Role": "arn:aws:iam::154032908746:role/TechnologaiDev-Lambda",
+                "Timeout": 30
+            }
+        },
+        "JwksGet": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {                
+                "Handler": "Technologai.AWS::Technologai.AWS.OpenID.Jwks::JwksGet",                            
+                "Runtime": "dotnet6",
+                "Role": "arn:aws:iam::154032908746:role/TechnologaiDev-Lambda",
+                "Timeout": 30
+            }
+        },
+        "DiscoveryGet": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {                
+                "Handler": "Technologai.AWS::Technologai.AWS.OpenID.Discovery::DiscoveryGet",                            
+                "Runtime": "dotnet6",
+                "Role": "arn:aws:iam::154032908746:role/TechnologaiDev-Lambda",
+                "Timeout": 30
+            }
+        },
+        "GetUser": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {                
+                "Handler": "Technologai.AWS::Technologai.AWS.Mqtt::GetUser",                            
+                "Runtime": "dotnet6",
+                "Role": "arn:aws:iam::154032908746:role/TechnologaiDev-Lambda",
+                "Timeout": 30
+            }
+        },
+        "AclCheck": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {                
+                "Handler": "Technologai.AWS::Technologai.AWS.Mqtt::AclCheck",                            
+                "Runtime": "dotnet6",
+                "Role": "arn:aws:iam::154032908746:role/TechnologaiDev-Lambda",
+                "Timeout": 30
+            }
+        },
+         "ListenerAdd": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {                
+                "Handler": "Technologai.AWS::Technologai.AWS.Icecast::ListenerAdd",                            
+                "Runtime": "dotnet6",
+                "Role": "arn:aws:iam::154032908746:role/TechnologaiDev-Lambda",
+                "Timeout": 30
+            }
+        },
+        "StreamAuth": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {                
+                "Handler": "Technologai.AWS::Technologai.AWS.Icecast::StreamAuth",                            
+                "Runtime": "dotnet6",
+                "Role": "arn:aws:iam::154032908746:role/TechnologaiDev-Lambda",
+                "Timeout": 30
+            }
+        }
+    }
+}
