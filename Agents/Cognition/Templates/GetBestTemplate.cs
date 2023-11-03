@@ -19,9 +19,9 @@
         {            
             string? templateId = null; 
 
-            if (information.Input?.Raw == "32bit")
+            if (information.Input?.Raw == "32byte")
             {                
-                templateId = "generate_32_bit_string";
+                templateId = "generate_32_byte_string";
             }
 
             if (information.Input?.Raw == "foo")
