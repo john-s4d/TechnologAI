@@ -3,10 +3,7 @@ using Amazon.DynamoDBv2;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text.Json;
 
@@ -45,7 +42,7 @@ namespace Technologai.AWS.OpenID
 #if DEBUG
 
                 // When in debug mode, we can generate a client key.
-                // Update claim "sub" in the request to something helpful.
+                // Update Authorizer claim "sub" in the request to something helpful.
 
                 if (request.Body == "GENERATE_CLIENT_REQUEST")
                 {
@@ -68,8 +65,6 @@ namespace Technologai.AWS.OpenID
             byte[] clientSecret = RandomNumberGenerator.GetBytes(32);
             byte[] salt = RandomNumberGenerator.GetBytes(32);
             byte[] clientSecretSaltHash = SHA256.Create().ComputeHash(clientSecret.Concat(salt).ToArray());
-
-            //string clientId = Base64UrlEncoder.Encode(preferredClientId);
 
             DateTime clientIssuedAt = DateTime.UtcNow;
 
