@@ -26,40 +26,36 @@ namespace Technologai.AWS.OpenID
             {
                 LambdaLogger.Log("No Authorizer");
                 return new ClientErrorResponse(401, "Unauthorized");
-            }
-            else
-            {
-                // TODO: Do we need to validate Authorizer subject? Ideally issuer trust should be enough.
-            }
+            }           
 
-            byte[] clientIdBytes = Array.Empty<byte>();
-            JsonWebKey jsonWebKey = new();
+            string? preferredClientId = string.Empty;
+            JsonWebKey jwks = new();
 
             try
             {
                 var clientRequest = JsonSerializer.Deserialize<ClientMetaData>(request.Body);
 
-                clientIdBytes = Base64UrlEncoder.DecodeBytes(clientRequest?.preferred_client_id);
-                jsonWebKey = new JsonWebKey(clientRequest?.json_web_key);
+                preferredClientId = clientRequest?.preferred_client_id;
+                jwks = new JsonWebKey(clientRequest?.jwks);
 
-                if (clientIdBytes.Length != 32) { throw new ArgumentException(nameof(ClientMetaData.preferred_client_id)); }
+                if (preferredClientId?.Length != 32) { throw new ArgumentException(nameof(ClientMetaData.preferred_client_id)); }
             }
             catch (Exception ex)
             {
 #if DEBUG
 
                 // When in debug mode, we can generate a client key.
-                // Use "sub": "ff8ea777-e984-4c88-870c-850bce153a08"
+                // Update claim "sub" in the request to something helpful.
 
                 if (request.Body == "GENERATE_CLIENT_REQUEST")
                 {
-                    clientIdBytes = RandomNumberGenerator.GetBytes(32);
-                    jsonWebKey = JsonWebKeyConverter.ConvertFromRSASecurityKey(new(RSA.Create(2048).ExportParameters(false)));
+                    preferredClientId = Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(32));
+                    jwks = JsonWebKeyConverter.ConvertFromRSASecurityKey(new(RSA.Create(2048).ExportParameters(false)));
                     
                     var clientMetaData = new ClientMetaData
                     {
-                        preferred_client_id = Base64UrlEncoder.Encode(clientIdBytes),
-                        json_web_key = JsonExtensions.SerializeToJson(jsonWebKey)
+                        preferred_client_id = preferredClientId,
+                        jwks = JsonExtensions.SerializeToJson(jwks)
                     };
                     LambdaLogger.Log(JsonSerializer.Serialize(clientMetaData));
                 }
@@ -73,7 +69,7 @@ namespace Technologai.AWS.OpenID
             byte[] salt = RandomNumberGenerator.GetBytes(32);
             byte[] clientSecretSaltHash = SHA256.Create().ComputeHash(clientSecret.Concat(salt).ToArray());
 
-            string clientId = Base64UrlEncoder.Encode(clientIdBytes);
+            //string clientId = Base64UrlEncoder.Encode(preferredClientId);
 
             DateTime clientIssuedAt = DateTime.UtcNow;
 
@@ -84,7 +80,7 @@ namespace Technologai.AWS.OpenID
                     {
                         { "ClientSecretSaltHash", new AttributeValue { S = Base64UrlEncoder.Encode(clientSecretSaltHash) } },
                         { "Salt", new AttributeValue { S = Base64UrlEncoder.Encode(salt) } },
-                        { "ClientId", new AttributeValue { S = clientId } },
+                        { "ClientId", new AttributeValue { S = preferredClientId } },
                         { "CreatedDateTime", new AttributeValue { S = clientIssuedAt.ToString("o") } },
                         { "CreatedBy", new AttributeValue { S = request.RequestContext.Authorizer.Jwt.Claims["sub"] } },
                         { "Active", new AttributeValue { BOOL = true } }
@@ -107,17 +103,17 @@ namespace Technologai.AWS.OpenID
             }
 
 #if DEBUG   
-            LambdaLogger.Log($"client_id: {clientId}");
+            LambdaLogger.Log($"client_id: {preferredClientId}");
             LambdaLogger.Log($"client_secret: {Base64UrlEncoder.Encode(clientSecret)}");
 #endif
 
             using (var rsa = new RSACryptoServiceProvider())
             {
-                rsa.ImportParameters(JwkToRsa(jsonWebKey));
+                rsa.ImportParameters(JwkToRsa(jwks));
 
                 var clientInformation = new ClientInformation
                 {
-                    client_id = clientId,
+                    client_id = preferredClientId,
                     encrypted_client_secret = Base64UrlEncoder.Encode(rsa.Encrypt(clientSecret, false)),
                     client_id_issued_at = Convert.ToString(new DateTimeOffset(clientIssuedAt).ToUnixTimeMilliseconds()),
                     //registration_access_token = "",
@@ -143,7 +139,7 @@ namespace Technologai.AWS.OpenID
         public class ClientMetaData
         {
             public string? preferred_client_id { get; set; }
-            public string? json_web_key { get; set; }
+            public string? jwks { get; set; }
         }
 
         public class ClientInformation
