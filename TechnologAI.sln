@@ -56,8 +56,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "technologai_agent", "techno
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Authority", "Authority", "{12A618A3-0389-4313-9B72-3C67749B0130}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extension", "Extension\Extension.csproj", "{09FD9705-7C15-4BB7-A777-ED07D24DD903}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -100,10 +98,6 @@ Global
 		{0DE43D9F-CD25-4270-B321-AFB3D64C4BEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DE43D9F-CD25-4270-B321-AFB3D64C4BEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0DE43D9F-CD25-4270-B321-AFB3D64C4BEC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{09FD9705-7C15-4BB7-A777-ED07D24DD903}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{09FD9705-7C15-4BB7-A777-ED07D24DD903}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{09FD9705-7C15-4BB7-A777-ED07D24DD903}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{09FD9705-7C15-4BB7-A777-ED07D24DD903}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -121,7 +115,6 @@ Global
 		{0DE43D9F-CD25-4270-B321-AFB3D64C4BEC} = {55F43CA4-40F5-4A16-80DF-B4E0C9034D25}
 		{3044023C-FE6C-4E9C-BBA5-C58F9DD518A5} = {0B575BC7-1516-40CB-827E-CA72EADB8CF3}
 		{05BCF0DC-03B8-4D52-A35B-1F3556CC96A4} = {3044023C-FE6C-4E9C-BBA5-C58F9DD518A5}
-		{09FD9705-7C15-4BB7-A777-ED07D24DD903} = {6226C593-2DD5-4021-93B0-53846F05C4F7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D7755621-BA51-411A-B04D-20AB0C57BA0D}
