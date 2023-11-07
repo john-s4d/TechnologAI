@@ -1,2 +1,2 @@
-# Technologai
-#${{ secrets.HELM_REPO }}
+# TechnologAI.Legacy
+No longer in use
