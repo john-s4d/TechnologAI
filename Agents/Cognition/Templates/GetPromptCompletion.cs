@@ -1,29 +1,34 @@
-﻿namespace Technologai.Cognition
+﻿namespace Technologai.Templates
 {
     internal class GetPromptCompletion : Template
     {
-
-        //OpenAi
-        public GetPromptCompletion()
+        private const string DEFAULT_MODEL = "openai.gpt4";
+        public GetPromptCompletion(Agent agent)
         {
             Id = "get_prompt_completion";
-            Description = "Get a prompt completion from an LLM Model";
-            InputKeys = new string[] { "model","prompt" };            
+            Description = "Get a prompt completion from an LLM Model.";
+            InputKeys = new string[] { "model", "prompt" };
         }
 
-        public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
-        /*
-        public override Task<Data?> Process(InformationAdapter information)
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override Task<Data?> Process(Information information)
         {            
-            //OpenAI
-        }*/
+            if (information.Input == null)
+            {
+                return Task.FromResult((Data?)null);
+            }
+
+            else if (information.Input.Format == DataFormat.STRUCTURED)
+            {
+                string model = information.Input.Structured?["model"] ?? DEFAULT_MODEL;
+                string prompt = information.Input.Structured?["prompt"] ?? string.Empty;
+                return Task.FromResult((Data?)null);
+            }
+            else
+            {
+                return Task.FromResult((Data?)null);
+            }
+        }
     }
 }
-
-/*
-var prompt = $"Your response MUST be a compliant machine-readable JSON document.\r\n\r\n" +
-$"{JsonConvert.SerializeObject(choose_ability)}" +
-$"\r\n\r\nGiven the list of abilities provided, specify which one you would like to use to respond to the input. " +
-$"Your response should consist of a single JSON object with the name of the selected ability. For example: {information.Template.SampleJsonOut}";
-*/
-

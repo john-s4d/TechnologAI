@@ -19,8 +19,8 @@ namespace Technologai
         private const string TOPIC_DELIMITER = "/";
 
         public string? AgencyId { get; set; }
-        public string? MemberId { get; set; }
-        public string Topic { get { return $"{AgencyId ?? "-"}/{MemberId ?? "-"}"; } }
+        public string? ToMemberId { get; set; }
+        public string Topic { get { return $"{AgencyId ?? "-"}/{ToMemberId ?? "-"}"; } }
         public AgentMessageType MessageType { get; set; }
         public object? MessageData { get; set; }
 
@@ -38,7 +38,7 @@ namespace Technologai
             var brokerMessage = new BrokerMessage()
             {
                 AgencyId = topicParts[0],
-                MemberId = topicParts[1],
+                ToMemberId = topicParts[1],
             };
 
             var payload = args.ApplicationMessage.ConvertPayloadToString();
@@ -51,7 +51,7 @@ namespace Technologai
                     {
                         case "PULSE":
                             brokerMessage.MessageType = AgentMessageType.PULSE;
-                            brokerMessage.MessageData = JsonSerializer.Deserialize<PulseMessage>(payload);
+                            brokerMessage.MessageData = JsonSerializer.Deserialize<Pulse>(payload);
                             break;
                         case "TEMPLATE":
                             brokerMessage.MessageType = AgentMessageType.TEMPLATE;
@@ -73,7 +73,7 @@ namespace Technologai
             switch (MessageType)
             {
                 case AgentMessageType.PULSE:
-                    return JsonSerializer.Serialize(MessageData as PulseMessage);
+                    return JsonSerializer.Serialize(MessageData as Pulse);
                 case AgentMessageType.TEMPLATE:
                     return JsonSerializer.Serialize(MessageData as Template);
                 case AgentMessageType.INFORMATION:

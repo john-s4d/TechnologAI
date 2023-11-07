@@ -1,21 +1,21 @@
-﻿using Technologai;
-
-public class GetInputFromUser : Template
+﻿namespace Technologai.Templates
 {
-    public GetInputFromUser()
+    public class GetInputFromUser : Template
     {
-        Id = "get_input_from_user";
-        Description = "Receive a text input from the user.";
-    }
-
-    public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
-
-    public override async Task<Data?> Process(InformationAdapter information)
-    {        
-        return await Task.Run(() =>
+        public GetInputFromUser()
         {
-            var output = new Data(Console.ReadLine() ?? string.Empty);
-            return output;
-        });
+            Id = "get_input_from_user";
+            Description = "Receive a text input from the user.";
+        }
+
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
+
+        public override async Task<Data?> Process(Information information)
+        {
+            return await Task.Run(() =>
+            {
+                return new Data(Console.ReadLine() ?? string.Empty);
+            });
+        }
     }
 }

@@ -1,5 +1,5 @@
-﻿namespace Technologai.Cognition.Templates
-{
+﻿namespace Technologai.Templates
+{ 
     internal class FindTemplateInCatalog : Template
     {
         /*

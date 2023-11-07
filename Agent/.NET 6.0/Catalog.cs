@@ -1,6 +1,8 @@
-﻿namespace Technologai
+﻿using System.Collections.Concurrent;
+
+namespace Technologai
 {
-    public class Catalog : Dictionary<string, ITemplate>
+    public class Catalog : ConcurrentDictionary<string, Template>
     {
         private Identity _identity;
 
@@ -9,13 +11,13 @@
             _identity = identity;
         }
 
-        public void Add(ITemplate template)
+        public void Add(Template template)
         {
             if (!string.IsNullOrEmpty(template.Id))
             {
                 if (template.MemberId == null)
                 {
-                    template.MemberId = _identity.Id;
+                    template.MemberId = _identity.AgentId;
                 }
 
                 this[template.Id] = template;

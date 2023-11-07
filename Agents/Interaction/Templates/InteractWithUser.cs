@@ -1,46 +1,33 @@
-﻿using Technologai;
-
-public class InteractWithUser : Template
+﻿namespace Technologai.Templates
 {
+    public class InteractWithUser : Template
+    {
         public InteractWithUser()
-    {
-        Id = "interact_with_user";
-        Description = "Provide the user with information and receive a response from the user.";
-    }
+        {
+            Id = "interact_with_user";
+            Description = "Show a message to the user and then receive a text input from the user. Find, and then respond with, the best template response to the user's input.";
+        }
 
-    public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-    public override async Task<Data?> Process(InformationAdapter information)
-    {
-        var showUserOutput = await information.Spawn("show_output_to_user", information.Input);
-        await showUserOutput.PublishAndWait();
+        public override async Task<Data?> Process(Information information)
+        {
+            await information.Publish("show_message_to_user", $"{information.Input} \r\n> ");
 
-        var getUserInput = await information.Spawn("get_input_from_user");
-        var userInput = await getUserInput.PublishAndWait();
+            var userInput = await information.Publish("get_input_from_user");
 
 #if DEBUG
 
-        if (userInput?.Raw?.StartsWith("DEBUG:") ?? false)
-        {
-            var debugTemplate = await information.Spawn("debug", userInput);
-            await debugTemplate.Publish(PublishCallback);
-            return new Data("Debug published");
-        }
+            if (userInput?.Raw?.StartsWith("DEBUG:") ?? false)
+            {
+                return await information.Publish("debug", userInput);
+            }
 #endif
 
-        var getBestTemplate = await information.Spawn("get_best_template", userInput);
-        var bestTemplate = await getBestTemplate.PublishAndWait();
+            var bestTemplate = await information.Publish("get_best_template", userInput);
 
-        var chosenTemplate = await information.Spawn(bestTemplate?.Structured?["Id"] ?? "input_to_output", userInput);
-        await chosenTemplate.Publish(PublishCallback);
+            return await information.Publish(bestTemplate?.Structured?["id"] ?? "input_to_output", userInput);
 
-        return new Data("Working...");
-
-    }
-
-    private void PublishCallback(InformationAdapter information)
-    {
-        var showUserOutput = information.Spawn("show_output_to_user", information.Output).Result;
-        _ = showUserOutput.Publish();
+        }
     }
 }

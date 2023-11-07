@@ -1,4 +1,4 @@
-﻿namespace Technologai.Cognition
+﻿namespace Technologai.Templates
 {
     internal class GetBestTemplate : Template
     {
@@ -6,22 +6,22 @@
 
         public GetBestTemplate(string defaultTemplateId = "input_to_output")
         {
-            Id = "get_best_template";
-            Description = "Get the best template for handling the input.";
-            OutputKeys = new string[] { "Id" };
-
             _defaultTemplateId = defaultTemplateId;
+
+            Id = "get_best_template";
+            Description = "Get the ID for the template which is best described by the input.";
+            OutputKeys = new string[] { "id" };
         }
 
-        public override Task<bool> Assess(InformationAdapter information) => Task.FromResult(true);
+        public override Task<bool> Assess(Information information) => Task.FromResult(true);
 
-        public override Task<Data?> Process(InformationAdapter information)
+        public async override Task<Data?> Process(Information information)
         {            
-            string templateId = _defaultTemplateId; 
+            string? templateId = null; 
 
-            if (information.Input?.Raw == "32bit")
+            if (information.Input?.Raw == "32byte")
             {                
-                templateId = "generate_32_bit_string";
+                templateId = "generate_32_byte_string";
             }
 
             if (information.Input?.Raw == "foo")
@@ -29,9 +29,16 @@
                 templateId = "respond_bar";
             }
 
-            // TODO: Ask an LLM to determine the best template to use from the available templates
+            if (templateId == null)
+            {
+                // TODO: Ask an LLM to determine the best template to use from the available templates
 
-            return Task.FromResult((Data?)new Data(new Dictionary<string, string> { { "Id", templateId } }));
+                string prompt = $"{information.Input}";
+
+                templateId = await information.Publish("get_prompt_completion", prompt);
+            }                    
+
+            return new Data(new Dictionary<string, string> { { "id", templateId ?? _defaultTemplateId } });
         }
     }
 }
@@ -42,4 +49,3 @@ $"{JsonConvert.SerializeObject(choose_ability)}" +
 $"\r\n\r\nGiven the list of abilities provided, specify which one you would like to use to respond to the input. " +
 $"Your response should consist of a single JSON object with the name of the selected ability. For example: {information.Template.SampleJsonOut}";
 */
-

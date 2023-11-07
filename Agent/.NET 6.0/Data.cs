@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Technologai
@@ -72,7 +73,7 @@ namespace Technologai
         // Structured data is key/value pairs        
         public Dictionary<string, string>? Structured { get; }
 
-        public Data(string? raw, DataFormat dataFormat = DataFormat.RAW)
+        public Data(string? raw = null, DataFormat dataFormat = DataFormat.RAW)
         {
             Raw = raw;
             Format = dataFormat;
@@ -100,12 +101,35 @@ namespace Technologai
        
         public override string? ToString() => Raw;
 
-        public static implicit operator Data(string? raw) => new Data(raw);
+        public static Data? Create(string raw)
+        {
+            return new Data(raw);
+        }
 
-        public static implicit operator Data(Dictionary<string, string> structured) => new Data(structured);
+        public static Data? Create(Exception exception)
+        {
+            return Create("error", exception.Message);
+        }
 
-        public static implicit operator string?(Data data) => data.Raw;
+        public static Data? Create(string key, string value)
+        {
+            return new Data(new Dictionary<string, string>()
+            {
+                { key, value }
+            });
+        }
 
-        public static implicit operator Dictionary<string, string>?(Data data) => data.Structured;
+        public static Data? Create(string key, IEnumerable<IConvertible> value)
+        {
+            return Create(key, JsonSerializer.Serialize(value));            
+        }
+
+        public static implicit operator Data?(string? raw) => new Data(raw);
+
+        public static implicit operator Data?(Dictionary<string, string> structured) => new Data(structured);
+
+        public static implicit operator string?(Data? data) => data?.Raw;
+
+        public static implicit operator Dictionary<string, string>?(Data? data) => data?.Structured;
     }
 }
