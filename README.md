@@ -1,6 +1,6 @@
 # TechnologAI
 
-TechnologAI was the last major iteration before what eventually became Agience.
+TechnologAI, circa 2022, was the last major iteration before what eventually became Agience. 
 
 This project was my attempt to build a modular agent architecture around three ideas that mattered to me: identity, tool use, and agent-to-agent communication. Long before standards like MCP became common, I was already experimenting with structured tool interfaces that agents could discover and invoke. In the same way, I was exploring A2A-style messaging, where agents could communicate through typed messages, maintain context, and coordinate behavior across roles and environments.
 
